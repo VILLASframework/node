@@ -27,6 +27,7 @@ struct LoadConfigFileOptions {
   bool allow_libconfig = false;
   bool allow_environment = false;
   bool allow_include = false;
+  bool allow_comments = false;
 };
 
 // load a configuration file

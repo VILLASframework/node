@@ -150,7 +150,7 @@ void to_json(Json &json, JanssonPtr const &jansson) {
 namespace {
 
 // Implement the deprecated variable substitution syntax.
-void expand_substitutions(Json &value, bool resolve_env,
+void expand_substitutions(Json &value, bool resolve_env, bool allow_comments,
                           fs::path const *include_dir) {
   if (not value.is_string())
     return;
@@ -204,6 +204,7 @@ void expand_substitutions(Json &value, bool resolve_env,
                                      .allow_libconfig = false,
                                      .allow_environment = resolve_env,
                                      .allow_include = include_dir != nullptr,
+                                     .allow_comments = allow_comments,
                                  });
       if (result.is_null())
         result = partial_result;
@@ -225,14 +226,16 @@ void expand_substitutions(Json &value, bool resolve_env,
 #ifdef WITH_CONFIG
 
 Json parse_libconfig_setting(::config_setting_t const *setting,
-                             bool resolve_env, fs::path const *include_dir) {
+                             bool resolve_env, bool allow_comments,
+                             fs::path const *include_dir) {
   switch (config_setting_type(setting)) {
   case CONFIG_TYPE_ARRAY:
   case CONFIG_TYPE_LIST: {
     auto array = Json::array();
     for (auto const idx : std::views::iota(0, config_setting_length(setting))) {
       auto const elem = config_setting_get_elem(setting, idx);
-      array.push_back(parse_libconfig_setting(elem, resolve_env, include_dir));
+      array.push_back(parse_libconfig_setting(elem, resolve_env, allow_comments,
+                                              include_dir));
     }
 
     return array;
@@ -244,7 +247,8 @@ Json parse_libconfig_setting(::config_setting_t const *setting,
       auto const elem = config_setting_get_elem(setting, idx);
       auto name = std::string(config_setting_name(elem));
       object.emplace(std::move(name),
-                     parse_libconfig_setting(elem, resolve_env, include_dir));
+                     parse_libconfig_setting(elem, resolve_env, allow_comments,
+                                             include_dir));
     }
 
     return object;
@@ -252,7 +256,7 @@ Json parse_libconfig_setting(::config_setting_t const *setting,
 
   case CONFIG_TYPE_STRING: {
     auto json = Json(std::string(config_setting_get_string(setting)));
-    expand_substitutions(json, resolve_env, include_dir);
+    expand_substitutions(json, resolve_env, allow_comments, include_dir);
     return json;
   }
 
@@ -299,7 +303,8 @@ extern "C" char const **libconfig_include_func(::config_t *config, char const *,
   }
 
   auto pattern_json = Json(pattern);
-  expand_substitutions(pattern_json, hook->resolve_env, nullptr);
+  // The null include_dir only expands environment variables in the pattern.
+  expand_substitutions(pattern_json, hook->resolve_env, false, nullptr);
   auto const &pattern_expanded = pattern_json.get_ref<std::string const &>();
 
   try {
@@ -327,7 +332,7 @@ extern "C" char const **libconfig_include_func(::config_t *config, char const *,
 
 #endif
 
-Json load_libconfig_file(std::FILE *file, bool resolve_env,
+Json load_libconfig_file(std::FILE *file, bool resolve_env, bool allow_comments,
                          fs::path const *include_dir) {
   using ConfigDestroy = decltype([](::config_t *c) { ::config_destroy(c); });
   using ConfigGuard = std::unique_ptr<::config_t, ConfigDestroy>;
@@ -359,7 +364,7 @@ Json load_libconfig_file(std::FILE *file, bool resolve_env,
   }
 
   return parse_libconfig_setting(config_root_setting(&config), resolve_env,
-                                 include_dir);
+                                 allow_comments, include_dir);
 }
 
 #endif // WITH_CONFIG
@@ -381,16 +386,17 @@ Json load_config_file(fs::path const &path, LoadConfigFileOptions const &opts) {
     auto parser_callback = [&](int depth, Json::parse_event_t event,
                                Json &value) {
       if (event == Json::parse_event_t::value)
-        expand_substitutions(value, opts.allow_environment,
+        expand_substitutions(value, opts.allow_environment, opts.allow_comments,
                              opts.allow_include ? &include_dir : nullptr);
 
       return true;
     };
 
-    return Json::parse(file.get(), parser_callback);
+    return Json::parse(file.get(), parser_callback, true, opts.allow_comments);
   } else if (opts.allow_libconfig) {
 #ifdef WITH_CONFIG
     return load_libconfig_file(file.get(), opts.allow_environment,
+                               opts.allow_comments,
                                opts.allow_include ? &include_dir : nullptr);
 #else
     throw std::runtime_error(

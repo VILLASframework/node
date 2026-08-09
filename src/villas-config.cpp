@@ -99,6 +99,7 @@ protected:
                                                  .allow_libconfig = true,
                                                  .allow_environment = true,
                                                  .allow_include = true,
+                                                 .allow_comments = true,
                                              });
 
       SuperNode::validate(config, {
