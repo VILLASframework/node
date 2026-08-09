@@ -47,18 +47,18 @@ repos:
       - id: editorconfig-checker
         alias: ec
         args:
-        - -disable-indent-size
-        - -exclude
-        - ^LICENSE$|^LICENSES/|\.ecf$
+          - -disable-indent-size
+          - -exclude
+          - ^LICENSE$|^LICENSES/|\.ecf$
 
   # Using this mirror lets us use mypyc-compiled black, which is about 2x faster
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: "23.3.0"
+    rev: "24.10.0"
     hooks:
       - id: black-jupyter
         exclude: .*_pb2.pyi?$
         args:
-        - --line-length=90
+          - --line-length=90
 
   - repo: https://github.com/pycqa/flake8
     rev: "7.3.0"
@@ -66,7 +66,7 @@ repos:
       - id: flake8
         exclude: .*_pb2.pyi?$
         args:
-        - --max-line-length=90
+          - --max-line-length=90
 
   - repo: https://github.com/markdownlint/markdownlint
     rev: "v0.13.0"
