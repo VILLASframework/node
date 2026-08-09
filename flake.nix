@@ -183,6 +183,7 @@
               nativeBuildInputs = pkg.nativeBuildInputs ++ packages;
               propagatedBuildInputs = pkg.propagatedBuildInputs;
               propagatedNativeBuildInputs = pkg.propagatedNativeBuildInputs;
+              env.NLOHMANN_JSON_SRC = pkgs.nlohmann_json.src;
             };
         in
         rec {
