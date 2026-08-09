@@ -25,12 +25,10 @@ cat > config.json <<EOF
     },
     "nodes": {
         "testnode1": {
-            "type": "websocket",
-            "dummy": "value1"
+            "type": "websocket"
         },
         "testnode2": {
             "type": "socket",
-            "dummy": "value2",
 
             "in": {
                 "address": "*:12001",
