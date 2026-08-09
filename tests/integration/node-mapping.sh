@@ -29,31 +29,29 @@ cat > config.json <<EOF
     "nodes": {
         "sig_1": {
             "type": "signal.v2",
-
             "limit": 1,
-
-            "initial_sequenceno": 99,
-
             "in": {
                "signals": [
                    { "name": "const1", "signal": "constant", "amplitude": 1 },
                    { "name": "const2", "signal": "constant", "amplitude": 2 },
                    { "name": "const3", "signal": "constant", "amplitude": 3 }
+               ],
+               "hooks": [
+                   { "type": "shift_seq", "offset": 99 }
                ]
             }
         },
         "sig_2": {
             "type": "signal.v2",
-
             "limit": 1,
-
-            "initial_sequenceno": 123,
-
             "in": {
                 "signals": [
                     { "name": "const1", "signal": "constant", "amplitude": 11 },
                     { "name": "const2", "signal": "constant", "amplitude": 12 },
                     { "name": "const3", "signal": "constant", "amplitude": 13 }
+                ],
+                "hooks": [
+                    { "type": "shift_seq", "offset": 123 }
                 ]
             }
         },

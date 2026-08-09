@@ -76,4 +76,4 @@ kill %%
 wait %%
 
 # Compare local config with the fetched one
-diff -u <(jq -S . < fetched.json) <(jq -S . < local.json)
+diff -u <(jq -S < fetched.json) <(villas config -m -D local.json | jq -S)

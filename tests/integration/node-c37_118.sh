@@ -27,7 +27,6 @@ cat > config.json <<EOF
         },
         "server": {
             "type": "c37.118",
-            "hooks": ["print"],
             "out": {
                 "address": "localhost",
                 "idcode": 1,
