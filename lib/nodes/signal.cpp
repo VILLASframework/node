@@ -277,14 +277,14 @@ int SignalNode::_read(struct Sample *smps[], unsigned cnt) {
   struct Sample *t = smps[0];
 
   struct timespec ts;
-  uint64_t steps, counter = sequence - sequence_init;
+  uint64_t steps;
 
   assert(cnt == 1);
 
   if (rt)
     ts = time_now();
   else {
-    struct timespec offset = time_from_double(counter * 1.0 / rate);
+    struct timespec offset = time_from_double(sequence * 1.0 / rate);
     ts = time_add(&started, &offset);
   }
 
@@ -300,10 +300,10 @@ int SignalNode::_read(struct Sample *smps[], unsigned cnt) {
   for (unsigned i = 0; i < t->length; i++) {
     auto &sig = signals[i];
 
-    sig.read(counter, running, rate, &t->data[i]);
+    sig.read(sequence, running, rate, &t->data[i]);
   }
 
-  if (limit > 0 && counter >= (unsigned)limit) {
+  if (limit > 0 && sequence >= (unsigned)limit) {
     logger->info("Reached limit.");
 
     setState(State::STOPPING);

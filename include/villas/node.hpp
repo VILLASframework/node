@@ -60,7 +60,6 @@ class Node {
 public:
   Logger logger;
 
-  uint64_t sequence_init;
   uint64_t
       sequence; // This is a counter of received samples, in case the node-type does not generate sequence numbers itself.
 
