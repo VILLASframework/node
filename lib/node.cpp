@@ -47,7 +47,7 @@ using namespace villas::utils;
 using namespace std::string_view_literals;
 
 Node::Node(const uuid_t &id, const std::string &name)
-    : logger(Log::get("node")), sequence_init(0), sequence(0),
+    : logger(Log::get("node")), sequence(0),
       in(NodeDirection::Direction::IN, this),
       out(NodeDirection::Direction::OUT, this), configPath(),
 #ifdef __linux__
@@ -105,18 +105,10 @@ int Node::parse(json_t *json) {
   assert(state == State::INITIALIZED || state == State::PARSED ||
          state == State::CHECKED);
 
-  int ret, en = enabled, init_seq = -1;
+  int ret;
 
   json_error_t err;
   json_t *json_netem = nullptr;
-
-  ret = json_unpack_ex(json, &err, 0, "{ s?: b, s?: i }", "enabled", &en,
-                       "initial_sequenceno", &init_seq);
-  if (ret)
-    return ret;
-
-  if (init_seq >= 0)
-    sequence_init = init_seq;
 
 #ifdef __linux__
   ret = json_unpack_ex(json, &err, 0, "{ s?: { s?: o, s?: i } }", "out",
@@ -124,8 +116,6 @@ int Node::parse(json_t *json) {
   if (ret)
     return ret;
 #endif // __linux__
-
-  enabled = en;
 
   if (json_netem) {
 #ifdef WITH_NETEM
@@ -142,23 +132,11 @@ int Node::parse(json_t *json) {
 #endif // WITH_NETEM
   }
 
-  struct {
-    const char *str;
-    NodeDirection *dir;
-  } dirs[] = {{"in", &in}, {"out", &out}};
+  if (auto ret = in.parse(json_object_get(json, "in")))
+    return ret;
 
-  for (unsigned j = 0; j < std::size(dirs); j++) {
-    json_t *json_dir = json_object_get(json, dirs[j].str);
-
-    // Skip if direction is unused
-    if (!json_dir) {
-      json_dir = json_pack("{ s: b }", "enabled", 0);
-    }
-
-    ret = dirs[j].dir->parse(json_dir);
-    if (ret)
-      return ret;
-  }
+  if (auto ret = out.parse(json_object_get(json, "out")))
+    return ret;
 
   config = json;
 
@@ -206,7 +184,6 @@ int Node::start() {
 #endif // __linux__
 
   state = State::STARTED;
-  sequence = sequence_init;
 
   return 0;
 }

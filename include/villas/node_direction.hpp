@@ -46,8 +46,6 @@ public:
   HookList hooks;          // List of read / write hooks (struct hook).
   SignalList::Ptr signals; // Signal description.
 
-  json_t *config; // A JSON object containing the configuration of the node.
-
   NodeDirection(enum NodeDirection::Direction dir, Node *n);
 
   int parse(json_t *json);

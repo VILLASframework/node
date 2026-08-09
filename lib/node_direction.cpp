@@ -20,34 +20,27 @@ using namespace villas::node;
 using namespace villas::utils;
 
 NodeDirection::NodeDirection(enum NodeDirection::Direction dir, Node *n)
-    : direction(dir), path(nullptr), node(n), enabled(1), builtin(1),
-      vectorize(1), config(nullptr) {}
+    : direction(dir), path(nullptr), node(n), enabled(0), builtin(1),
+      vectorize(1) {}
 
 int NodeDirection::parse(json_t *json) {
   int ret;
   json_t *json_hooks = nullptr;
   json_t *json_signals = nullptr;
 
-  config = json;
-
-  janssonUnpack(json, "{ s?: o, s?: o, s?: i, s?: b, s?: b }", //
-                "hooks", &json_hooks,                          //
-                "signals", &json_signals,                      //
-                "vectorize", &vectorize,                       //
-                "builtin", &builtin,                           //
-                "enabled", &enabled);
+  if (json)
+    janssonUnpack(json, "{ s?: o, s?: o, s?: i, s?: b, s?: b }", //
+                  "hooks", &json_hooks,                          //
+                  "signals", &json_signals,                      //
+                  "vectorize", &vectorize,                       //
+                  "builtin", &builtin,                           //
+                  "enabled", &enabled);
 
   if (node->getFactory()->getFlags() &
       (int)NodeFactory::Flags::PROVIDES_SIGNALS) {
-    // Do nothing.. Node-type will provide signals
     signals = std::make_shared<SignalList>();
-    if (!signals)
-      throw MemoryAllocationError();
-  } else if (json_is_array(json_signals)) {
+  } else if (json_signals) {
     signals = std::make_shared<SignalList>();
-    if (!signals)
-      throw MemoryAllocationError();
-
     ret = signals->parse(json_signals);
     if (ret)
       throw ConfigError(json_signals, "node-config-node-signals",
@@ -55,8 +48,6 @@ int NodeDirection::parse(json_t *json) {
   } else {
     signals =
         std::make_shared<SignalList>(DEFAULT_SAMPLE_LENGTH, SignalType::FLOAT);
-    if (!signals)
-      return -1;
   }
 
 #ifdef WITH_HOOKS
