@@ -405,6 +405,7 @@ protected:
                                                     .allow_libconfig = true,
                                                     .allow_environment = true,
                                                     .allow_include = true,
+                                                    .allow_comments = true,
                                                 });
 
     villas::node::SuperNode sn(std::move(config), config_path.parent_path());

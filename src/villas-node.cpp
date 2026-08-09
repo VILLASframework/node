@@ -177,6 +177,7 @@ protected:
                                                       .allow_libconfig = true,
                                                       .allow_environment = true,
                                                       .allow_include = true,
+                                                      .allow_comments = true,
                                                   });
 
       return SuperNode(config, config_path.parent_path());
