@@ -189,7 +189,7 @@
         rec {
           default = gcc;
 
-          gcc = mkShellFor pkgs.stdenv pkgs.villas-node;
+          gcc = mkShellFor pkgs.gcc14Stdenv pkgs.villas-node;
           clang = mkShellFor pkgs.clangStdenv pkgs.villas-node;
 
           python = pkgs.mkShell {
