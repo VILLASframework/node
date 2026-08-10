@@ -127,6 +127,8 @@ void PmuHook::parse(json_t *json) {
 
   if (!windowTypeC)
     logger->info("No Window type given, assume no windowing");
+  else if (strcmp(windowTypeC, "none") == 0)
+    windowType = WindowType::NONE;
   else if (strcmp(windowTypeC, "flattop") == 0)
     windowType = WindowType::FLATTOP;
   else if (strcmp(windowTypeC, "hamming") == 0)
