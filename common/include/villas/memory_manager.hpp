@@ -235,6 +235,6 @@ template <>
 class fmt::formatter<villas::MemoryManager::Mapping>
     : public fmt::ostream_formatter {};
 template <>
-class fmt::formatter<villas::MemoryManager::AddressSpaceId>
+class fmt::formatter<villas::MemoryManager::AddressSpace>
     : public fmt::ostream_formatter {};
 #endif
