@@ -33,7 +33,7 @@ public:
 
     MultiSignalHook::parse(json);
 
-    ret = json_unpack_ex(json, &err, 0, "{ s: f, s: f }", "min", &min, "max",
+    ret = json_unpack_ex(json, &err, 0, "{ s: F, s: F }", "min", &min, "max",
                          &max);
     if (ret)
       throw ConfigError(json, err, "node-config-hook-average");
