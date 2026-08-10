@@ -366,26 +366,18 @@ void SuperNode::parse(json_t *root) {
     json_object_foreach (json_nodes, node_name, json_node) {
       uuid_t node_uuid;
       const char *node_type;
-      const char *node_uuid_str = nullptr;
 
       ret = Node::isValidName(node_name);
       if (!ret)
         throw RuntimeError("Invalid name for node: {}", node_name);
 
-      ret = json_unpack_ex(json_node, &err, 0, "{ s: s, s?: s }", "type",
-                           &node_type, "uuid", &node_uuid_str);
+      ret = json_unpack_ex(json_node, &err, 0, "{ s: s }", "type", &node_type);
       if (ret)
         throw ConfigError(root, err, "node-config-node-type",
                           "Failed to parse type of node '{}'", node_name);
 
-      if (node_uuid_str) {
-        ret = uuid_parse(uuid_str, uuid);
-        if (ret)
-          throw ConfigError(json_node, "node-config-node-uuid",
-                            "Failed to parse UUID: {}", uuid_str);
-      } else
-        // Generate UUID from node name and super-node UUID
-        uuid::generateFromString(node_uuid, node_name, uuid::toString(uuid));
+      // Generate UUID from node name and super-node UUID
+      uuid::generateFromString(node_uuid, node_name, uuid::toString(uuid));
 
       auto *n = NodeFactory::make(node_type, node_uuid, node_name);
       if (!n)
