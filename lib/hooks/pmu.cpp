@@ -11,8 +11,8 @@
 namespace villas {
 namespace node {
 
-PmuHook::PmuHook(Path *p, Node *n, int fl, int prio, bool en)
-    : MultiSignalHook(p, n, fl, prio, en), windows(), windowsTs(),
+PmuHook::PmuHook(Path *p, Node *n, int fl, int prio)
+    : MultiSignalHook(p, n, fl, prio), windows(), windowsTs(),
       timeAlignType(TimeAlign::CENTER), windowType(WindowType::NONE),
       sampleRate(1), phasorRate(1.0), nominalFreq(1.0), numberPlc(1.),
       windowSize(1), channelNameEnable(true), angleUnitFactor(1.0),

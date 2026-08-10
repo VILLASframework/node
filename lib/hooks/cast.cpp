@@ -19,8 +19,8 @@ protected:
   std::string new_unit;
 
 public:
-  CastHook(Path *p, Node *n, int fl, int prio, bool en = true)
-      : MultiSignalHook(p, n, fl, prio, en), new_type(SignalType::INVALID) {}
+  CastHook(Path *p, Node *n, int fl, int prio)
+      : MultiSignalHook(p, n, fl, prio), new_type(SignalType::INVALID) {}
 
   void prepare() override {
     assert(state == State::CHECKED);

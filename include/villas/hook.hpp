@@ -56,7 +56,6 @@ protected:
   int flags;
   unsigned
       priority; // A priority to change the order of execution within one type of hook.
-  bool enabled; // Is this hook active?
 
   Path *path;
   Node *node;
@@ -66,7 +65,7 @@ protected:
   json_t *config; // A JSON object containing the configuration of the hook.
 
 public:
-  Hook(Path *p, Node *n, int fl, int prio, bool en = true);
+  Hook(Path *p, Node *n, int fl, int prio);
 
   virtual ~Hook() {}
 
@@ -120,8 +119,6 @@ public:
   json_t *getConfig() const { return config; }
 
   HookFactory *getFactory() const { return factory; }
-
-  bool isEnabled() const { return enabled; }
 };
 
 class SingleSignalHook : public Hook {
@@ -131,8 +128,8 @@ protected:
   std::string signalName;
 
 public:
-  SingleSignalHook(Path *p, Node *n, int fl, int prio, bool en = true)
-      : Hook(p, n, fl, prio, en), signalIndex(0) {}
+  SingleSignalHook(Path *p, Node *n, int fl, int prio)
+      : Hook(p, n, fl, prio), signalIndex(0) {}
 
   void parse(json_t *json) override;
 

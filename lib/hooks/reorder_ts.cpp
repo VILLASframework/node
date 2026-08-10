@@ -42,11 +42,13 @@ protected:
   }
 
 public:
-  ReorderTsHook(Path *p, Node *n, int fl, int prio, bool en = true)
-      : Hook(p, n, fl, prio, en), window{}, window_size(16), buffer(nullptr) {}
+  ReorderTsHook(Path *p, Node *n, int fl, int prio)
+      : Hook(p, n, fl, prio), window{}, window_size(16), buffer(nullptr) {}
 
   void parse(json_t *json) override {
     assert(state != State::STARTED);
+
+    Hook::parse(json);
 
     json_error_t err;
     int ret =

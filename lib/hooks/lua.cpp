@@ -339,11 +339,10 @@ void LuaSignalExpression::evaluate(union SignalData *data,
   lua_pop(L, 1);
 }
 
-LuaHook::LuaHook(Path *p, Node *n, int fl, int prio, bool en)
-    : Hook(p, n, fl, prio, en),
-      signalsExpressions(std::make_shared<SignalList>()), L(luaL_newstate()),
-      useNames(true), hasExpressions(false), needsLocking(false),
-      functions({0}) {}
+LuaHook::LuaHook(Path *p, Node *n, int fl, int prio)
+    : Hook(p, n, fl, prio), signalsExpressions(std::make_shared<SignalList>()),
+      L(luaL_newstate()), useNames(true), hasExpressions(false),
+      needsLocking(false), functions({0}) {}
 
 LuaHook::~LuaHook() { lua_close(L); }
 

@@ -21,8 +21,8 @@ protected:
   uint64_t smpMemoryPosition;
 
 public:
-  RMSHook(Path *p, Node *n, int fl, int prio, bool en = true)
-      : MultiSignalHook(p, n, fl, prio, en), smpMemory(), windowSize(0),
+  RMSHook(Path *p, Node *n, int fl, int prio)
+      : MultiSignalHook(p, n, fl, prio), smpMemory(), windowSize(0),
         smpMemoryPosition(0) {}
 
   void prepare() override {
