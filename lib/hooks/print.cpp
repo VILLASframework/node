@@ -29,8 +29,8 @@ protected:
   std::vector<char> output_buffer;
 
 public:
-  PrintHook(Path *p, Node *n, int fl, int prio, bool en = true)
-      : Hook(p, n, fl, prio, en), output(nullptr) {}
+  PrintHook(Path *p, Node *n, int fl, int prio)
+      : Hook(p, n, fl, prio), output(nullptr) {}
 
   void start() override {
     assert(state == State::PREPARED || state == State::STOPPED);

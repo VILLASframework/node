@@ -30,8 +30,8 @@ protected:
   int curr_count;
 
 public:
-  JitterCalcHook(Path *p, Node *n, int fl, int prio, bool en = true)
-      : Hook(p, n, fl, prio, en), jitter_val(GPS_NTP_DELAY_WIN_SIZE),
+  JitterCalcHook(Path *p, Node *n, int fl, int prio)
+      : Hook(p, n, fl, prio), jitter_val(GPS_NTP_DELAY_WIN_SIZE),
         delay_series(GPS_NTP_DELAY_WIN_SIZE),
         moving_avg(GPS_NTP_DELAY_WIN_SIZE), moving_var(GPS_NTP_DELAY_WIN_SIZE),
         delay_mov_sum(0), delay_mov_sum_sqrd(0), curr_count(0) {}

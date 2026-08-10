@@ -62,7 +62,7 @@ protected:
                                 const Phasor &lastPhasor);
 
 public:
-  PmuHook(Path *p, Node *n, int fl, int prio, bool en = true);
+  PmuHook(Path *p, Node *n, int fl, int prio);
 
   void prepare() override;
 

@@ -21,8 +21,8 @@ protected:
   enum { SHIFT_ORIGIN, SHIFT_RECEIVED } mode;
 
 public:
-  ShiftTimestampHook(Path *p, Node *n, int fl, int prio, bool en = true)
-      : Hook(p, n, fl, prio, en), mode(SHIFT_ORIGIN) {}
+  ShiftTimestampHook(Path *p, Node *n, int fl, int prio)
+      : Hook(p, n, fl, prio), mode(SHIFT_ORIGIN) {}
 
   void parse(json_t *json) override {
     double o;

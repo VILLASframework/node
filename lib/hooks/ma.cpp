@@ -21,8 +21,8 @@ protected:
   uint64_t smpMemoryPosition;
 
 public:
-  MovingAverageHook(Path *p, Node *n, int fl, int prio, bool en = true)
-      : MultiSignalHook(p, n, fl, prio, en), smpMemory(), accumulator(0.0),
+  MovingAverageHook(Path *p, Node *n, int fl, int prio)
+      : MultiSignalHook(p, n, fl, prio), smpMemory(), accumulator(0.0),
         windowSize(10), smpMemoryPosition(0) {}
 
   void prepare() override {

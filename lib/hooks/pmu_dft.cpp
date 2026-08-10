@@ -113,8 +113,8 @@ protected:
   double rocofOffset;
 
 public:
-  PmuDftHook(Path *p, Node *n, int fl, int prio, bool en = true)
-      : MultiSignalHook(p, n, fl, prio, en), windowType(WindowType::NONE),
+  PmuDftHook(Path *p, Node *n, int fl, int prio)
+      : MultiSignalHook(p, n, fl, prio), windowType(WindowType::NONE),
         paddingType(PaddingType::ZERO), estType(EstimationType::NONE),
         timeAlignType(TimeAlign::CENTER), smpMemoryData(), smpMemoryTs(),
 #ifdef DFT_MEM_DUMP

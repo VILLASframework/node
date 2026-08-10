@@ -57,11 +57,11 @@ protected:
   enum TimeAlign timeAlignType;
 
 public:
-  PowerHook(Path *p, Node *n, int fl, int prio, bool en = true)
-      : MultiSignalHook(p, n, fl, prio, en), smpMemory(), pairings(),
-        smpMemoryTs(), windowSize(0), smpMemoryPosition(0),
-        calcActivePower(true), calcReactivePower(true), caclApparentPower(true),
-        calcCosPhi(true), channelNameEnable(false), angleUnitFactor(1),
+  PowerHook(Path *p, Node *n, int fl, int prio)
+      : MultiSignalHook(p, n, fl, prio), smpMemory(), pairings(), smpMemoryTs(),
+        windowSize(0), smpMemoryPosition(0), calcActivePower(true),
+        calcReactivePower(true), caclApparentPower(true), calcCosPhi(true),
+        channelNameEnable(false), angleUnitFactor(1),
         timeAlignType(TimeAlign::CENTER) {}
 
   void prepare() override {

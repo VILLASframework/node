@@ -82,9 +82,6 @@ void HookList::prepare(SignalList::Ptr signals, int m, Path *p, Node *n) {
   }
 
 skip_add:
-  // Remove filters which are not enabled
-  remove_if([](Hook::Ptr h) { return !h->isEnabled(); });
-
   // We sort the hooks according to their priority
   sort([](const value_type &a, const value_type b) {
     return a->getPriority() < b->getPriority();
