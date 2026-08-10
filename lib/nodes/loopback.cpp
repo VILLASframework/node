@@ -107,7 +107,7 @@ int LoopbackNode::parse(json_t *json) {
   if (mode_str) {
     if (!strcmp(mode_str, "auto"))
       mode = QueueSignalledMode::AUTO;
-#ifdef HAVE_EVENTFD
+#ifdef HAS_EVENTFD
     else if (!strcmp(mode_str, "eventfd"))
       mode = QueueSignalledMode::EVENTFD;
 #endif
