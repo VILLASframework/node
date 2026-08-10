@@ -18,7 +18,8 @@ class LimitValueHook : public MultiSignalHook {
 protected:
   unsigned offset;
 
-  float min, max;
+  // jansson unpacks 'F' through a double *
+  double min, max;
 
 public:
   LimitValueHook(Path *p, Node *n, int fl, int prio)
