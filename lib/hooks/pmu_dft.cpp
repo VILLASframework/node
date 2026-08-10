@@ -72,7 +72,7 @@ protected:
   uint64_t calcCount;
   unsigned sampleRate;
   double startFrequency;
-  double endFreqency;
+  double endFrequency;
   double frequencyResolution;
   unsigned rate;
   unsigned ppsIndex;
@@ -122,7 +122,7 @@ public:
 #endif
         matrix(), results(), filterWindowCoefficents(), absResults(),
         absFrequencies(), calcCount(0), sampleRate(0), startFrequency(0),
-        endFreqency(0), frequencyResolution(0), rate(0), ppsIndex(0),
+        endFrequency(0), frequencyResolution(0), rate(0), ppsIndex(0),
         windowSize(0), windowMultiplier(0), freqCount(0), channelNameEnable(1),
         smpMemPos(0), lastSequence(0), windowCorrectionFactor(0),
         lastCalc({0, 0}), nextCalc(0.0), lastResult(),
@@ -207,7 +207,7 @@ public:
                          "Current window multiplyer factor is {}",
                          windowMultiplier);
 
-    freqCount = ceil((endFreqency - startFrequency) / frequencyResolution) + 1;
+    freqCount = ceil((endFrequency - startFrequency) / frequencyResolution) + 1;
 
     // Initialize matrix of dft coeffients
     matrix.clear();
@@ -254,7 +254,7 @@ public:
         "{ s?: i, s?: F, s?: F, s?: F, s?: i, s?: i, s?: s, s?: s, s?: s, s?: "
         "i, s?: s, s?: b, s?: s, s?: F, s?: F, s?: F, s?: F}",
         "sample_rate", &sampleRate, "start_frequency", &startFrequency,
-        "end_frequency", &endFreqency, "frequency_resolution",
+        "end_frequency", &endFrequency, "frequency_resolution",
         &frequencyResolution, "dft_rate", &rate, "window_size_factor",
         &windowSizeFactor, "window_type", &windowTypeC, "padding_type",
         &paddingTypeC, "estimate_type", &estimateTypeC, "pps_index", &ppsIndex,
@@ -335,7 +335,7 @@ public:
   void check() override {
     assert(state == State::PARSED);
 
-    if (endFreqency < 0 || endFreqency > sampleRate)
+    if (endFrequency < 0 || endFrequency > sampleRate)
       throw RuntimeError("End frequency must be smaller than sampleRate {}",
                          sampleRate);
 
