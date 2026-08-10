@@ -900,7 +900,7 @@ void GooseNode::parseOutput(json_t *json) {
   char const *interface_id = "lo";
   ret = json_unpack_ex(
       json, &err, 0,
-      "{ s:o, s:?b, s:?s, s:?i, s:?s, s:?i, s:?i, s:?s, s:?f }", //
+      "{ s:o, s:?b, s:?s, s:?i, s:?s, s:?i, s:?i, s:?s, s:?F }", //
       "publishers", &json_publishers,                            //
       "routed", &routed,                                         //
       "local_address", &local_address,                           //

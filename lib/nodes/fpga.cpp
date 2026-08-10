@@ -127,7 +127,7 @@ int FpgaNode::parse(json_t *json) {
     vfioContainer = std::make_shared<kernel::vfio::Container>();
   }
 
-  ret = json_unpack_ex(json, &err, 0, "{ s: o, s?: o, s?: b, s?: f}", "card",
+  ret = json_unpack_ex(json, &err, 0, "{ s: o, s?: o, s?: b, s?: F}", "card",
                        &jsonCard, "connect", &jsonConnectStrings,
                        "low_latency_mode", &lowLatencyMode, "timestep",
                        &timestep);
