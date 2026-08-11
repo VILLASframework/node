@@ -23,6 +23,7 @@ set(API_SRC
     requests/node_action.cpp
     requests/node_stats.cpp
     requests/node_stats_reset.cpp
+    requests/node_reconfigure.cpp
     requests/node_file.cpp
     requests/metrics.cpp
     requests/paths.cpp
