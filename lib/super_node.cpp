@@ -153,23 +153,26 @@ static void validate_walk_schema(Json &instance, JsonPointer const &ptr,
 
 template <typename T>
 static void validate_plugin(Json &instance, JsonPointer const &ptr,
+                            std::string const &property,
                             SuperNodeValidateOptions const &opts) {
   Json name;
-  if (instance.is_string())
+  if (instance.is_string()) {
     name = instance;
-  else if (instance.is_object() and instance.contains("type"))
-    name = instance["type"];
-  else
+    instance = Json::object({{property, name}});
+  } else if (instance.is_object() and instance.contains(property)) {
+    name = instance[property];
+  } else {
     throw JsonError({
         .pointer = ptr,
-        .message = fmt::format("unknown plugin type"),
+        .message = fmt::format("unknown {}", property),
     });
+  }
 
   auto factory = plugin::registry->lookup<T>(name);
   if (not factory) {
     throw JsonError({
-        .pointer = instance.is_string() ? ptr : ptr / "type",
-        .message = fmt::format("unknown plugin type '{}'", name),
+        .pointer = instance.is_string() ? ptr : ptr / property,
+        .message = fmt::format("unknown {} {}", property, name),
     });
   }
 
@@ -208,13 +211,15 @@ static void validate_walk_schema(Json &instance, JsonPointer const &ptr,
       discriminator != schema.end()) {
     if (auto plugin = discriminator->find("x-villas-plugin");
         plugin != discriminator->end()) {
+      auto const &property =
+          discriminator->at("propertyName").get_ref<Json::string_t const &>();
       try {
         if (*plugin == "node")
-          validate_plugin<NodeFactory>(instance, ptr, opts);
+          validate_plugin<NodeFactory>(instance, ptr, property, opts);
         else if (*plugin == "hook")
-          validate_plugin<HookFactory>(instance, ptr, opts);
+          validate_plugin<HookFactory>(instance, ptr, property, opts);
         else if (*plugin == "format")
-          validate_plugin<FormatFactory>(instance, ptr, opts);
+          validate_plugin<FormatFactory>(instance, ptr, property, opts);
         else
           throw RuntimeError("invalid x-villas-plugin annotation {} in schema",
                              *plugin);
