@@ -21,6 +21,7 @@ extern "C" {
 #include <villas/colors.hpp>
 #include <villas/hook.hpp>
 #include <villas/hook_list.hpp>
+#include <villas/jansson.hpp>
 #include <villas/mapping.hpp>
 #include <villas/node.hpp>
 #include <villas/node/config.hpp>
@@ -56,8 +57,8 @@ Node::Node(const uuid_t &id, const std::string &name)
 #ifdef WITH_NETEM
       tc_qdisc(nullptr), tc_classifier(nullptr),
 #endif // WITH_NETEM
-      state(State::INITIALIZED), enabled(true), config(nullptr),
-      name_short(name), affinity(-1), // all cores
+      state(State::INITIALIZED), enabled(true), name_short(name),
+      affinity(-1), // all cores
       factory(nullptr) {
   if (uuid_is_null(id)) {
     uuid_generate_random(uuid);
@@ -397,7 +398,7 @@ json_t *Node::toJson() const {
 
   /* Add all additional fields of node here.
    * This can be used for metadata */
-  json_object_update(json_node, config);
+  json_object_update_new(json_node, config.get<JanssonPtr>().release());
 
   return json_node;
 }

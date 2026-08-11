@@ -112,7 +112,7 @@ int villas::node::stats_node_start(NodeCompat *n) {
 
     stats_sig->node = nodes.lookup(stats_sig->node_str);
     if (!stats_sig->node)
-      throw ConfigError(n->getConfig(), "node-config-node-stats-node",
+      throw ConfigError(nullptr, "node-config-node-stats-node",
                         "Invalid reference node {}", stats_sig->node_str);
   }
 

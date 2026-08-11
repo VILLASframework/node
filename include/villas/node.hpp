@@ -16,6 +16,7 @@
 
 #include <villas/colors.hpp>
 #include <villas/common.hpp>
+#include <villas/json.hpp>
 #include <villas/list.hpp>
 #include <villas/log.hpp>
 #include <villas/node/json_schema.hpp>
@@ -89,7 +90,7 @@ protected:
   Stats::Ptr
       stats; // Statistic counters. This is a pointer to the statistic hooks private data.
 
-  json_t *config; // A JSON object containing the configuration of the node.
+  Json config; // A JSON object containing the configuration of the node.
 
   std::string
       name_short; // A short identifier of the node, only used for configuration and logging
@@ -247,7 +248,7 @@ public:
   void swapSignals();
 
   // Get the node configuration as JSON.
-  json_t *getConfig() { return config; }
+  Json &getConfig() { return config; }
 
   // Get the state of this node.
   enum State getState() const { return state; }

@@ -53,7 +53,7 @@ int FpgaNode::prepare() {
       }
     }
     if (card == nullptr) {
-      throw ConfigError(config, "node-config-fpga",
+      throw ConfigError(nullptr, "node-config-fpga",
                         "There is no FPGA card with the name: {}", cardName);
     }
   }

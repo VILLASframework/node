@@ -390,7 +390,7 @@ int villas::node::uldaq_check(NodeCompat *n) {
   UlError err;
 
   if (n->in.vectorize < 100)
-    throw ConfigError(n->getConfig(), "node-config-node-vectorize",
+    throw ConfigError(nullptr, "node-config-node-vectorize",
                       "Setting 'vectorize' must be larger than 100");
 
   ret = uldaq_connect(n);
