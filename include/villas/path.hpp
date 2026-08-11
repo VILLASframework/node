@@ -88,6 +88,7 @@ public:
   unsigned queuelen;        // The queue length for each path_destination::queue
 
   pthread_t tid;  // The thread id for this path.
+  int notify_fd;  // An eventfd(2) used to interrupt poll(2).
   json_t *config; // A JSON object containing the configuration of the path.
 
   Logger logger;
@@ -146,6 +147,9 @@ public:
 
   // Stop a path.
   void stop();
+
+  // Interrupt poll(2) so that it is restarted with the current descriptors.
+  void repoll();
 
   // Get a list of signals which is emitted by the path.
   SignalList::Ptr getOutputSignals(bool after_hooks = true);

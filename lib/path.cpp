@@ -11,6 +11,7 @@
 #include <unordered_map>
 
 #include <poll.h>
+#include <sys/eventfd.h>
 #include <unistd.h>
 
 #include <villas/colors.hpp>
@@ -79,6 +80,14 @@ void *Path::runPoll() {
 
     logger->debug("Returned from poll(2): ret={}", ret);
 
+    if (pfds.back().revents & POLLIN) {
+      uint64_t cntr;
+      if (read(notify_fd, &cntr, sizeof(cntr)) < 0)
+        throw SystemError("Failed to read notification of path");
+
+      continue;
+    }
+
     for (unsigned i = 0; i < pfds.size(); i++) {
       auto &pfd = pfds[i];
 
@@ -116,6 +125,10 @@ Path::Path()
   uuid_clear(uuid);
 
   pool.state = State::DESTROYED;
+
+  notify_fd = eventfd(0, EFD_NONBLOCK);
+  if (notify_fd < 0)
+    throw SystemError("Failed to create eventfd for path");
 }
 
 void Path::startPoll() {
@@ -147,6 +160,16 @@ void Path::startPoll() {
 
     pfds.push_back(pfd);
   }
+
+  // We use the last slot for the notification eventfd
+  pfds.push_back({.fd = notify_fd, .events = POLLIN});
+}
+
+void Path::repoll() {
+  uint64_t incr = 1;
+
+  if (write(notify_fd, &incr, sizeof(incr)) < 0)
+    throw SystemError("Failed to notify path");
 }
 
 void Path::prepare(NodeList &nodes) {
@@ -583,6 +606,8 @@ Path::~Path() {
   assert(state != State::DESTROYED);
 
   ret = pool_destroy(&pool);
+
+  close(notify_fd);
 }
 
 bool Path::isMuxed() const {
