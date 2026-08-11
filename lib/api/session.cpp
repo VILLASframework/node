@@ -140,10 +140,16 @@ void Session::open(void *in, size_t len) {
 }
 
 void Session::body(void *in, size_t len) {
+  if (not request)
+    return;
+
   request->buffer.append((const char *)in, len);
 }
 
 void Session::bodyComplete() {
+  if (not request)
+    return;
+
   try {
     request->decode();
 
