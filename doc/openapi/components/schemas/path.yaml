@@ -24,13 +24,6 @@ properties:
       items:
         type: string
 
-  enabled:
-    type: boolean
-    default: true
-    description: |
-      Whether this path is enabled.
-      A disabled path is loaded from the configuration but not started.
-
   mode:
     type: string
     default: any

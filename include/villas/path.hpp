@@ -82,9 +82,7 @@ public:
 
   double rate;              // A timeout for
   int affinity;             // Thread affinity.
-  bool enabled;             // Is this path enabled?
   int poll;                 // Weather or not to use poll(2).
-  bool reversed;            // This path has a matching reverse path.
   bool builtin;             // This path should use built-in hooks by default.
   int original_sequence_no; // Use original source sequence number when multiplexing
   unsigned queuelen;        // The queue length for each path_destination::queue
@@ -168,10 +166,6 @@ public:
 
   bool isSimple() const;
   bool isMuxed() const;
-
-  bool isEnabled() const { return enabled; }
-
-  bool isReversed() const { return reversed; }
 
   State getState() const { return state; }
 

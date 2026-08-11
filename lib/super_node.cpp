@@ -483,12 +483,8 @@ void SuperNode::startNodes() {
 }
 
 void SuperNode::startPaths() {
-  for (auto *p : paths) {
-    if (!p->isEnabled())
-      continue;
-
+  for (auto *p : paths)
     p->start();
-  }
 }
 
 void SuperNode::prepareNodes() {
@@ -505,12 +501,8 @@ void SuperNode::prepareNodes() {
 }
 
 void SuperNode::preparePaths() {
-  for (auto *p : paths) {
-    if (!p->isEnabled())
-      continue;
-
+  for (auto *p : paths)
     p->prepare(nodes);
-  }
 }
 
 void SuperNode::prepare() {

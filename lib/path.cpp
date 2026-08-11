@@ -110,8 +110,8 @@ void *Path::runPoll() {
 Path::Path()
     : state(State::INITIALIZED), mode(Mode::ANY), timeout(CLOCK_MONOTONIC),
       rate(0), // Disabled
-      affinity(0), enabled(true), poll(-1), reversed(false), builtin(true),
-      original_sequence_no(-1), queuelen(DEFAULT_QUEUE_LENGTH),
+      affinity(0), poll(-1), builtin(true), original_sequence_no(-1),
+      queuelen(DEFAULT_QUEUE_LENGTH),
       logger(Log::get(fmt::format("path:{}", id++))) {
   uuid_clear(uuid);
 
@@ -315,7 +315,7 @@ void Path::prepare(NodeList &nodes) {
 }
 
 void Path::parse(json_t *json, NodeList &nodes, const uuid_t sn_uuid) {
-  int ret, en = -1, rev = -1;
+  int ret;
 
   json_error_t err;
   json_t *json_in;
@@ -326,24 +326,17 @@ void Path::parse(json_t *json, NodeList &nodes, const uuid_t sn_uuid) {
   const char *mode_str = nullptr;
   const char *uuid_str = nullptr;
 
-  ret = json_unpack_ex(json, &err, 0,
-                       "{ s: o, s?: o, s?: o, s?: b, s?: b, s?: b, s?: i, s?: "
-                       "s, s?: b, s?: F, s?: o, s?: b, s?: s, s?: i }",
-                       "in", &json_in, "out", &json_out, "hooks", &json_hooks,
-                       "reverse", &rev, "enabled", &en, "builtin", &builtin,
-                       "queuelen", &queuelen, "mode", &mode_str, "poll", &poll,
-                       "rate", &rate, "mask", &json_mask,
-                       "original_sequence_no", &original_sequence_no, "uuid",
-                       &uuid_str, "affinity", &affinity);
+  ret = json_unpack_ex(
+      json, &err, 0,
+      "{ s: o, s?: o, s?: o, s?: b, s?: i, s?: "
+      "s, s?: b, s?: F, s?: o, s?: b, s?: s, s?: i }",
+      "in", &json_in, "out", &json_out, "hooks", &json_hooks, "builtin",
+      &builtin, "queuelen", &queuelen, "mode", &mode_str, "poll", &poll, "rate",
+      &rate, "mask", &json_mask, "original_sequence_no", &original_sequence_no,
+      "uuid", &uuid_str, "affinity", &affinity);
   if (ret)
     throw ConfigError(json, err, "node-config-path",
                       "Failed to parse path configuration");
-
-  if (en >= 0)
-    enabled = en != 0;
-
-  if (rev >= 0)
-    reversed = rev != 0;
 
   // Optional settings
   if (mode_str) {
@@ -503,12 +496,11 @@ void Path::start() {
 
   logger->info("Starting path {}: #signals={}/{}, #hooks={}, #sources={}, "
                "#destinations={}, mode={}, poll={}, mask=0b{:b}, rate={}, "
-               "enabled={}, reversed={}, queuelen={}, original_sequence_no={}",
+               "queuelen={}, original_sequence_no={}",
                this->toString(), signals->size(), getOutputSignals()->size(),
                hooks.size(), sources.size(), destinations.size(), mode_str,
-               poll ? "yes" : "no", mask.to_ullong(), rate,
-               isEnabled() ? "yes" : "no", isReversed() ? "yes" : "no",
-               queuelen, original_sequence_no ? "yes" : "no");
+               poll ? "yes" : "no", mask.to_ullong(), rate, queuelen,
+               original_sequence_no ? "yes" : "no");
 
 #ifdef WITH_HOOKS
   hooks.start();
@@ -593,27 +585,6 @@ Path::~Path() {
   ret = pool_destroy(&pool);
 }
 
-bool Path::isSimple() const {
-  int ret;
-  const char *in = nullptr, *out = nullptr;
-
-  json_error_t err;
-  ret =
-      json_unpack_ex(config, &err, 0, "{ s: s, s: s }", "in", &in, "out", &out);
-  if (ret)
-    return false;
-
-  ret = Node::isValidName(in);
-  if (!ret)
-    return false;
-
-  ret = Node::isValidName(out);
-  if (!ret)
-    return false;
-
-  return true;
-}
-
 bool Path::isMuxed() const {
   if (sources.size() > 0)
     return true;
@@ -677,10 +648,9 @@ json_t *Path::toJson() const {
       "o, s: o, s: o }",
       "uuid", uuid::toString(uuid).c_str(), "state",
       stateToString(state).c_str(), "mode", mode == Mode::ANY ? "any" : "all",
-      "enabled", enabled, "builtin", builtin, "reversed", reversed,
-      "original_sequence_no", original_sequence_no, "last_sequence",
-      last_sequence, "poll", poll, "queuelen", queuelen, "signals",
-      json_signals, "hooks", json_hooks, "in", json_sources, "out",
+      "builtin", builtin, "original_sequence_no", original_sequence_no,
+      "last_sequence", last_sequence, "poll", poll, "queuelen", queuelen,
+      "signals", json_signals, "hooks", json_hooks, "in", json_sources, "out",
       json_destinations);
 
   return json_path;
