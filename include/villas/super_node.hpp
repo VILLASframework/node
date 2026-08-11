@@ -34,11 +34,6 @@ namespace node {
 // Forward declarations
 class Node;
 
-struct SuperNodeValidateOptions {
-  bool apply_migrations = false;
-  bool apply_defaults = false;
-};
-
 // Global configuration
 class SuperNode {
 protected:
@@ -81,7 +76,7 @@ protected:
 public:
   SuperNode(Json config, fs::path search_path = {});
 
-  static void validate(Json &config, SuperNodeValidateOptions const &opts);
+  static void validate(Json &config, JsonSchemaValidateOptions const &opts);
 
   void prepare();
   void start();

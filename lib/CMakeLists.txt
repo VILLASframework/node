@@ -38,6 +38,7 @@ set(LIB_SRC
     node_compat.cpp
     node_list.cpp
     json_schema.cpp
+    json_schema_generated.cpp
     path_destination.cpp
     path_source.cpp
     path.cpp

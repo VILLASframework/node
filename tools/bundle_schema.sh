@@ -21,7 +21,7 @@ bundled_schema() {
 
 BUNDLED_SCHEMA="$(bundled_schema)"
 
-cat > "${TOPLEVEL}/lib/json_schema.cpp" <<<"
+cat > "${TOPLEVEL}/lib/json_schema_generated.cpp" <<<"
 // SPDX-FileCopyrightText: 2014-2025 The VILLASframework Authors
 // SPDX-License-Identifier: Apache-2.0
 // Generated file — do not edit

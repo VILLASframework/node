@@ -3,10 +3,8 @@
 // Generated file — do not edit
 #pragma once
 
-#include <algorithm>
 #include <concepts>
 #include <functional>
-#include <iterator>
 #include <vector>
 
 #include <nlohmann/json-schema.hpp>
@@ -76,6 +74,11 @@ public:
 
 Json const &bundled_schemas();
 
+struct JsonSchemaValidateOptions {
+  bool apply_migrations = false;
+  bool apply_defaults = false;
+};
+
 class JsonSchema {
   Json json_;
   nlohmann::json_schema::json_validator validator_;
@@ -86,24 +89,8 @@ public:
         validator_(schema, nullptr,
                    nlohmann::json_schema::default_string_format_check) {}
 
-  Json const &json() const { return json_; }
-
-  Json validate(Json const &json) const {
-    struct final : nlohmann::json_schema::error_handler {
-      std::vector<JsonDiagnostic> diagnostics{};
-
-      void error(JsonPointer const &pointer, Json const &instance,
-                 std::string const &message) override {
-        diagnostics.emplace_back(pointer, message);
-      }
-    } error_handler;
-
-    if (auto default_values = validator_.validate(json, error_handler);
-        error_handler.diagnostics.empty())
-      return default_values;
-    else
-      throw JsonError(std::move(error_handler.diagnostics));
-  }
+  void validate(Json &instance,
+                JsonSchemaValidateOptions const &opts = {}) const;
 };
 
 } // namespace villas::node
