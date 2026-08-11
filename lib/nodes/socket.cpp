@@ -15,6 +15,7 @@
 #include <villas/compat.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/socket.hpp>
+#include <villas/path.hpp>
 #include <villas/queue.h>
 #include <villas/sample.hpp>
 #include <villas/super_node.hpp>
@@ -178,130 +179,219 @@ int villas::node::socket_check(NodeCompat *n) {
   return 0;
 }
 
-int villas::node::socket_start(NodeCompat *n) {
-  auto *s = n->getData<struct Socket>();
-  int ret;
+// Forward declarations
+static int socket_bind(NodeCompat *n, Socket *s);
+static int socket_connect(NodeCompat *n, Socket *s);
+static void socket_tcp_connection(NodeCompat *n, Socket *s);
 
-  // Initialize IO
-  s->formatter->start(n->getInputSignals(false), ~(int)SampleFlags::HAS_OFFSET);
+// Replace the socket descriptor while keeping its number stable.
+static void socket_replace(NodeCompat *n, Socket *s, int sd) {
+  if (dup2(sd, s->sd) < 0) {
+    ::close(sd);
+    throw SystemError("Failed to replace socket descriptor");
+  }
+
+  ::close(sd);
+
+  for (auto ps : n->sources)
+    ps->getPath()->repoll();
+}
+
+static void socket_resolve_address(Socket *s, union sockaddr_union *saddr,
+                                   bool in, Json const &json) {
+  auto const &address = json.get_ref<Json::string_t const &>();
+
+  auto ret = socket_parse_address(address.c_str(), (struct sockaddr *)saddr,
+                                  s->layer, in ? AI_PASSIVE : 0);
+  if (ret)
+    throw SystemError("Failed to resolve {} address '{}': {}",
+                      in ? "local" : "remote", address, gai_strerror(ret));
+}
+
+static void socket_reconfigure_in_address(NodeCompat *n, Json const &json) {
+  auto *s = n->getData<struct Socket>();
+
+  socket_resolve_address(s, &s->in.saddr, true, json);
+
+  // A TCP client never binds.
+  if (s->layer == SocketLayer::TCP_CLIENT or n->getState() != State::STARTED)
+    return;
+
+  socket_replace(n, s, socket_bind(n, s));
+
+  if (s->layer == SocketLayer::TCP_SERVER) {
+    if (s->clt_sd >= 0)
+      ::close(s->clt_sd);
+
+    s->tcp_connected = false;
+    socket_tcp_connection(n, s);
+  }
+}
+
+static void socket_reconfigure_out_address(NodeCompat *n, Json const &json) {
+  auto *s = n->getData<struct Socket>();
+
+  socket_resolve_address(s, &s->out.saddr, false, json);
+
+  if (s->layer == SocketLayer::TCP_CLIENT and n->getState() == State::STARTED) {
+    s->tcp_connected = false;
+    socket_replace(n, s, socket_connect(n, s));
+    s->tcp_connected = true;
+  }
+}
+
+int villas::node::socket_prepare(NodeCompat *n) {
+  n->reconfiguration_callbacks["/in/address"_json_pointer] = [n](Json json) {
+    socket_reconfigure_in_address(n, json);
+  };
+
+  n->reconfiguration_callbacks["/out/address"_json_pointer] = [n](Json json) {
+    socket_reconfigure_out_address(n, json);
+  };
+
+  return 0;
+}
+
+// Returns a new socket descriptor. The caller owns it.
+static int socket_bind(NodeCompat *n, Socket *s) {
+  int ret;
+  int sd;
 
   // Create socket
   switch (s->layer) {
   case SocketLayer::UDP:
-    s->sd = socket(s->in.saddr.sa.sa_family, SOCK_DGRAM, IPPROTO_UDP);
+    sd = socket(s->in.saddr.sa.sa_family, SOCK_DGRAM, IPPROTO_UDP);
     break;
 
   case SocketLayer::IP:
-    s->sd = socket(s->in.saddr.sa.sa_family, SOCK_RAW,
-                   ntohs(s->in.saddr.sin.sin_port));
+    sd = socket(s->in.saddr.sa.sa_family, SOCK_RAW,
+                ntohs(s->in.saddr.sin.sin_port));
     break;
 
 #ifdef WITH_SOCKET_LAYER_ETH
   case SocketLayer::ETH:
-    s->sd = socket(s->in.saddr.sa.sa_family, SOCK_DGRAM,
-                   s->in.saddr.sll.sll_protocol);
+    sd = socket(s->in.saddr.sa.sa_family, SOCK_DGRAM,
+                s->in.saddr.sll.sll_protocol);
     break;
 #endif // WITH_SOCKET_LAYER_ETH
 
   case SocketLayer::UNIX:
-    s->sd = socket(s->in.saddr.sa.sa_family, SOCK_DGRAM, 0);
+    sd = socket(s->in.saddr.sa.sa_family, SOCK_DGRAM, 0);
     break;
 
   case SocketLayer::TCP_SERVER:
   case SocketLayer::TCP_CLIENT:
-    s->sd = socket(s->in.saddr.sa.sa_family, SOCK_STREAM, 0);
+    sd = socket(s->in.saddr.sa.sa_family, SOCK_STREAM, 0);
     break;
 
   default:
     throw RuntimeError("Invalid socket type!");
   }
 
-  if (s->sd < 0)
+  if (sd < 0)
     throw SystemError("Failed to create socket");
 
-  // Delete Unix domain socket if already existing
-  if (s->layer == SocketLayer::UNIX) {
-    ret = unlink(s->in.saddr.sun.sun_path);
-    if (ret && errno != ENOENT)
-      return ret;
-  }
+  try {
 
-  // Bind socket for receiving
-  socklen_t addrlen = 0;
-  switch (s->in.saddr.ss.ss_family) {
-  case AF_INET:
-    addrlen = sizeof(struct sockaddr_in);
-    break;
+    // Delete Unix domain socket if already existing
+    if (s->layer == SocketLayer::UNIX) {
+      ret = unlink(s->in.saddr.sun.sun_path);
+      if (ret && errno != ENOENT)
+        throw SystemError("Failed to unlink Unix domain socket");
+    }
 
-  case AF_INET6:
-    addrlen = sizeof(struct sockaddr_in6);
-    break;
+    // Bind socket for receiving
+    socklen_t addrlen = 0;
+    switch (s->in.saddr.ss.ss_family) {
+    case AF_INET:
+      addrlen = sizeof(struct sockaddr_in);
+      break;
 
-  case AF_UNIX:
-    addrlen = SUN_LEN(&s->in.saddr.sun);
-    break;
+    case AF_INET6:
+      addrlen = sizeof(struct sockaddr_in6);
+      break;
+
+    case AF_UNIX:
+      addrlen = SUN_LEN(&s->in.saddr.sun);
+      break;
 
 #ifdef WITH_SOCKET_LAYER_ETH
-  case AF_PACKET:
-    addrlen = sizeof(struct sockaddr_ll);
-    break;
+    case AF_PACKET:
+      addrlen = sizeof(struct sockaddr_ll);
+      break;
 #endif // WITH_SOCKET_LAYER_ETH
-  default:
-    addrlen = sizeof(s->in.saddr);
-  }
+    default:
+      addrlen = sizeof(s->in.saddr);
+    }
 
-  if (s->layer != SocketLayer::TCP_CLIENT)
-    ret = bind(s->sd, (struct sockaddr *)&s->in.saddr, addrlen);
-  else
-    ret = 0;
-
-  if (ret < 0)
-    throw SystemError("Failed to bind socket");
-
-  if (s->multicast.enabled) {
-    ret = setsockopt(s->sd, IPPROTO_IP, IP_MULTICAST_LOOP, &s->multicast.loop,
-                     sizeof(s->multicast.loop));
-    if (ret)
-      throw SystemError("Failed to set multicast loop option");
-
-    ret = setsockopt(s->sd, IPPROTO_IP, IP_MULTICAST_TTL, &s->multicast.ttl,
-                     sizeof(s->multicast.ttl));
-    if (ret)
-      throw SystemError("Failed to set multicast ttl option");
-
-    ret = setsockopt(s->sd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &s->multicast.mreq,
-                     sizeof(s->multicast.mreq));
-    if (ret)
-      throw SystemError("Failed to join multicast group");
-  }
-
-  // Set socket priority, QoS or TOS IP options
-  int prio;
-  switch (s->layer) {
-  case SocketLayer::UDP:
-  case SocketLayer::TCP_SERVER:
-  case SocketLayer::TCP_CLIENT:
-  case SocketLayer::IP:
-    prio = IPTOS_LOWDELAY;
-    if (setsockopt(s->sd, IPPROTO_IP, IP_TOS, &prio, sizeof(prio)))
-      throw SystemError("Failed to set type of service (QoS)");
+    if (s->layer != SocketLayer::TCP_CLIENT)
+      ret = bind(sd, (struct sockaddr *)&s->in.saddr, addrlen);
     else
-      n->logger->debug("Set QoS/TOS IP option to {:#x}", prio);
-    break;
+      ret = 0;
 
-  default:
+    if (ret < 0)
+      throw SystemError("Failed to bind socket");
+
+    if (s->multicast.enabled) {
+      ret = setsockopt(sd, IPPROTO_IP, IP_MULTICAST_LOOP, &s->multicast.loop,
+                       sizeof(s->multicast.loop));
+      if (ret)
+        throw SystemError("Failed to set multicast loop option");
+
+      ret = setsockopt(sd, IPPROTO_IP, IP_MULTICAST_TTL, &s->multicast.ttl,
+                       sizeof(s->multicast.ttl));
+      if (ret)
+        throw SystemError("Failed to set multicast ttl option");
+
+      ret = setsockopt(sd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &s->multicast.mreq,
+                       sizeof(s->multicast.mreq));
+      if (ret)
+        throw SystemError("Failed to join multicast group");
+    }
+
+    // Set socket priority, QoS or TOS IP options
+    int prio;
+    switch (s->layer) {
+    case SocketLayer::UDP:
+    case SocketLayer::TCP_SERVER:
+    case SocketLayer::TCP_CLIENT:
+    case SocketLayer::IP:
+      prio = IPTOS_LOWDELAY;
+      if (setsockopt(sd, IPPROTO_IP, IP_TOS, &prio, sizeof(prio)))
+        throw SystemError("Failed to set type of service (QoS)");
+      else
+        n->logger->debug("Set QoS/TOS IP option to {:#x}", prio);
+      break;
+
+    default:
 #ifdef __linux__
-    prio = SOCKET_PRIO;
-    if (setsockopt(s->sd, SOL_SOCKET, SO_PRIORITY, &prio, sizeof(prio)))
-      throw SystemError("Failed to set socket priority");
-    else
-      n->logger->debug("Set socket priority to {}", prio);
-    break;
+      prio = SOCKET_PRIO;
+      if (setsockopt(sd, SOL_SOCKET, SO_PRIORITY, &prio, sizeof(prio)))
+        throw SystemError("Failed to set socket priority");
+      else
+        n->logger->debug("Set socket priority to {}", prio);
+      break;
 #else
-  {
-  }
+    {
+    }
 #endif // __linux__
+    }
+
+  } catch (...) {
+    ::close(sd);
+    throw;
   }
+
+  return sd;
+}
+
+int villas::node::socket_start(NodeCompat *n) {
+  auto *s = n->getData<struct Socket>();
+
+  // Initialize IO
+  s->formatter->start(n->getInputSignals(false), ~(int)SampleFlags::HAS_OFFSET);
+
+  s->sd = socket_bind(n, s);
 
   s->out.buflen = SOCKET_INITIAL_BUFFER_LEN;
   s->out.buf = new char[s->out.buflen];
@@ -361,6 +451,38 @@ int villas::node::socket_stop(NodeCompat *n) {
   return 0;
 }
 
+// Returns a new socket descriptor. The caller owns it.
+static int socket_connect(NodeCompat *n, Socket *s) {
+  int ret = -1;
+
+  int sd = socket(s->in.saddr.sa.sa_family, SOCK_STREAM, 0);
+  if (sd < 0)
+    throw SystemError("Failed to create socket");
+
+  // Attempt to connect to TCP server.
+  int retries = 0;
+  while (retries < MAX_CONNECTION_RETRIES) {
+    n->logger->info("Attempting to connect to TCP server: attempt={}...",
+                    retries + 1);
+    ret = connect(sd, reinterpret_cast<struct sockaddr *>(&s->out.saddr),
+                  sizeof(s->out.saddr));
+    if (ret == 0)
+      break;
+
+    retries++;
+    if (retries < MAX_CONNECTION_RETRIES) {
+      sleep(RETRIES_DELAY);
+    }
+  }
+
+  if (ret < 0) {
+    ::close(sd);
+    throw SystemError("Failed to conenct to TCP server");
+  }
+
+  return sd;
+}
+
 static void socket_tcp_connection(NodeCompat *n, Socket *s) {
   int ret;
   if (s->layer == SocketLayer::TCP_CLIENT) {
@@ -369,28 +491,9 @@ static void socket_tcp_connection(NodeCompat *n, Socket *s) {
       if (ret < 0)
         throw SystemError("Failed to close socket descriptor");
     }
-    s->sd = socket(s->in.saddr.sa.sa_family, SOCK_STREAM, 0);
-    if (s->sd < 0)
-      throw SystemError("Failed to create socket");
-    // Attempt to connect to TCP server.
-    int retries = 0;
-    while (retries < MAX_CONNECTION_RETRIES) {
-      n->logger->info("Attempting to connect to TCP server: attempt={}...",
-                      retries + 1);
-      ret = connect(s->sd, reinterpret_cast<struct sockaddr *>(&s->out.saddr),
-                    sizeof(s->in.saddr));
-      if (ret == 0) {
-        s->tcp_connected = true;
-        break;
-      } else {
-        retries++;
-        if (retries < MAX_CONNECTION_RETRIES) {
-          sleep(RETRIES_DELAY);
-        }
-      }
-    }
-    if (ret < 0)
-      throw SystemError("Failed to conenct to TCP server");
+
+    s->sd = socket_connect(n, s);
+    s->tcp_connected = true;
   } else if (s->layer == SocketLayer::TCP_SERVER) {
     ret = listen(s->sd, 5);
     if (ret < 0)
@@ -691,6 +794,7 @@ __attribute__((constructor(110))) static void register_plugin() {
   p.parse = socket_parse;
   p.print = socket_print;
   p.check = socket_check;
+  p.prepare = socket_prepare;
   p.start = socket_start;
   p.stop = socket_stop;
   p.read = socket_read;

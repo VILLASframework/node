@@ -58,6 +58,8 @@ int socket_start(NodeCompat *n);
 
 int socket_check(NodeCompat *n);
 
+int socket_prepare(NodeCompat *n);
+
 int socket_stop(NodeCompat *n);
 
 int socket_reverse(NodeCompat *n);
