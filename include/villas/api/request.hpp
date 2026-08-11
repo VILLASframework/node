@@ -79,7 +79,8 @@ public:
   }
 
   std::string getHeader(enum lws_token_indexes hdr) {
-    char buf[1024];
+    // lws_hdr_copy() returns -1 without touching buf if the header is missing.
+    char buf[1024] = {};
 
     lws_hdr_copy(session->wsi, buf, sizeof(buf), hdr);
 
