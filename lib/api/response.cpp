@@ -5,25 +5,48 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <jansson.h>
+
 #include <villas/api/request.hpp>
 #include <villas/api/response.hpp>
 #include <villas/config.hpp>
+#include <villas/jansson.hpp>
 
 using namespace villas::node::api;
 
-Response::Response(Session *s, int c, const std::string &ct, const Buffer &b)
-    : session(s), logger(Log::get("api:response")), buffer(b), code(c),
-      contentType(ct),
-      headers{{"Server:", HTTP_USER_AGENT},
-              {"Access-Control-Allow-Origin:", "*"},
-              {"Access-Control-Allow-Methods:", "GET, POST, OPTIONS"},
-              {"Access-Control-Allow-Headers:", "Content-Type"},
-              {"Access-Control-Max-Age:", "86400"}} {}
+Response Response::json(int code, json_t const *json) {
+  std::string body;
+
+  auto callback = [](const char *data, size_t len, void *ctx) {
+    auto &string = *reinterpret_cast<std::string *>(ctx);
+    string.insert(string.end(), data, data + len);
+    return 0;
+  };
+
+  json_dump_callback(json, callback, &body, JSON_INDENT(4));
+  return Response(code, "application/json", body);
+}
+
+Response Response::json(int code, Json const &json) {
+  return Response(code, "application/json", json.dump(4));
+}
+
+Response Response::error(RuntimeError const &err) {
+  return Response::json(HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                        Json::object({{"error", err.what()}}));
+}
+
+Response Response::error(Error const &err) {
+  auto response = JanssonPtr(json_pack("{ s: s }", "error", err.what()));
+  if (err.json)
+    json_object_update(response.get(), err.json);
+  return Response::json(err.code, response.get());
+}
 
 int Response::writeBody(struct lws *wsi) {
   int ret;
 
-  ret = lws_write(wsi, (unsigned char *)buffer.data(), buffer.size(),
+  ret = lws_write(wsi, (unsigned char *)body.data(), body.size(),
                   LWS_WRITE_HTTP_FINAL);
   if (ret < 0)
     return -1;
@@ -36,11 +59,8 @@ int Response::writeHeaders(struct lws *wsi) {
   uint8_t headerBuffer[2048], *p = headerBuffer,
                               *end = &headerBuffer[sizeof(headerBuffer) - 1];
 
-  // We need to encode the buffer here for getting the real content length of the response
-  encodeBody();
-
-  ret = lws_add_http_common_headers(wsi, code, contentType.c_str(),
-                                    buffer.size(), &p, end);
+  ret = lws_add_http_common_headers(wsi, code, content_type.c_str(),
+                                    body.size(), &p, end);
   if (ret)
     return 1;
 
@@ -58,15 +78,8 @@ int Response::writeHeaders(struct lws *wsi) {
     return 1;
 
   // Do we have a body to send?
-  if (buffer.size() > 0)
+  if (body.size() > 0)
     lws_callback_on_writable(wsi);
 
   return 0;
 }
-
-JsonResponse::~JsonResponse() {
-  if (response)
-    json_decref(response);
-}
-
-void JsonResponse::encodeBody() { buffer.encode(response, JSON_INDENT(4)); }

@@ -15,6 +15,7 @@
 #include <villas/stats.hpp>
 #include <villas/super_node.hpp>
 #include <villas/utils.hpp>
+#include <villas/jansson.hpp>
 
 namespace villas {
 namespace node {
@@ -25,7 +26,7 @@ class StatsRequest : public NodeRequest {
 public:
   using NodeRequest::NodeRequest;
 
-  Response *execute() override {
+  Response execute() override {
     if (method != Session::Method::GET)
       throw Error::invalidMethod(this);
 
@@ -37,8 +38,8 @@ public:
       throw Error::badRequest(
           nullptr, "The statistics collection for this node is not enabled");
 
-    return new JsonResponse(session, HTTP_STATUS_OK,
-                            node->getStats()->toJson());
+    auto json_stats = JanssonPtr(node->getStats()->toJson());
+    return Response::json(HTTP_STATUS_OK, json_stats.get());
   }
 };
 

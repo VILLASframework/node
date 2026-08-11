@@ -24,7 +24,7 @@ class NodeInfoRequest : public NodeRequest {
 public:
   using NodeRequest::NodeRequest;
 
-  Response *execute() override {
+  Response execute() override {
     if (method != Session::Method::GET)
       throw Error::invalidMethod(this);
 
@@ -41,7 +41,7 @@ public:
         json_object_set_new(json_out, "signals", sigs->toJson());
     }
 
-    return new JsonResponse(session, HTTP_STATUS_OK, json_node);
+    return Response::json(HTTP_STATUS_OK, json_node);
   }
 };
 

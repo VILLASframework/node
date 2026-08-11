@@ -26,7 +26,7 @@ class MetricsRequest : public Request {
 public:
   using Request::Request;
 
-  Response *execute() override {
+  Response execute() override {
     if (method != Session::Method::GET) {
       throw Error::invalidMethod(this);
     }
@@ -54,9 +54,7 @@ public:
       }
     }
 
-    auto str = ss.str();
-    return new Response(session, HTTP_STATUS_OK, "text/plain; charset=UTF-8",
-                        Buffer(str.c_str(), str.size()));
+    return Response(HTTP_STATUS_OK, "text/plain; charset=UTF-8", ss.str());
   }
 };
 

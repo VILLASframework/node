@@ -23,7 +23,7 @@ class StatusRequest : public Request {
 public:
   using Request::Request;
 
-  Response *execute() override {
+  Response execute() override {
     int ret;
 
     if (method != Session::Method::GET)
@@ -61,68 +61,64 @@ public:
 
     tzset();
 
-    json_error_t err;
-    json_t *json_status = json_pack_ex(
-        &err, 0,
-        "{"
-        "s: s, s: s, s: s, s: s, s: f, s: f,"
-        /* timezone       */ "s: { s: s, s: I, s: b },"
-        /* kernel         */ "s: { s: s, s: s, s: s, s: s, s: s, s: s},"
-        /* system         */ "s: { s: i, s: i, s: I, s: I,"
-        /* system load    */ "s: [ f, f, f ],"
-        /* system ram     */ "s: { s: I, s, I, s: I, s: I },"
-        /* system swap    */ "s: { s: I, s: I },"
-        /* system highmem */ "s: { s: I, s: I }}}", //
+    auto json_status = Json::object(
+        {{"state", stateToString(sn->getState())},
+         {"version", PROJECT_VERSION},
+         {"hostname", hname},
+         {"uuid", uuid::toString(sn->getUuid()).c_str()},
+         {"time_now", time_to_double(&now)},
+         {"time_started", time_to_double(&started)},
+         {"timezone",
+          {
+              {"name", tzname[daylight]},
+              {"offset", (json_int_t)timezone},
+              {"dst", daylight},
+          }},
+         {"kernel",
+          {
+              {"sysname", uts.sysname},
+              {"nodename", uts.nodename},
+              {"release", uts.release},
+              {"version", uts.version},
+              {"machine", uts.machine},
+              {"domainname", uts.domainname},
+          }},
+         {"system",
+          {
+              {"cores_configured", get_nprocs_conf()},
+              {"cores", get_nprocs()},
+              {"processes", (json_int_t)sinfo.procs},
+              {"uptime", (json_int_t)sinfo.uptime},
 
-        "state", stateToString(sn->getState()).c_str(), //
-        "version", PROJECT_VERSION,                     //
-        "hostname", hname,                              //
-        "uuid", uuid::toString(sn->getUuid()).c_str(),  //
-        "time_now", time_to_double(&now),               //
-        "time_started", time_to_double(&started),       //
+              {"load",
+               {
+                   f_load * sinfo.loads[0],
+                   f_load * sinfo.loads[1],
+                   f_load * sinfo.loads[2],
+               }},
 
-        "timezone",                     //
-        "name", tzname[daylight],       //
-        "offset", (json_int_t)timezone, //
-        "dst", daylight,                //
+              {"ram",
+               {
+                   {"total", (json_int_t)(sinfo.totalram * sinfo.mem_unit)},
+                   {"free", (json_int_t)(sinfo.freeram * sinfo.mem_unit)},
+                   {"shared", (json_int_t)(sinfo.sharedram * sinfo.mem_unit)},
+                   {"buffer", (json_int_t)(sinfo.bufferram * sinfo.mem_unit)},
+               }},
 
-        "kernel",                     //
-        "sysname", uts.sysname,       //
-        "nodename", uts.nodename,     //
-        "release", uts.release,       //
-        "version", uts.version,       //
-        "machine", uts.machine,       //
-        "domainname", uts.domainname, //
+              {"swap",
+               {
+                   {"total", (json_int_t)(sinfo.totalswap * sinfo.mem_unit)},
+                   {"free", (json_int_t)(sinfo.freeswap * sinfo.mem_unit)},
+               }},
 
-        "system",                              //
-        "cores_configured", get_nprocs_conf(), //
-        "cores", get_nprocs(),                 //
-        "processes", (json_int_t)sinfo.procs,  //
-        "uptime", (json_int_t)sinfo.uptime,    //
+              {"highmem",
+               {
+                   {"total", (json_int_t)(sinfo.totalhigh * sinfo.mem_unit)},
+                   {"free", (json_int_t)(sinfo.freehigh * sinfo.mem_unit)},
+               }},
+          }}});
 
-        /* system */ "load",     //
-        f_load * sinfo.loads[0], //
-        f_load * sinfo.loads[1], //
-        f_load * sinfo.loads[2], //
-
-        /* system */ "ram",                                       //
-        "total", (json_int_t)(sinfo.totalram * sinfo.mem_unit),   //
-        "free", (json_int_t)(sinfo.freeram * sinfo.mem_unit),     //
-        "shared", (json_int_t)(sinfo.sharedram * sinfo.mem_unit), //
-        "buffer", (json_int_t)(sinfo.bufferram * sinfo.mem_unit), //
-
-        /* system */ "swap",                                     //
-        "total", (json_int_t)(sinfo.totalswap * sinfo.mem_unit), //
-        "free", (json_int_t)(sinfo.freeswap * sinfo.mem_unit),   //
-
-        /* system */ "highmem",                                  //
-        "total", (json_int_t)(sinfo.totalhigh * sinfo.mem_unit), //
-        "free", (json_int_t)(sinfo.freehigh * sinfo.mem_unit));
-    if (!json_status)
-      throw Error(HTTP_STATUS_INTERNAL_SERVER_ERROR, nullptr,
-                  "Failed to prepare response: {}", err.text);
-
-    return new JsonResponse(session, HTTP_STATUS_OK, json_status);
+    return Response::json(HTTP_STATUS_OK, json_status);
   }
 };
 

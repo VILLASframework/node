@@ -8,6 +8,7 @@
 #include <villas/api/request.hpp>
 #include <villas/api/response.hpp>
 #include <villas/api/session.hpp>
+#include <villas/jansson.hpp>
 #include <villas/super_node.hpp>
 
 namespace villas {
@@ -19,9 +20,8 @@ class ConfigRequest : public Request {
 public:
   using Request::Request;
 
-  Response *execute() override {
-    JanssonPtr json = session->getSuperNode()->getConfig();
-
+  Response execute() override {
+    auto config = session->getSuperNode()->getConfig();
     if (method != Session::Method::GET)
       throw Error::invalidMethod(this);
 
@@ -29,8 +29,7 @@ public:
       throw Error::badRequest(nullptr,
                               "Config endpoint does not accept any body data");
 
-    auto *json_config = json ? json.release() : json_object();
-    return new JsonResponse(session, HTTP_STATUS_OK, json_config);
+    return Response::json(HTTP_STATUS_OK, config);
   }
 };
 

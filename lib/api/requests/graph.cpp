@@ -35,7 +35,7 @@ public:
 
   ~GraphRequest() override { gvFreeContext(gvc); }
 
-  Response *execute() override {
+  Response execute() override {
     if (method != Session::Method::GET)
       throw Error::invalidMethod(this);
 
@@ -98,11 +98,10 @@ public:
     gvLayout(gvc, graph, layout.c_str());
     gvRenderData(gvc, graph, format.c_str(), &data, &len);
 
-    auto buf = Buffer(data, len);
-    auto *resp = new Response(session, HTTP_STATUS_OK, ct, buf);
+    auto resp = Response(HTTP_STATUS_OK, ct, std::string(data, len));
 
     if (format == "svgz")
-      resp->setHeader("Content-Encoding", "gzip");
+      resp.headers["Content-Encoding"] = "gzip";
 
 #if 0
     gvFreeRenderData(data);

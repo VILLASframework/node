@@ -24,7 +24,7 @@ class PathsRequest : public Request {
 public:
   using Request::Request;
 
-  Response *execute() override {
+  Response execute() override {
     if (method != Session::Method::GET)
       throw Error::invalidMethod(this);
 
@@ -32,9 +32,9 @@ public:
       throw Error::badRequest(nullptr,
                               "Paths endpoint does not accept any body data");
 
-    json_t *json_paths = session->getSuperNode()->getPaths().toJson();
+    auto json_paths = JanssonPtr(session->getSuperNode()->getPaths().toJson());
 
-    return new JsonResponse(session, HTTP_STATUS_OK, json_paths);
+    return Response::json(HTTP_STATUS_OK, json_paths.get());
   }
 };
 

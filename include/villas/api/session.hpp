@@ -7,11 +7,13 @@
 
 #pragma once
 
-#include <jansson.h>
+#include <optional>
 
 #include <villas/api.hpp>
 #include <villas/buffer.hpp>
+#include <villas/jansson.hpp>
 #include <villas/queue.h>
+#include <villas/api/response.hpp>
 
 namespace villas {
 namespace node {
@@ -55,7 +57,7 @@ protected:
   Logger logger;
 
   std::unique_ptr<Request> request;
-  std::unique_ptr<Response> response;
+  std::optional<Response> response;
 
   bool headersSent;
 

@@ -10,6 +10,7 @@
 #include <villas/api/request.hpp>
 #include <villas/api/response.hpp>
 #include <villas/api/session.hpp>
+#include <villas/jansson.hpp>
 #include <villas/node.hpp>
 #include <villas/stats.hpp>
 #include <villas/super_node.hpp>
@@ -24,7 +25,7 @@ class NodesRequest : public Request {
 public:
   using Request::Request;
 
-  Response *execute() override {
+  Response execute() override {
     if (method != Session::Method::GET)
       throw Error::invalidMethod(this);
 
@@ -32,9 +33,8 @@ public:
       throw Error::badRequest(nullptr,
                               "Nodes endpoint does not accept any body data");
 
-    json_t *json_nodes = session->getSuperNode()->getNodes().toJson();
-
-    return new JsonResponse(session, HTTP_STATUS_OK, json_nodes);
+    auto json_nodes = JanssonPtr(session->getSuperNode()->getNodes().toJson());
+    return Response::json(HTTP_STATUS_OK, json_nodes.get());
   }
 };
 

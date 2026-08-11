@@ -62,7 +62,7 @@ public:
 
   virtual void prepare() {}
 
-  virtual Response *execute() = 0;
+  virtual Response execute() = 0;
 
   virtual void decode();
 

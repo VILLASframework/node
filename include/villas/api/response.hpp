@@ -10,11 +10,8 @@
 #include <unordered_map>
 
 #include <villas/api.hpp>
-#include <villas/buffer.hpp>
 #include <villas/exceptions.hpp>
-#include <villas/jansson.hpp>
-#include <villas/log.hpp>
-#include <villas/plugin.hpp>
+#include <villas/json.hpp>
 
 namespace villas {
 namespace node {
@@ -25,62 +22,24 @@ class Session;
 class Request;
 
 class Response {
-
 public:
-  friend Session;
+  int code = HTTP_STATUS_OK;
+  std::string content_type = "text/html; charset=UTF-8";
+  std::string body = "";
+  std::unordered_map<std::string, std::string> headers = {
+      {"Server:", HTTP_USER_AGENT},
+      {"Access-Control-Allow-Origin:", "*"},
+      {"Access-Control-Allow-Methods:", "GET, POST, OPTIONS"},
+      {"Access-Control-Allow-Headers:", "Content-Type"},
+      {"Access-Control-Max-Age:", "86400"}};
 
-  Response(Session *s, int c = HTTP_STATUS_OK,
-           const std::string &ct = "text/html; charset=UTF-8",
-           const Buffer &b = Buffer());
-
-  virtual ~Response() {}
-
-  virtual void encodeBody() {}
+  static Response json(int, json_t const *);
+  static Response json(int, Json const &);
+  static Response error(RuntimeError const &);
+  static Response error(Error const &);
 
   int writeBody(struct lws *wsi);
-
   int writeHeaders(struct lws *wsi);
-
-  void setHeader(const std::string &key, const std::string &value) {
-    headers[key] = value;
-  }
-
-protected:
-  Session *session;
-  Logger logger;
-  Buffer buffer;
-
-  int code;
-  std::string contentType;
-  std::unordered_map<std::string, std::string> headers;
-};
-
-class JsonResponse : public Response {
-
-protected:
-  json_t *response;
-
-public:
-  JsonResponse(Session *s, int c, json_t *r)
-      : Response(s, c, "application/json"), response(r) {}
-
-  ~JsonResponse() override;
-
-  void encodeBody() override;
-};
-
-class ErrorResponse : public JsonResponse {
-
-public:
-  ErrorResponse(Session *s, const RuntimeError &e)
-      : JsonResponse(s, HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                     json_pack("{ s: s }", "error", e.what())) {}
-
-  ErrorResponse(Session *s, const Error &e)
-      : JsonResponse(s, e.code, json_pack("{ s: s }", "error", e.what())) {
-    if (e.json)
-      json_object_update(response, e.json);
-  }
 };
 
 } // namespace api

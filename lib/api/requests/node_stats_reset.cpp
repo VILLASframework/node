@@ -25,7 +25,7 @@ class StatsRequest : public NodeRequest {
 public:
   using NodeRequest::NodeRequest;
 
-  Response *execute() override {
+  Response execute() override {
     if (method != Session::Method::POST)
       throw Error::invalidMethod(this);
 
@@ -39,7 +39,7 @@ public:
 
     node->getStats()->reset();
 
-    return new Response(session, HTTP_STATUS_OK);
+    return Response(HTTP_STATUS_OK);
   }
 };
 

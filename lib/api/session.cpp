@@ -47,16 +47,16 @@ void Session::execute() {
   logger->debug("Running API request: {}", request->toString());
 
   try {
-    response = std::unique_ptr<Response>(request->execute());
+    response = request->execute();
 
     logger->debug("Completed API request: {}", request->toString());
   } catch (const Error &e) {
-    response = std::make_unique<ErrorResponse>(this, e);
+    response = Response::error(e);
 
     logger->warn("API request failed: {}, code={}: {}", request->toString(),
                  e.code, e.what());
   } catch (const RuntimeError &e) {
-    response = std::make_unique<ErrorResponse>(this, e);
+    response = Response::error(e);
 
     logger->warn("API request failed: {}: {}", request->toString(), e.what());
   }
@@ -131,10 +131,10 @@ void Session::open(void *in, size_t len) {
       // This request has a HTTP body. We wait for more data to arrive
     }
   } catch (const Error &e) {
-    response = std::make_unique<ErrorResponse>(this, e);
+    response = Response::error(e);
     lws_callback_on_writable(wsi);
   } catch (const RuntimeError &e) {
-    response = std::make_unique<ErrorResponse>(this, e);
+    response = Response::error(e);
     lws_callback_on_writable(wsi);
   }
 }
@@ -149,7 +149,7 @@ void Session::bodyComplete() {
 
     api->pending.push(this);
   } catch (const Error &e) {
-    response = std::make_unique<ErrorResponse>(this, e);
+    response = Response::error(e);
 
     logger->warn("Failed to decode API request: {}", e.what());
   }

@@ -8,6 +8,7 @@
 #include <villas/api/request.hpp>
 #include <villas/api/response.hpp>
 #include <villas/capabilities.hpp>
+#include <villas/jansson.hpp>
 
 namespace villas {
 namespace node {
@@ -18,7 +19,7 @@ class CapabilitiesRequest : public Request {
 public:
   using Request::Request;
 
-  Response *execute() override {
+  Response execute() override {
     if (method != Session::Method::GET)
       throw Error::invalidMethod(this);
 
@@ -26,9 +27,8 @@ public:
       throw Error::badRequest(
           nullptr, "Capabilities endpoint does not accept any body data");
 
-    auto *json_capabilities = getCapabilities();
-
-    return new JsonResponse(session, HTTP_STATUS_OK, json_capabilities);
+    auto json_capabilities = JanssonPtr(getCapabilities());
+    return Response::json(HTTP_STATUS_OK, json_capabilities.get());
   }
 };
 

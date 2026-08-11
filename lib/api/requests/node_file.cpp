@@ -22,7 +22,7 @@ class FileRequest : public NodeRequest {
 public:
   using NodeRequest::NodeRequest;
 
-  Response *execute() override {
+  Response execute() override {
     if (method != Session::Method::GET && method != Session::Method::POST)
       throw Error::invalidMethod(this);
 
@@ -43,7 +43,7 @@ public:
     if (matches[2] == "rewind")
       rewind(f->stream_in);
 
-    return new Response(session, HTTP_STATUS_OK);
+    return Response(HTTP_STATUS_OK);
   }
 };
 

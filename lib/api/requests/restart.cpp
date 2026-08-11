@@ -8,6 +8,7 @@
 #include <villas/api/request.hpp>
 #include <villas/api/response.hpp>
 #include <villas/api/session.hpp>
+#include <villas/jansson.hpp>
 #include <villas/log.hpp>
 #include <villas/node/exceptions.hpp>
 #include <villas/super_node.hpp>
@@ -43,7 +44,7 @@ protected:
 public:
   using Request::Request;
 
-  Response *execute() override {
+  Response execute() override {
     int ret;
     json_error_t err;
 
@@ -92,9 +93,10 @@ public:
     // We pass some env variables to the new process
     setenv("VILLAS_API_RESTART_COUNT", buf, 1);
 
-    auto *json_response = json_pack(
-        "{ s: i, s: o }", "restarts", cnt, "config",
-        configUri.empty() ? json_null() : json_string(configUri.c_str()));
+    auto json_response = Json::object({
+        {"restarts", cnt},
+        {"config", configUri.empty() ? Json() : Json(configUri)},
+    });
 
     // Register exit handler
     ret = atexit(handler);
@@ -105,7 +107,7 @@ public:
     // Properly terminate current instance
     utils::killme(SIGTERM);
 
-    return new JsonResponse(session, HTTP_STATUS_OK, json_response);
+    return Response::json(HTTP_STATUS_OK, json_response);
   }
 };
 

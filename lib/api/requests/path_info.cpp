@@ -24,7 +24,7 @@ class PathInfoRequest : public PathRequest {
 public:
   using PathRequest::PathRequest;
 
-  Response *execute() override {
+  Response execute() override {
     if (method != Session::Method::GET)
       throw Error::invalidMethod(this);
 
@@ -32,7 +32,8 @@ public:
       throw Error::badRequest(nullptr,
                               "Endpoint does not accept any body data");
 
-    return new JsonResponse(session, HTTP_STATUS_OK, path->toJson());
+    auto json_path = JanssonPtr(path->toJson());
+    return Response::json(HTTP_STATUS_OK, json_path.get());
   }
 };
 

@@ -24,7 +24,7 @@ template <auto func> class NodeActionRequest : public NodeRequest {
 public:
   using NodeRequest::NodeRequest;
 
-  Response *execute() override {
+  Response execute() override {
     if (method != Session::Method::POST)
       throw Error::invalidMethod(this);
 
@@ -37,7 +37,7 @@ public:
       throw Error::badRequest(nullptr, "Failed to execute action", "{ s: d }",
                               "ret", ret);
 
-    return new Response(session, HTTP_STATUS_OK);
+    return Response(HTTP_STATUS_OK);
   }
 };
 
