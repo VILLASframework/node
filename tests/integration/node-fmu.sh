@@ -47,7 +47,7 @@ cat > config.json <<EOF
 			"type": "fmu",
 			"fmu_path": "${DIR}/Dahlquist.fmu",
 			"fmu_unpack_path": "${DIR}/fmu_dahl",
-			"fmu_writing_turn": true,
+			"fmu_write_first": true,
 			"stop_time": 10.0,
 			"start_time": 0.0,
 			"step_size": 1.0,
