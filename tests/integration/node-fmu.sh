@@ -36,42 +36,41 @@ cat > expect.dat <<EOF
 EOF
 
 cat > config.json <<EOF
-nodes = {
-    file_output = {
-        type = "file"
-        uri = "output.dat"
-        out = {
-
-        }
-    },
-    fmu_node = {
-        type = "fmu"
-        # Path to fmu file
-        fmu_path = "${DIR}/Dahlquist.fmu"
-        fmu_unpack_path = "${DIR}/fmu_dahl"
-        fmu_write_first = true
-        stop_time = 10.0
-        start_time = 0.0
-        step_size = 1.0
-
-        in = {
-            signals = ()
-        }
-
-        out = {
-            signals = (
-                { name = "x", type = "float" },
-            )
-        }
-    }
+{
+	"nodes": {
+		"results": {
+			"type": "file",
+			"uri": "output.dat",
+			"out": {}
+		},
+		"fmu_node": {
+			"type": "fmu",
+			"fmu_path": "${DIR}/Dahlquist.fmu",
+			"fmu_unpack_path": "${DIR}/fmu_dahl",
+			"fmu_write_first": true,
+			"stop_time": 10.0,
+			"start_time": 0.0,
+			"step_size": 1.0,
+			"in": {
+				"signals": []
+			},
+			"out": {
+				"signals": [
+					{
+						"name": "x",
+						"type": "float"
+					}
+				]
+			}
+		}
+	},
+	"paths": [
+		{
+			"in": "fmu_node",
+			"out": "results"
+		}
+	]
 }
-
-paths = (
-    {
-        in = "fmu_node",
-        out = "file_output"
-    },
-)
 EOF
 
 villas node config.json &
