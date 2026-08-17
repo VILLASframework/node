@@ -91,6 +91,7 @@ find_package(Criterion)
 find_package(OpalOrchestra)
 find_package(LibXml2)
 find_package(OpalAsyncApi)
+find_package(FMI)
 
 # Check for tools
 find_program(PROTOBUFC_COMPILER NAMES protoc-c)
@@ -199,6 +200,7 @@ cmake_dependent_option(WITH_NODE_ETHERCAT       "Build with ethercat node-type" 
 cmake_dependent_option(WITH_NODE_EXAMPLE        "Build with example node-type"                          "${WITH_DEFAULTS}" "" OFF)
 cmake_dependent_option(WITH_NODE_EXEC           "Build with exec node-type"                             "${WITH_DEFAULTS}" "" OFF)
 cmake_dependent_option(WITH_NODE_FILE           "Build with file node-type"                             "${WITH_DEFAULTS}" "" OFF)
+cmake_dependent_option(WITH_NODE_FMU            "Build with fmu node-type"                              "${WITH_DEFAULTS}" "FMI_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_FPGA           "Build with fpga node-type"                             "${WITH_DEFAULTS}" "WITH_FPGA" OFF)
 cmake_dependent_option(WITH_NODE_IEC60870       "Build with iec60870 node-types"                        "${WITH_DEFAULTS}" "LIB60870_FOUND; NOT WITHOUT_GPL" OFF)
 cmake_dependent_option(WITH_NODE_IEC61850       "Build with iec61850 node-types"                        "${WITH_DEFAULTS}" "LIBIEC61850_FOUND; NOT WITHOUT_GPL" OFF)
@@ -309,6 +311,7 @@ add_feature_info(NODE_ETHERCAT          WITH_NODE_ETHERCAT          "Build with 
 add_feature_info(NODE_EXAMPLE           WITH_NODE_EXAMPLE           "Build with example node-type")
 add_feature_info(NODE_EXEC              WITH_NODE_EXEC              "Build with exec node-type")
 add_feature_info(NODE_FILE              WITH_NODE_FILE              "Build with file node-type")
+add_feature_info(NODE_FMU               WITH_NODE_FMU               "Build with fmu node-type")
 add_feature_info(NODE_FPGA              WITH_NODE_FPGA              "Build with fpga node-type")
 add_feature_info(NODE_IEC60870          WITH_NODE_IEC60870          "Build with iec60870 node-types")
 add_feature_info(NODE_IEC61850          WITH_NODE_IEC61850          "Build with iec61850 node-types")
