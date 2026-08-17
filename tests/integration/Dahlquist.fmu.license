@@ -1,0 +1,6 @@
+/* Reference FMU model for integration test of FMU node-type.
+ *
+ * Author: Ritesh Karki <ritesh.karki@rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2026, Modelica Association Project "FMI"
+ * SPDX-License-Identifier: BSD-2-Clause
+ */
