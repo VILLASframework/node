@@ -36,7 +36,7 @@ protected:
   int _read(struct Sample *smps[], unsigned cnt) override;
   int _write(struct Sample *smps[], unsigned cnt) override;
 
-  bool writing_turn = true;
+  bool writing_turn;
   const char *path;
   const char *unpackPath;
 

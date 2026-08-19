@@ -61,6 +61,10 @@ FmuNode::FmuNode(const uuid_t &id, const std::string &name)
 
 int FmuNode::prepare() {
   struct stat sb;
+  // Check if path is valid
+  if (stat(path, &sb) != 0)
+    logger->error("The FMU path is invalid: {}, {}", strerror(errno), path);
+
   if (stat(unpackPath, &sb) != 0)
     logger->error("The unpack path is invalid: {}, {}", strerror(errno),
                   unpackPath);
@@ -104,9 +108,7 @@ int FmuNode::prepare() {
   return Node::prepare();
 }
 
-int FmuNode::check() {
-  return Node::check();
-}
+int FmuNode::check() { return Node::check(); }
 
 int FmuNode::_read(struct Sample *smps[], unsigned cnt) {
   assert(cnt == 1);
@@ -313,10 +315,11 @@ int FmuNode::parse(json_t *json) {
   step_size = 0.1;
   stop_time = INT_MAX;
   ret = json_unpack_ex(
-      json, &err, 0, "{s:s, s:s, s?:f, s?:f, s?:f, s?:{s:o}, s?:{s:o}}",
-      "fmu_path", &path, "fmu_unpack_path", &unpackPath, "stop_time",
-      &stop_time, "start_time", &start_time, "step_size", &step_size, "in",
-      "signals", &json_signals_in, "out", "signals", &json_signals_out);
+      json, &err, 0, "{s:s, s:s, s?:b, s?:f, s?:f, s?:f, s?:{s:o}, s?:{s:o}}",
+      "fmu_path", &path, "fmu_unpack_path", &unpackPath, "fmu_writing_turn",
+      &writing_turn, "stop_time", &stop_time, "start_time", &start_time,
+      "step_size", &step_size, "in", "signals", &json_signals_in, "out",
+      "signals", &json_signals_out);
   if (ret)
     throw ConfigError(json, err, "node-config-node-fmu");
   if (stop_time == INT_MAX) {
@@ -350,9 +353,7 @@ int FmuNode::parse(json_t *json) {
   return 0;
 }
 
-int FmuNode::start() {
-  return Node::start();
-}
+int FmuNode::start() { return Node::start(); }
 
 int FmuNode::stop() {
   fmi3_import_terminate(fmu);

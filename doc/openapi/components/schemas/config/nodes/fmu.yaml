@@ -15,10 +15,10 @@ allOf:
       description: |
         Specifies the URI to a directory which has the unpacked files of the FMU model (mainly the shared library and the modelDescription.xml for the model).
 
-    fmu_write_first:
+    fmu_writing_turn:
       type: boolean
       description: |
-        Specifies whether the model has to be writtem with input values before running. `true` denotes that the model should use the input values. `false` would make the model use default values instead.
+        Specifies whether the model has to be written with input values before running. `true` denotes that the model should use the input values. `false` would make the model use default values instead.
 
     start_time:
       type: number
