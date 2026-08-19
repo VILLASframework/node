@@ -1,5 +1,2 @@
-/* Reference FMU model for integration test of FMU node-type.
- *
- * SPDX-FileCopyrightText: 2026, Modelica Association Project "FMI"
- * SPDX-License-Identifier: BSD-2-Clause
- */
+SPDX-FileCopyrightText: 2026, Modelica Association Project "FMI"
+SPDX-License-Identifier: BSD-2-Clause
