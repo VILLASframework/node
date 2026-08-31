@@ -3,6 +3,7 @@
 
 *:*/fpga/thirdparty/*
 *:*/villas.pb-c.h
+*:reflection.pb.h
 
 noValidConfiguration
 duplInheritedMember

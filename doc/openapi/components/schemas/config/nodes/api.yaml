@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+allOf:
+- type: object
+  properties:
+    format:
+      $ref: ../format_spec.yaml
+    api_type:
+      type: string
+      enum: [gRPC]
+    address:
+      type: string
+      description: Remote gRPC server address
+
+- $ref: ../node.yaml

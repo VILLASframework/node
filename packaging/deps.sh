@@ -612,6 +612,23 @@ if ! pkg-config "nlohmann_json" &&
     cmake --build . \
         --target install \
         --parallel ${PARALLEL}
+	popd
+fi
+
+# Get and complie gRPC server reflection proto description file
+if ! find /usr/{local,}/include -name reflection.pb.cc | grep -q . &&
+    should_build "gRPC reflection" "For API gateway node-type"; then
+    mkdir -p gRPC_reflection
+    pushd gRPC_reflection
+    curl https://raw.githubusercontent.com/grpc/grpc-proto/refs/heads/master/grpc/reflection/v1/reflection.proto -o reflection.proto
+    protoc  -I. \
+            --cpp_out=. \
+            --grpc_out=. \
+            --plugin=protoc-gen-grpc=/usr/bin/grpc_cpp_plugin \
+            reflection.proto
+    mkdir -p /usr/local/include/grpc/reflection/v1alpha
+    cp *.h /usr/local/include/grpc/reflection/v1alpha/
+    cp *.cc /usr/local/include/grpc/reflection/v1alpha/
     popd
 fi
 
