@@ -41,7 +41,7 @@ if (WITH_GRPC)
     )
     if (REFLECTION_INCLUDE_DIR)
         list(APPEND API_SRC
-            requests/gateway/grpc.cpp
+            requests/api/grpc.cpp
             ${REFLECTION_INCLUDE_DIR}/grpc/reflection/v1alpha/reflection.pb.cc
             ${REFLECTION_INCLUDE_DIR}/grpc/reflection/v1alpha/reflection.grpc.pb.cc
         )

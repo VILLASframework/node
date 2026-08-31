@@ -13,7 +13,7 @@
 
 #include <villas/api/requests/node.hpp>
 #include <villas/api/response.hpp>
-#include <villas/nodes/gateway.hpp>
+#include <villas/nodes/api.hpp>
 #include <villas/timing.hpp>
 
 #include "villas/log.hpp"
@@ -23,18 +23,18 @@ using namespace google::protobuf;
 class ReflectionClient {
 public:
   ReflectionClient(std::shared_ptr<grpc::Channel> channel)
-      : stub_(grpc::reflection::v1alpha::ServerReflection::NewStub(channel)) {}
+      : stub_(grpc::reflection::v1::ServerReflection::NewStub(channel)) {}
   google::protobuf::FileDescriptorSet *
   GetFileDescriptor(const std::string &symbol) {
     grpc::ClientContext context;
     auto stream = stub_->ServerReflectionInfo(&context);
-    grpc::reflection::v1alpha::ServerReflectionRequest request;
+    grpc::reflection::v1::ServerReflectionRequest request;
     request.set_file_containing_symbol(symbol);
     bool streamstatus = stream->Write(request);
     if (!streamstatus)
       std::cout << "Server does not allow reflection" << std::endl;
 
-    grpc::reflection::v1alpha::ServerReflectionResponse response;
+    grpc::reflection::v1::ServerReflectionResponse response;
     google::protobuf::FileDescriptorSet *file_descs =
         new google::protobuf::FileDescriptorSet;
     if (stream->Read(&response)) {
@@ -56,7 +56,7 @@ public:
   };
 
 private:
-  std::unique_ptr<grpc::reflection::v1alpha::ServerReflection::Stub> stub_;
+  std::unique_ptr<grpc::reflection::v1::ServerReflection::Stub> stub_;
 };
 
 namespace villas {
@@ -66,10 +66,9 @@ namespace api {
 class grpcRequest : public NodeRequest {
 public:
   using NodeRequest::NodeRequest;
-  // using GatewayRequest::GatewayRequest;
 
   Response *execute() override {
-    gateway_node = dynamic_cast<GatewayNode *>(node);
+    gateway_node = dynamic_cast<ApiGatewayNode *>(node);
 
     switch (method) {
     case Session::Method::GET:
@@ -84,8 +83,8 @@ public:
 
   Response *executeGet() {
     std::string address = gateway_node->address;
-    GatewayNode::ApiType api_type = gateway_node->type;
-    if (api_type != GatewayNode::ApiType::gRPC)
+    ApiGatewayNode::ApiType api_type = gateway_node->type;
+    if (api_type != ApiGatewayNode::ApiType::gRPC)
       throw Error(HTTP_STATUS_NOT_FOUND, nullptr, "Api type unavailable");
 
     auto gRPC_package = matches[2];
@@ -141,9 +140,9 @@ public:
   Response *executePost() {
     // Create channel & stub
     std::string address = gateway_node->address;
-    GatewayNode::ApiType api_type = gateway_node->type;
+    ApiGatewayNode::ApiType api_type = gateway_node->type;
 
-    if (api_type != GatewayNode::ApiType::gRPC)
+    if (api_type != ApiGatewayNode::ApiType::gRPC)
       throw Error(HTTP_STATUS_NOT_FOUND, nullptr, "Api type unavailable");
 
     auto gRPC_package = matches[2];
@@ -507,7 +506,7 @@ public:
   }
 
 protected:
-  GatewayNode *gateway_node;
+  ApiGatewayNode *gateway_node;
 };
 
 // Register API requests

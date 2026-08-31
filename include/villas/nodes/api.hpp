@@ -18,7 +18,7 @@ namespace node {
 // Forward declarations
 struct Sample;
 
-class GatewayNode : public Node {
+class ApiGatewayNode : public Node {
 protected:
   int parse(json_t *json) override;
 
@@ -26,7 +26,7 @@ protected:
   int _write(struct Sample *smps[], unsigned cnt) override;
 
 public:
-  GatewayNode(const uuid_t &id = {}, const std::string &name = "");
+  ApiGatewayNode(const uuid_t &id = {}, const std::string &name = "");
   enum ApiType { gRPC };
 
   struct Direction {
@@ -52,7 +52,7 @@ public:
 
   int stop() override;
 
-  ~GatewayNode();
+  ~ApiGatewayNode();
 };
 
 } // namespace node

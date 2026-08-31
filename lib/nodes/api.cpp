@@ -10,14 +10,14 @@
 #include <pthread.h>
 
 #include <villas/exceptions.hpp>
-#include <villas/nodes/gateway.hpp>
+#include <villas/nodes/api.hpp>
 
 #include "villas/sample.hpp"
 
 using namespace villas;
 using namespace villas::node;
 
-GatewayNode::GatewayNode(const uuid_t &id, const std::string &name)
+ApiGatewayNode::ApiGatewayNode(const uuid_t &id, const std::string &name)
     : Node(id, name), read(), write(), type(), formatter() {
   int ret;
   auto dirs = std::vector{&read, &write};
@@ -33,7 +33,7 @@ GatewayNode::GatewayNode(const uuid_t &id, const std::string &name)
   }
 }
 
-int GatewayNode::prepare() {
+int ApiGatewayNode::prepare() {
 
   read.sample = sample_alloc_mem(64);
   if (!read.sample)
@@ -46,22 +46,22 @@ int GatewayNode::prepare() {
   return Node::prepare();
 }
 
-int GatewayNode::check() { return Node::check(); }
+int ApiGatewayNode::check() { return Node::check(); }
 
-int GatewayNode::_read(struct Sample *smps[], unsigned cnt) {
+int ApiGatewayNode::_read(struct Sample *smps[], unsigned cnt) {
   assert(cnt == 1);
 
   pthread_cond_wait(&read.cv, &read.mutex);
   sample_copy(smps[0], read.sample);
-  logger->debug("Gateway read sample {}", smps[0]->length);
+  logger->debug("API Gateway read sample {}", smps[0]->length);
 
   return 1;
 }
 
-int GatewayNode::_write(struct Sample *smps[], unsigned cnt) {
+int ApiGatewayNode::_write(struct Sample *smps[], unsigned cnt) {
   assert(cnt == 1);
   sample_copy(write.sample, smps[0]);
-  logger->debug("Gateway write sample {}", smps[0]->length);
+  logger->debug("API Gateway write sample {}", smps[0]->length);
 
   int ret =
       formatter->sprint(write.buf, write.buflen, &write.wbytes, smps, cnt);
@@ -75,7 +75,7 @@ int GatewayNode::_write(struct Sample *smps[], unsigned cnt) {
   return 1;
 }
 
-int GatewayNode::parse(json_t *json) {
+int ApiGatewayNode::parse(json_t *json) {
   int ret = Node::parse(json);
   if (ret)
     return ret;
@@ -107,7 +107,7 @@ int GatewayNode::parse(json_t *json) {
   return 0;
 }
 
-int GatewayNode::start() {
+int ApiGatewayNode::start() {
   formatter->start(getInputSignals(false), ~(int)SampleFlags::HAS_OFFSET);
 
   read.buflen = 64 * 1024;
@@ -118,7 +118,7 @@ int GatewayNode::start() {
   return Node::start();
 }
 
-int GatewayNode::stop() {
+int ApiGatewayNode::stop() {
   delete[] read.buf;
   delete[] write.buf;
   sample_free(read.sample);
@@ -126,12 +126,12 @@ int GatewayNode::stop() {
   return 0;
 }
 
-GatewayNode::~GatewayNode() {}
+ApiGatewayNode::~ApiGatewayNode() {}
 
 // Register node
-static char n[] = "gateway";
-static char d[] = "A node providing a Gateway";
-static NodePlugin<GatewayNode, n, d,
+static char n[] = "api";
+static char d[] = "A node providing an API gateway";
+static NodePlugin<ApiGatewayNode, n, d,
                   (int)NodeFactory::Flags::SUPPORTS_READ |
                       (int)NodeFactory::Flags::SUPPORTS_WRITE,
                   1>

@@ -3,5 +3,15 @@
 # SPDX-License-Identifier: Apache-2.0
 ---
 allOf:
-- $ref: ../node_obj.yaml
-- $ref: gateway.yaml
+- type: object
+  properties:
+    format:
+      $ref: ../format_spec.yaml
+    api_type:
+      type: string
+      enum: [gRPC]
+    address:
+      type: string
+      description: Remote gRPC server address
+
+- $ref: ../node.yaml
