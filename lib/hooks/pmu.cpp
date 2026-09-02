@@ -16,9 +16,9 @@ PmuHook::PmuHook(Path *p, Node *n, int fl, int prio, bool en)
       timeAlignType(TimeAlign::CENTER), windowType(WindowType::NONE),
       sampleRate(1), dataRate(1), nominalFreq(1.0), numberPlc(1.),
       windowSize(1), channelNameEnable(true), angleUnitFactor(1.0),
-      lastSequence(0), nextRun({0}), phasorRate(0), phasorPeriodNs(0),
-      run(false), init(false), initSampleCount(0), phaseOffset(0.0),
-      amplitudeOffset(0.0), frequencyOffset(0.0), rocofOffset(0.0) {}
+      lastSequence(0), nextRun({0}), run(false), init(false),
+      initSampleCount(0), phaseOffset(0.0), amplitudeOffset(0.0),
+      frequencyOffset(0.0), rocofOffset(0.0) {}
 
 void PmuHook::prepare() {
   MultiSignalHook::prepare();
@@ -58,11 +58,10 @@ void PmuHook::prepare() {
 
     signals->push_back(rocofSig);
 
-    lastPhasors.push_back({0., 0., 0., 0.});
+    currentPhasors.push_back({0., 0., 0., 0.});
   }
 
   windowSize = ceil(sampleRate * numberPlc / nominalFreq);
-  //phasorPeriodNs = static_cast<int64_t>(round(1.0e9 / phasorRate));
 
   for (unsigned i = 0; i < signalIndices.size(); i++) {
     if (windowType == WindowType::NONE)
@@ -99,7 +98,7 @@ void PmuHook::parse(json_t *json) {
       json, &err, 0,
       "{ s?: i, s?: i, s?: F, s?: F, s?: s, s?: s, s?: b, s?: s, s?: F, s?: F, "
       "s?: F, s?: F, s?: s}",
-      "sample_rate", &sampleRate, "dft_rate", &dataRate, "nominal_freq",
+      "sample_rate", &sampleRate, "data_rate", &dataRate, "nominal_freq",
       &nominalFreq, "number_plc", &numberPlc, "window_type", &windowTypeC,
       "angle_unit", &angleUnitC, "add_channel_name", &channelNameEnable,
       "timestamp_align", &timeAlignC, "phase_offset", &phaseOffset,
@@ -263,8 +262,8 @@ Hook::Reason PmuHook::process(struct Sample *smp) {
   timespec phasorTimestamp = {0};
   if (run) {
     for (unsigned i = 0; i < signalIndices.size(); i++) {
-      lastPhasors[i] = estimatePhasor(windows[i], lastPhasors[i]);
-      if (lastPhasors[i].valid != Status::VALID)
+      currentPhasors[i] = estimatePhasor(windows[i], windowsTs);
+      if (currentPhasors[i].valid != Status::VALID)
         phasorStatus = Status::INVALID;
     }
 
@@ -283,21 +282,22 @@ Hook::Reason PmuHook::process(struct Sample *smp) {
     for (unsigned i = 0; i < signalIndices.size(); i++) {
       if (outputMode == OutputMode::COMPLEX) {
         smp->data[i * 3 + 0].f =
-            lastPhasors[i].frequency + frequencyOffset; // Frequency
+            currentPhasors[i].frequency + frequencyOffset; // Frequency
         smp->data[i * 3 + 1].z =
-            std::polar(lastPhasors[i].amplitude / std::numbers::sqrt2,
-                       lastPhasors[i].phase);                        // Phasor
-        smp->data[i * 3 + 2].f = lastPhasors[i].rocof + rocofOffset; // ROCOF
+            std::polar(currentPhasors[i].amplitude / std::numbers::sqrt2,
+                       currentPhasors[i].phase); // Phasor
+        smp->data[i * 3 + 2].f = currentPhasors[i].rocof + rocofOffset; // ROCOF
         smp->length = signalIndices.size() * 3;
         smp->ts.origin = phasorTimestamp;
       } else {
         smp->data[i * 4 + 0].f =
-            lastPhasors[i].frequency + frequencyOffset; // Frequency
-        smp->data[i * 4 + 1].f = (lastPhasors[i].amplitude / pow(2, 0.5)) +
+            currentPhasors[i].frequency + frequencyOffset; // Frequency
+        smp->data[i * 4 + 1].f = (currentPhasors[i].amplitude / pow(2, 0.5)) +
                                  amplitudeOffset; // Amplitude
         smp->data[i * 4 + 2].f =
-            (lastPhasors[i].phase * 180 / M_PI) + phaseOffset;       // Phase
-        smp->data[i * 4 + 3].f = lastPhasors[i].rocof + rocofOffset; /* ROCOF */
+            (currentPhasors[i].phase * angleUnitFactor) + phaseOffset; // Phase
+        smp->data[i * 4 + 3].f =
+            currentPhasors[i].rocof + rocofOffset; /* ROCOF */
         smp->length = signalIndices.size() * 4;
         smp->ts.origin = phasorTimestamp;
       }
@@ -311,7 +311,7 @@ Hook::Reason PmuHook::process(struct Sample *smp) {
 }
 
 PmuHook::Phasor PmuHook::estimatePhasor(dsp::CosineWindow<double> *window,
-                                        const Phasor &lastPhasor) {
+                                        dsp::Window<timespec> *windowTs) {
   return {0., 0., 0., 0., Status::INVALID};
 }
 

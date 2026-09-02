@@ -40,7 +40,7 @@ protected:
 
   std::vector<dsp::CosineWindow<double> *> windows;
   dsp::Window<timespec> *windowsTs;
-  std::vector<Phasor> lastPhasors;
+  std::vector<Phasor> currentPhasors;
 
   enum TimeAlign timeAlignType;
   enum WindowType windowType;
@@ -55,9 +55,7 @@ protected:
   double angleUnitFactor;
   uint64_t lastSequence;
   timespec nextRun;
-  double phasorRate;
-  int64_t
-      phasorPeriodNs; // Phasor output period in nanoseconds, derived from phasorRate.
+
   bool run;
   bool init;
   unsigned initSampleCount;
@@ -69,7 +67,7 @@ protected:
   double rocofOffset;
 
   virtual Phasor estimatePhasor(dsp::CosineWindow<double> *window,
-                                const Phasor &lastPhasor);
+                                dsp::Window<timespec> *windowTs);
 
 public:
   PmuHook(Path *p, Node *n, int fl, int prio, bool en = true);
