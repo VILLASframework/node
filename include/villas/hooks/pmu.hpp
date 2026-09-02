@@ -33,12 +33,18 @@ protected:
     RIGHT,
   };
 
+  enum class OutputMode {
+    FLOAT,
+    COMPLEX,
+  };
+
   std::vector<dsp::CosineWindow<double> *> windows;
   dsp::Window<timespec> *windowsTs;
   std::vector<Phasor> lastPhasors;
 
   enum TimeAlign timeAlignType;
   enum WindowType windowType;
+  enum OutputMode outputMode;
 
   unsigned sampleRate;
   int dataRate;

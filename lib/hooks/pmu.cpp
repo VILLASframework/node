@@ -30,14 +30,13 @@ void PmuHook::prepare() {
         std::make_shared<Signal>("frequency", "Hz", SignalType::FLOAT);
     auto amplSig =
         std::make_shared<Signal>("amplitude", "V", SignalType::FLOAT);
+    auto phasorSig =
+        std::make_shared<Signal>("phasor", "V", SignalType::COMPLEX);
     auto phaseSig = std::make_shared<Signal>(
         "phase", (angleUnitFactor) ? "rad" : "deg",
         SignalType::FLOAT); //angleUnitFactor==1 means rad
     auto rocofSig =
         std::make_shared<Signal>("rocof", "Hz/s", SignalType::FLOAT);
-
-    if (!freqSig || !amplSig || !phaseSig || !rocofSig)
-      throw RuntimeError("Failed to create new signals");
 
     if (channelNameEnable) {
       auto suffix = fmt::format("_{}", signalNames[i]);
@@ -46,11 +45,17 @@ void PmuHook::prepare() {
       amplSig->name += suffix;
       phaseSig->name += suffix;
       rocofSig->name += suffix;
+      phasorSig->name += suffix;
     }
 
     signals->push_back(freqSig);
-    signals->push_back(amplSig);
-    signals->push_back(phaseSig);
+    if (outputMode == OutputMode::COMPLEX) {
+      signals->push_back(phasorSig);
+    } else {
+      signals->push_back(amplSig);
+      signals->push_back(phaseSig);
+    }
+
     signals->push_back(rocofSig);
 
     lastPhasors.push_back({0., 0., 0., 0.});
@@ -84,23 +89,23 @@ void PmuHook::parse(json_t *json) {
   const char *windowTypeC = nullptr;
   const char *angleUnitC = nullptr;
   const char *timeAlignC = nullptr;
+  const char *outputModeC = nullptr;
 
   json_error_t err;
 
   assert(state != State::STARTED);
 
-  Hook::parse(json);
-
   ret = json_unpack_ex(
       json, &err, 0,
       "{ s?: i, s?: i, s?: F, s?: F, s?: s, s?: s, s?: b, s?: s, s?: F, s?: F, "
-      "s?: F, s?: F}",
+      "s?: F, s?: F, s?: s}",
       "sample_rate", &sampleRate, "dft_rate", &dataRate, "nominal_freq",
       &nominalFreq, "number_plc", &numberPlc, "window_type", &windowTypeC,
       "angle_unit", &angleUnitC, "add_channel_name", &channelNameEnable,
       "timestamp_align", &timeAlignC, "phase_offset", &phaseOffset,
       "amplitude_offset", &amplitudeOffset, "frequency_offset",
-      &frequencyOffset, "rocof_offset", &rocofOffset);
+      &frequencyOffset, "rocof_offset", &rocofOffset, "output_mode",
+      &outputModeC);
 
   if (ret)
     throw ConfigError(json, err, "node-config-hook-pmu");
@@ -124,6 +129,13 @@ void PmuHook::parse(json_t *json) {
         json, "node-config-hook-pmu-number_plc",
         "Number of power line cycles cannot be less than 0 tried to set {}",
         numberPlc);
+
+  if (!outputModeC)
+    outputMode = OutputMode::FLOAT;
+  else if (strcmp(outputModeC, "complex") == 0)
+    outputMode = OutputMode::COMPLEX;
+  else
+    outputMode = OutputMode::FLOAT;
 
   if (!windowTypeC)
     logger->info("No Window type given, assume no windowing");
@@ -237,15 +249,15 @@ Hook::Reason PmuHook::process(struct Sample *smp) {
   timespec timeDiff = time_diff(&nextRun, &smp->ts.origin);
   int64_t timeDiffNs =
       static_cast<int64_t>(timeDiff.tv_sec) * 1'000'000'000l + timeDiff.tv_nsec;
-  if (timeDiffNs > 0) {
+
+  if (!run && timeDiffNs >= (-1'000'000'000l /
+                             sampleRate)) { //timeDiffNs >= -1e9/sampleRate
+    run = true;
+  } else if (run && timeDiffNs > 0) {
     nextRun = calcNextRun(smp->ts.origin);
     run = false;
-  } else if (timeDiffNs >=
-             (-1'000'000'000l / sampleRate)) { //timeDiffNs >= -1e9/sampleRate
-    if (run)
-      return Reason::SKIP_SAMPLE;
-    run = true;
-  }
+  } else if (run)
+    return Reason::SKIP_SAMPLE;
 
   Status phasorStatus = Status::VALID;
   timespec phasorTimestamp = {0};
@@ -256,7 +268,6 @@ Hook::Reason PmuHook::process(struct Sample *smp) {
         phasorStatus = Status::INVALID;
     }
 
-    logger->info("{}.{:09}", smp->ts.origin.tv_sec, smp->ts.origin.tv_nsec);
     size_t tsPos = 0;
     if (timeAlignType == TimeAlign::RIGHT)
       tsPos = windowSize - 1;
@@ -270,18 +281,27 @@ Hook::Reason PmuHook::process(struct Sample *smp) {
   // Make sure to update phasors after window update but estimate them before
   if (run) {
     for (unsigned i = 0; i < signalIndices.size(); i++) {
-      smp->data[i * 4 + 0].f =
-          lastPhasors[i].frequency + frequencyOffset; // Frequency
-      smp->data[i * 4 + 1].f = (lastPhasors[i].amplitude / pow(2, 0.5)) +
-                               amplitudeOffset; // Amplitude
-      smp->data[i * 4 + 2].f =
-          (lastPhasors[i].phase * 180 / M_PI) + phaseOffset;       // Phase
-      smp->data[i * 4 + 3].f = lastPhasors[i].rocof + rocofOffset; /* ROCOF */
-      ;
+      if (outputMode == OutputMode::COMPLEX) {
+        smp->data[i * 3 + 0].f =
+            lastPhasors[i].frequency + frequencyOffset; // Frequency
+        smp->data[i * 3 + 1].z =
+            std::polar(lastPhasors[i].amplitude / std::numbers::sqrt2,
+                       lastPhasors[i].phase);                        // Phasor
+        smp->data[i * 3 + 2].f = lastPhasors[i].rocof + rocofOffset; // ROCOF
+        smp->length = signalIndices.size() * 3;
+        smp->ts.origin = phasorTimestamp;
+      } else {
+        smp->data[i * 4 + 0].f =
+            lastPhasors[i].frequency + frequencyOffset; // Frequency
+        smp->data[i * 4 + 1].f = (lastPhasors[i].amplitude / pow(2, 0.5)) +
+                                 amplitudeOffset; // Amplitude
+        smp->data[i * 4 + 2].f =
+            (lastPhasors[i].phase * 180 / M_PI) + phaseOffset;       // Phase
+        smp->data[i * 4 + 3].f = lastPhasors[i].rocof + rocofOffset; /* ROCOF */
+        smp->length = signalIndices.size() * 4;
+        smp->ts.origin = phasorTimestamp;
+      }
     }
-    smp->ts.origin = phasorTimestamp;
-
-    smp->length = signalIndices.size() * 4;
   }
 
   if (!run || phasorStatus != Status::VALID)
