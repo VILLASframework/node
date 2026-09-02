@@ -18,13 +18,26 @@ struct timespec time_now() {
 }
 
 struct timespec time_add(const struct timespec *start,
-                         const struct timespec *end) {
-  struct timespec sum = {.tv_sec = end->tv_sec + start->tv_sec,
-                         .tv_nsec = end->tv_nsec + start->tv_nsec};
+                         const struct timespec *duration) {
+  struct timespec sum = {.tv_sec = duration->tv_sec + start->tv_sec,
+                         .tv_nsec = duration->tv_nsec + start->tv_nsec};
 
   if (sum.tv_nsec >= 1000000000) {
     sum.tv_sec += 1;
     sum.tv_nsec -= 1000000000;
+  }
+
+  return sum;
+}
+
+struct timespec time_sub(const struct timespec *start,
+                         const struct timespec *duration) {
+  struct timespec sum = {.tv_sec = start->tv_sec - duration->tv_sec,
+                         .tv_nsec = start->tv_nsec - duration->tv_nsec};
+
+  if (sum.tv_nsec < 0) {
+    sum.tv_sec -= 1;
+    sum.tv_nsec += 1000000000;
   }
 
   return sum;

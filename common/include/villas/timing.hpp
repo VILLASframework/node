@@ -20,8 +20,11 @@ struct timespec time_diff(const struct timespec *start,
 
 // Get sum of two timespec structs.
 struct timespec time_add(const struct timespec *start,
-                         const struct timespec *end);
+                         const struct timespec *duration);
 
+// Get sub of two timespec structs.
+struct timespec time_sub(const struct timespec *start,
+                         const struct timespec *duration);
 // Return current time as a struct timespec.
 struct timespec time_now();
 

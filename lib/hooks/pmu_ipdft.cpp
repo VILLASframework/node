@@ -7,6 +7,8 @@
 
 #include <villas/hooks/pmu.hpp>
 
+#include "villas/timing.hpp"
+
 namespace villas {
 namespace node {
 
@@ -17,12 +19,15 @@ protected:
   std::vector<std::vector<std::complex<double>>> dftMatrix;
   std::vector<std::complex<double>> dftResult;
 
-  unsigned frequencyCount; // Number of requency bins that are calculated
+  unsigned frequencyCount; // Number of frequency bins that are calculated
   double estimationRange;  // The range around nominalFreq used for estimation
+  double lastEstimation;
+  Phasor lastPhasor;
 
 public:
   IpDftPmuHook(Path *p, Node *n, int fl, int prio, bool en = true)
-      : PmuHook(p, n, fl, prio, en), frequencyCount(0), estimationRange(0)
+      : PmuHook(p, n, fl, prio, en), frequencyCount(0), estimationRange(0),
+        lastEstimation(0), lastPhasor(0)
 
   {}
 
@@ -77,7 +82,7 @@ public:
   }
 
   PmuHook::Phasor estimatePhasor(dsp::CosineWindow<double> *window,
-                                 const PmuHook::Phasor &lastPhasor) override {
+                                 dsp::Window<timespec> *windowTs) override {
     PmuHook::Phasor phasor = {0};
 
     // Calculate DFT
@@ -139,14 +144,19 @@ public:
       phasor.phase = bPhase - M_PI * delta;
 
       // ROCOF estimation
-      phasor.rocof =
-          ((phasor.frequency - lastPhasor.frequency) * (double)phasorRate);
+      timespec windowTsEnd = (*windowTs)[windowTs->size() - 1];
+      phasor.rocof = (phasor.frequency - lastPhasor.frequency) /
+                     (time_to_double(&(windowTsEnd)) - lastEstimation);
       // End estimate phasor
     }
 
     if (lastPhasor.frequency !=
         0) // Check if we already calculated a phasor before
       phasor.valid = Status::VALID;
+
+    lastPhasor = phasor;
+    timespec windowTsEnd = (*windowTs)[windowTs->size() - 1];
+    lastEstimation = time_to_double(&windowTsEnd);
 
     return phasor;
   }

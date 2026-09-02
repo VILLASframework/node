@@ -33,15 +33,21 @@ protected:
     RIGHT,
   };
 
+  enum class OutputMode {
+    FLOAT,
+    COMPLEX,
+  };
+
   std::vector<dsp::CosineWindow<double> *> windows;
   dsp::Window<timespec> *windowsTs;
-  std::vector<Phasor> lastPhasors;
+  std::vector<Phasor> currentPhasors;
 
   enum TimeAlign timeAlignType;
   enum WindowType windowType;
+  enum OutputMode outputMode;
 
   unsigned sampleRate;
-  double phasorRate;
+  int dataRate;
   double nominalFreq;
   double numberPlc;
   unsigned windowSize;
@@ -49,6 +55,8 @@ protected:
   double angleUnitFactor;
   uint64_t lastSequence;
   timespec nextRun;
+
+  bool run;
   bool init;
   unsigned initSampleCount;
 
@@ -59,7 +67,7 @@ protected:
   double rocofOffset;
 
   virtual Phasor estimatePhasor(dsp::CosineWindow<double> *window,
-                                const Phasor &lastPhasor);
+                                dsp::Window<timespec> *windowTs);
 
 public:
   PmuHook(Path *p, Node *n, int fl, int prio, bool en = true);
@@ -69,6 +77,9 @@ public:
   void parse(json_t *json) override;
 
   Hook::Reason process(struct Sample *smp) override;
+
+private:
+  timespec calcNextRun(timespec currentTimetag);
 };
 
 } // namespace node
