@@ -41,7 +41,7 @@ protected:
   enum WindowType windowType;
 
   unsigned sampleRate;
-  double phasorRate;
+  int dataRate;
   double nominalFreq;
   double numberPlc;
   unsigned windowSize;
@@ -49,6 +49,10 @@ protected:
   double angleUnitFactor;
   uint64_t lastSequence;
   timespec nextRun;
+  double phasorRate;
+  int64_t
+      phasorPeriodNs; // Phasor output period in nanoseconds, derived from phasorRate.
+  bool run;
   bool init;
   unsigned initSampleCount;
 
@@ -69,6 +73,9 @@ public:
   void parse(json_t *json) override;
 
   Hook::Reason process(struct Sample *smp) override;
+
+private:
+  timespec calcNextRun(timespec currentTimetag);
 };
 
 } // namespace node
