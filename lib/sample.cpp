@@ -206,7 +206,7 @@ int villas::node::sample_cmp(struct Sample *a, struct Sample *b, double epsilon,
 
   // Compare timestamp
   if (flags & (int)SampleFlags::HAS_TS_ORIGIN) {
-    if (time_delta(&a->ts.origin, &b->ts.origin) > epsilon) {
+    if (abs(time_delta(&a->ts.origin, &b->ts.origin)) > epsilon) {
       printf("ts.origin: %f != %f\n", time_to_double(&a->ts.origin),
              time_to_double(&b->ts.origin));
       return 3;
