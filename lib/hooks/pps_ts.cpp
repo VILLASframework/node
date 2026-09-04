@@ -22,6 +22,8 @@ protected:
     HORIZON,
   } mode;
 
+  enum TimeSource { CLOCK_RELATIME, SAMPLE } timeSource;
+
   uint64_t lastSequence;
 
   double lastValue;
@@ -60,18 +62,15 @@ public:
     SingleSignalHook::parse(json);
 
     const char *mode_str = nullptr;
+    const char *timeSourceC = nullptr;
 
-    double fSmps = 1.0;
-    ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: f, s?: F, s?: i, s?: i }",
-                         "mode", &mode_str, "threshold", &threshold,
-                         "expected_smp_rate", &fSmps, "horizon_estimation",
+    ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: s, s?: f, s?: i, s?: i }",
+                         "mode", &mode_str, "time_source", &timeSourceC,
+                         "threshold", &threshold, "horizon_estimation",
                          &horizonEstimation, "horizon_compensation",
                          &horizonCompensation);
     if (ret)
       throw ConfigError(json, err, "node-config-hook-pps_ts");
-
-    period = 1.0 / fSmps;
-    currentSecond = time(nullptr);
 
     if (mode_str) {
       if (!strcmp(mode_str, "simple"))
@@ -81,6 +80,13 @@ public:
       else
         throw ConfigError(json, "node-config-hook-pps_ts-mode",
                           "Unsupported mode: {}", mode_str);
+    }
+
+    if (timeSourceC) {
+      if (!strcmp(timeSourceC, "CLOCK_REALTIME"))
+        timeSource = TimeSource::CLOCK_RELATIME;
+      else
+        timeSource = TimeSource::SAMPLE;
     }
 
     state = State::PARSED;
@@ -107,12 +113,15 @@ public:
 
     // Detect Edge
     bool isEdge = lastValue < threshold && value > threshold;
-    if (isEdge) {
+
+    if (isEdge)
+      cntEdges++;
+
+    if (isEdge && cntEdges > 0) {
       tsVirt.tv_sec = currentSecond + 1;
       tsVirt.tv_nsec = 0;
       period = 1.0 / cntSmps;
       cntSmps = 0;
-      cntEdges++;
       currentSecond = 0;
     } else {
       struct timespec tsPeriod = time_from_double(period);
@@ -122,12 +131,18 @@ public:
     lastValue = value;
     cntSmps++;
 
-    if (!currentSecond &&
-        tsVirt.tv_nsec >
-            0.5e9) //take the second somewere in the center of the last second to reduce impact of system clock error
-      currentSecond = time(nullptr);
+    if (!currentSecond && tsVirt.tv_nsec > 0.5e9) {
+      //take the second somewere in the center of the last second to reduce impact of system clock error
+      if (timeSource == TimeSource::CLOCK_RELATIME) {
+        timespec t;
+        clock_gettime(CLOCK_RELATIME, &t);
+        currentSecond = t.tv_sec;
+      } else if (timeSource == TimeSource::SAMPLE) {
+        currentSecond = smp->ts.origin.tv_sec;
+      }
+    }
 
-    if (cntEdges < 5)
+    if (cntEdges < 2)
       return Hook::Reason::SKIP_SAMPLE;
 
     smp->ts.origin = tsVirt;
@@ -172,7 +187,13 @@ public:
             timeError / (cntSmpsAvg * horizonCompensation);
         period = periodEstimate + periodErrorCompensation;
       } else {
-        tsVirt.tv_sec = time(nullptr);
+        if (timeSource == TimeSource::CLOCK_RELATIME) {
+          timespec t;
+          clock_gettime(CLOCK_RELATIME, &t);
+          tsVirt.tv_sec = t.tv_sec;
+        } else if (timeSource == TimeSource::SAMPLE) {
+          tsVirt.tv_sec = smp->ts.origin.tv_sec;
+        }
         tsVirt.tv_nsec = 0;
         isSynced = true;
         cntEdges = 0;
