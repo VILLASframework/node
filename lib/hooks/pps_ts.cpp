@@ -17,41 +17,28 @@ namespace node {
 class PpsTsHook : public SingleSignalHook {
 
 protected:
-  enum Mode {
-    SIMPLE,
-    HORIZON,
-  } mode;
-
-  enum TimeSource { CLOCK_RELATIME, SAMPLE } timeSource;
+  enum class TimeSource { OS, SAMPLE } timeSource;
 
   uint64_t lastSequence;
-
+  bool firstSample;
   double lastValue;
   double threshold;
+  bool armSecDetect;
 
-  bool isSynced;
-  bool isLocked;
   struct timespec tsVirt;
-  double timeError;               // In seconds
-  double periodEstimate;          // In seconds
-  double periodErrorCompensation; // In seconds
-  double period;                  // In seconds
+  double period; // In seconds
   uintmax_t cntEdges;
   uintmax_t cntSmps;
-  uintmax_t cntSmpsTotal;
-  unsigned horizonCompensation;
-  unsigned horizonEstimation;
+
   unsigned currentSecond;
   std::vector<uintmax_t> filterWindow;
 
 public:
   PpsTsHook(Path *p, Node *n, int fl, int prio, bool en = true)
-      : SingleSignalHook(p, n, fl, prio, en), mode(Mode::SIMPLE),
-        lastSequence(0), lastValue(0), threshold(1.5), isSynced(false),
-        isLocked(false), timeError(0.0), periodEstimate(0.0),
-        periodErrorCompensation(0.0), period(0.0), cntEdges(0), cntSmps(0),
-        cntSmpsTotal(0), horizonCompensation(10), horizonEstimation(10),
-        currentSecond(0), filterWindow(horizonEstimation + 1, 0) {}
+      : SingleSignalHook(p, n, fl, prio, en), timeSource(TimeSource::OS),
+        lastSequence(0), firstSample(false), lastValue(0), threshold(1.5),
+        armSecDetect(false), tsVirt({0, 0}), period(0.0), cntEdges(0),
+        cntSmps(0), currentSecond(0) {}
 
   void parse(json_t *json) override {
     int ret;
@@ -61,90 +48,76 @@ public:
 
     SingleSignalHook::parse(json);
 
-    const char *mode_str = nullptr;
     const char *timeSourceC = nullptr;
 
-    ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: s, s?: f, s?: i, s?: i }",
-                         "mode", &mode_str, "time_source", &timeSourceC,
-                         "threshold", &threshold, "horizon_estimation",
-                         &horizonEstimation, "horizon_compensation",
-                         &horizonCompensation);
+    ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: f }", "time_source",
+                         &timeSourceC, "threshold", &threshold);
     if (ret)
       throw ConfigError(json, err, "node-config-hook-pps_ts");
 
-    if (mode_str) {
-      if (!strcmp(mode_str, "simple"))
-        mode = Mode::SIMPLE;
-      else if (!strcmp(mode_str, "horizon"))
-        mode = Mode::HORIZON;
-      else
-        throw ConfigError(json, "node-config-hook-pps_ts-mode",
-                          "Unsupported mode: {}", mode_str);
-    }
-
     if (timeSourceC) {
-      if (!strcmp(timeSourceC, "CLOCK_REALTIME"))
-        timeSource = TimeSource::CLOCK_RELATIME;
-      else
+      if (!strcmp(timeSourceC, "sample"))
         timeSource = TimeSource::SAMPLE;
+      else
+        timeSource = TimeSource::OS;
     }
 
     state = State::PARSED;
   }
 
   villas::node::Hook::Reason process(struct Sample *smp) override {
-    switch (mode) {
-    case Mode::SIMPLE:
-      return processSimple(smp);
-
-    case Mode::HORIZON:
-      return processHorizon(smp);
-
-    default:
-      return Reason::ERROR;
-    }
-  }
-
-  villas::node::Hook::Reason processSimple(struct Sample *smp) {
     assert(state == State::STARTED);
 
     // Get value of PPS signal
     float value = smp->data[signalIndex].f; // TODO check if it is really float
 
+    if (!firstSample) {
+      firstSample = true;
+      lastValue = value;
+      return Hook::Reason::SKIP_SAMPLE;
+    }
+
     // Detect Edge
     bool isEdge = lastValue < threshold && value > threshold;
 
-    if (isEdge)
-      cntEdges++;
+    if (isEdge) {
 
-    if (isEdge && cntEdges > 0) {
-      tsVirt.tv_sec = currentSecond + 1;
-      tsVirt.tv_nsec = 0;
-      period = 1.0 / cntSmps;
+      if (cntEdges > 0) {
+        tsVirt.tv_sec = currentSecond + 1;
+        tsVirt.tv_nsec = 0;
+        period = 1.0 / cntSmps;
+        currentSecond = 0;
+      }
       cntSmps = 0;
-      currentSecond = 0;
+      cntEdges++;
+      armSecDetect = true;
     } else {
       struct timespec tsPeriod = time_from_double(period);
       tsVirt = time_add(&tsVirt, &tsPeriod);
     }
 
-    lastValue = value;
-    cntSmps++;
+    if (armSecDetect) {
+      long current_nsec = 0;
+      if (timeSource == TimeSource::OS)
+        current_nsec = time_now().tv_nsec;
+      else if (timeSource == TimeSource::SAMPLE)
+        current_nsec = smp->ts.origin.tv_nsec;
 
-    if (!currentSecond && tsVirt.tv_nsec > 0.5e9) {
-      //take the second somewere in the center of the last second to reduce impact of system clock error
-      if (timeSource == TimeSource::CLOCK_RELATIME) {
-        timespec t;
-        clock_gettime(CLOCK_RELATIME, &t);
-        currentSecond = t.tv_sec;
-      } else if (timeSource == TimeSource::SAMPLE) {
-        currentSecond = smp->ts.origin.tv_sec;
+      if (current_nsec > 0.5e9) {
+        //take the second somewere in the center of the last second to reduce impact of system clock error
+        if (timeSource == TimeSource::OS)
+          currentSecond = time_now().tv_sec;
+        else if (timeSource == TimeSource::SAMPLE)
+          currentSecond = smp->ts.origin.tv_sec;
+        armSecDetect = false;
       }
     }
+
+    lastValue = value;
+    cntSmps++;
 
     if (cntEdges < 2)
       return Hook::Reason::SKIP_SAMPLE;
-
     smp->ts.origin = tsVirt;
     smp->flags |= (int)SampleFlags::HAS_TS_ORIGIN;
 
@@ -153,78 +126,6 @@ public:
                    smp->sequence - lastSequence);
 
     lastSequence = smp->sequence;
-    return Hook::Reason::OK;
-  }
-
-  villas::node::Hook::Reason processHorizon(struct Sample *smp) {
-    assert(state == State::STARTED);
-
-    // Get value of PPS signal
-    float value = smp->data[signalIndex].f; // TODO check if it is really float
-
-    // Detect Edge
-    bool isEdge = lastValue < threshold && value > threshold;
-
-    lastValue = value;
-
-    if (isEdge) {
-      if (isSynced) {
-        if (tsVirt.tv_nsec > 0.5e9)
-          timeError += 1.0 - (tsVirt.tv_nsec / 1.0e9);
-        else
-          timeError -= (tsVirt.tv_nsec / 1.0e9);
-
-        filterWindow[cntEdges % filterWindow.size()] = cntSmpsTotal;
-        // Estimated sample period over last 'horizonEstimation' seconds
-        unsigned int tmp =
-            cntEdges < filterWindow.size() ? cntEdges : horizonEstimation;
-        double cntSmpsAvg =
-            (cntSmpsTotal -
-             filterWindow[(cntEdges - tmp) % filterWindow.size()]) /
-            tmp;
-        periodEstimate = 1.0 / cntSmpsAvg;
-        periodErrorCompensation =
-            timeError / (cntSmpsAvg * horizonCompensation);
-        period = periodEstimate + periodErrorCompensation;
-      } else {
-        if (timeSource == TimeSource::CLOCK_RELATIME) {
-          timespec t;
-          clock_gettime(CLOCK_RELATIME, &t);
-          tsVirt.tv_sec = t.tv_sec;
-        } else if (timeSource == TimeSource::SAMPLE) {
-          tsVirt.tv_sec = smp->ts.origin.tv_sec;
-        }
-        tsVirt.tv_nsec = 0;
-        isSynced = true;
-        cntEdges = 0;
-        cntSmpsTotal = 0;
-      }
-      cntSmps = 0;
-      cntEdges++;
-
-      logger->debug(
-          "Time Error is: {} periodEstimate {} periodErrorCompensation {}",
-          timeError, periodEstimate, periodErrorCompensation);
-    }
-
-    cntSmps++;
-    cntSmpsTotal++;
-
-    if (cntEdges < 5)
-      return Hook::Reason::SKIP_SAMPLE;
-
-    smp->ts.origin = tsVirt;
-    smp->flags |= (int)SampleFlags::HAS_TS_ORIGIN;
-
-    struct timespec tsPeriod = time_from_double(period);
-    tsVirt = time_add(&tsVirt, &tsPeriod);
-
-    if ((smp->sequence - lastSequence) > 1)
-      logger->warn("Samples missed: {} sampled missed",
-                   smp->sequence - lastSequence);
-
-    lastSequence = smp->sequence;
-
     return Hook::Reason::OK;
   }
 };
