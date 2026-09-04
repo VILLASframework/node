@@ -80,4 +80,4 @@ EOF
 
 villas node -d debug  config.json
 
-villas compare output.dat expect.dat
+villas compare -T output.dat expect.dat
