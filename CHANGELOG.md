@@ -1,5 +1,39 @@
 # Changelog
 
+## [1.3.0](https://github.com/VILLASframework/node/compare/v1.2.2...v1.3.0) (2026-09-07)
+
+
+### Features
+
+* **clangd:** Add compilation database path to build dir ([cf11c70](https://github.com/VILLASframework/node/commit/cf11c700dd033589b8086f52569b34541be430de))
+* **config:** Allow JSON files with comments ([ddc86cc](https://github.com/VILLASframework/node/commit/ddc86ccaf5712aedc3f295f203f212e97ead7c01))
+* **config:** Validate configuration against JSON schema ([8f7a594](https://github.com/VILLASframework/node/commit/8f7a59442ee1285ba1d9f33d62c5ec9877b32ab1))
+* **editorconfig:** Add yaml configuration ([cb3aa96](https://github.com/VILLASframework/node/commit/cb3aa96950c0ab2969219664d01f172783ca9478))
+* **gdb:** Add gdbinit for nlohmann::json pretty printing ([627543f](https://github.com/VILLASframework/node/commit/627543f09093e16c16e8a569fa22b080c4e5a7c6))
+* **nix:** Use gcc14Stdenv for devShell.default ([f10bc15](https://github.com/VILLASframework/node/commit/f10bc151873d39fb5d104fc7abe6bc2ff40d6593))
+* **node:** Introduce json-schema-validator for bundled schemas ([629844b](https://github.com/VILLASframework/node/commit/629844bdf645e07a0f60cac729051401fb928cc5))
+* **openapi:** Make redocly configuration more strict ([1bb89ea](https://github.com/VILLASframework/node/commit/1bb89ea22b0f4efd41805278e5e20893ea62c444))
+
+
+### Bug Fixes
+
+* **config:** Always allow integers where floats are allowed ([ed648e3](https://github.com/VILLASframework/node/commit/ed648e314883baebb98726614eaa1f1d60166696))
+* **docker:** Add workaround for local/lib libraries ([a921bc6](https://github.com/VILLASframework/node/commit/a921bc67e56b8ed653018c9f1223a02aad588fab))
+* **format-raw:** Remove unnecessary exception ([58bc131](https://github.com/VILLASframework/node/commit/58bc131d1b99eebda0048841e20e321a1c02d5c4))
+* **hook-limit_value:** Fix memory corruption ([f0b6da8](https://github.com/VILLASframework/node/commit/f0b6da80604df251978227160724cf3bc376db63))
+* **hook-pmu_dft:** Fix configuration typos ([d782154](https://github.com/VILLASframework/node/commit/d782154131b98b11fe87a43a9cd2f3dd8b241ef0))
+* **hook-pmu:** Allow explicit none window configuration ([f83898a](https://github.com/VILLASframework/node/commit/f83898a138f8419f0f8c362dea8cc47922ecd9c9))
+* **node-loopback:** Fix use of undefined macro ([aff6078](https://github.com/VILLASframework/node/commit/aff6078dcf0387e950c0e36d9666e7c7e23f3c3b))
+* **node:** Remove enabled and initial_sequenceno from configuration ([a617c14](https://github.com/VILLASframework/node/commit/a617c140ff70b2201231e62bbac7bb692ca36950))
+* **openapi:** Fix OpenAPI generation ([90bc643](https://github.com/VILLASframework/node/commit/90bc64386d2f31ac7647fbfe72afd4e56e6d7e93))
+* **openapi:** Use OpenAPI 3.1.1 with JSON Schema Draft 07 dialect ([ca6d257](https://github.com/VILLASframework/node/commit/ca6d257ce2fce19c1a9c5aa2c5b22dd960334ab1))
+* **redocly:** Fix linter configuration ([6f17e43](https://github.com/VILLASframework/node/commit/6f17e4328bd6950684bce0e4a819620a57324cf8))
+* **super_node:** Remove unused broken code ([d2a612f](https://github.com/VILLASframework/node/commit/d2a612fb724aad313bd90d555d5e5e675af4406d))
+* **tests:** Fix invalid test and example configurations ([de7c0ff](https://github.com/VILLASframework/node/commit/de7c0ff811b2a1a2e51a2b82b755e9f49c517b4e))
+* **tests:** Reap left-over children from integration tests ([8e78de4](https://github.com/VILLASframework/node/commit/8e78de44a865f448b48457fa1f67182b8d2b58db))
+* **tool:** Catch std::exception instead of std::runtime_error ([f6fba5d](https://github.com/VILLASframework/node/commit/f6fba5d446626baef0180c9030c4483c319c5c90))
+* **typo:** Fix typo in "frequency" ([ba996ae](https://github.com/VILLASframework/node/commit/ba996aed9ed86cd4dcf7256278a81aaa12dce991))
+
 ## [1.2.2](https://github.com/VILLASframework/node/compare/v1.2.1...v1.2.2) (2026-09-07)
 
 
