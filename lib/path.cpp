@@ -674,8 +674,7 @@ json_t *Path::toJson() const {
 
   json_t *json_path = json_pack(
       "{ s: s, s: s, s: s, s: b, s: b, s: b, s: b, s: b, s: b, s: i, s: o, s: "
-      "o, "
-      "s: o, s: o }",
+      "o, s: o, s: o }",
       "uuid", uuid::toString(uuid).c_str(), "state",
       stateToString(state).c_str(), "mode", mode == Mode::ANY ? "any" : "all",
       "enabled", enabled, "builtin", builtin, "reversed", reversed,
