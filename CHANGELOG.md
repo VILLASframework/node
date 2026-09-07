@@ -5,6 +5,7 @@
 
 ### Features
 
+* Add grid2op-timeseries-converter script for chronics file generation ([df1fbae](https://github.com/VILLASframework/node/commit/df1fbaeb7959503fe354bafc69b834d997d1dbb9))
 * **clangd:** Add compilation database path to build dir ([cf11c70](https://github.com/VILLASframework/node/commit/cf11c700dd033589b8086f52569b34541be430de))
 * **config:** Allow JSON files with comments ([ddc86cc](https://github.com/VILLASframework/node/commit/ddc86ccaf5712aedc3f295f203f212e97ead7c01))
 * **config:** Validate configuration against JSON schema ([8f7a594](https://github.com/VILLASframework/node/commit/8f7a59442ee1285ba1d9f33d62c5ec9877b32ab1))
