@@ -229,7 +229,7 @@ function additionalItemsRule() {
   }
 }
 
-module.exports = {
+export default {
   id: 'villas',
 
   preprocessors: {
