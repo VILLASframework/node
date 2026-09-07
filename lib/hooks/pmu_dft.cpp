@@ -269,9 +269,9 @@ public:
     json_t *json_start = json_object_get(json, "start_freqency");
     if (json_start)
       startFrequency = json_number_value(json_start);
-    json_t *json_end = json_object_get(json, "end_freqency");
+    json_t *json_end = json_object_get(json, "end_frequency");
     if (json_end)
-      endFreqency = json_number_value(json_end);
+      endFrequency = json_number_value(json_end);
 
     windowSize = sampleRate * windowSizeFactor / (double)rate;
     logger->info(
