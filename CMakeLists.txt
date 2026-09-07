@@ -7,7 +7,7 @@
 cmake_minimum_required(VERSION 3.14)
 
 project(villas-node
-    VERSION 1.2.1 # x-release-please-version
+    VERSION 1.2.2 # x-release-please-version
     DESCRIPTION "Open-Source Real-time Multi-protocol Gateway"
     HOMEPAGE_URL "https://www.fein-aachen.org/projects/villas-node/"
     LANGUAGES C CXX
