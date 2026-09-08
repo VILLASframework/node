@@ -18,12 +18,12 @@ set(LIBRARIES
     m
     stdc++
     rt
+    nlohmann_json_schema_validator
 )
 
 set(LIB_SRC
     capabilities.cpp
     config_helper.cpp
-    config.cpp
     dumper.cpp
     format.cpp
     mapping.cpp
@@ -37,6 +37,7 @@ set(LIB_SRC
     node_capi.cpp
     node_compat.cpp
     node_list.cpp
+    json_schema.cpp
     path_destination.cpp
     path_source.cpp
     path.cpp

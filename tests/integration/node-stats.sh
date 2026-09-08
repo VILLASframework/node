@@ -24,7 +24,6 @@ cat > config.json <<EOF
     "nodes": {
         "stats_1": {
             "type": "stats",
-            "node": "signal_1",
             "rate": 10.0,
             "in": {
                 "signals": [

@@ -15,6 +15,7 @@ add_library(villas-common SHARED
     cpuset.cpp
     dsp/pid.cpp
     hist.cpp
+    json.cpp
     kernel/kernel.cpp
     kernel/rt.cpp
     list.cpp
@@ -55,6 +56,7 @@ target_include_directories(villas-common PUBLIC
 )
 
 target_link_libraries(villas-common PUBLIC
+    nlohmann_json::nlohmann_json
     PkgConfig::JANSSON
     PkgConfig::UUID
     ${OPENSSL_LIBRARIES}

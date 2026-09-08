@@ -1,0 +1,140 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+title: Comedi-compatible DAQ/ADC cards
+type: object
+required: [type, device]
+properties:
+  type:
+    type: string
+    const: comedi
+
+  device:
+    type: string
+    description: The path to the Comedi device file.
+    example: /dev/comedi0
+
+  in:
+    type: object
+    required: [rate, signals]
+    properties:
+      enabled:
+        default: true
+        $ref: ./shared-node-enabled.yaml
+
+      subdevice:
+        type: integer
+        description: The Comedi subdevice number. Auto-detected if not specified.
+
+      bufsize:
+        type: integer
+        default: 16
+        description: The size of the Comedi buffer in kilobytes.
+
+      rate:
+        type: integer
+        description: The sampling rate in Hertz.
+
+      builtin:
+        default: true
+        $ref: ./shared-node-builtin.yaml
+
+      vectorize:
+        default: 1
+        $ref: ./shared-node-vectorize.yaml
+
+      hooks:
+        default: []
+        $ref: ./shared-hook-list.yaml
+
+      signals:
+        type: array
+        minItems: 1
+        items:
+          $ref: "#/definitions/node-comedi-signal"
+
+    additionalProperties: false
+
+  out:
+    type: object
+    required: [rate, signals]
+    properties:
+      enabled:
+        default: true
+        $ref: ./shared-node-enabled.yaml
+
+      subdevice:
+        type: integer
+        description: The Comedi subdevice number. Auto-detected if not specified.
+
+      bufsize:
+        type: integer
+        default: 16
+        description: The size of the Comedi buffer in kilobytes.
+
+      rate:
+        type: integer
+        description: The sampling rate in Hertz.
+
+      netem:
+        $ref: ./shared-node-netem.yaml
+
+      fwmark:
+        $ref: ./shared-node-fwmark.yaml
+
+      builtin:
+        default: true
+        $ref: ./shared-node-builtin.yaml
+
+      vectorize:
+        default: 1
+        $ref: ./shared-node-vectorize.yaml
+
+      hooks:
+        default: []
+        $ref: ./shared-hook-list.yaml
+
+      signals:
+        type: array
+        minItems: 1
+        items:
+          $ref: "#/definitions/node-comedi-signal"
+
+    additionalProperties: false
+
+additionalProperties: false
+
+definitions:
+  node-comedi-signal:
+    type: object
+    required:
+    - channel
+    - range
+    - aref
+
+    properties:
+      channel:
+        type: integer
+
+      range:
+        type: integer
+
+      aref:
+        type: integer
+
+      name:
+        $ref: ./shared-signal-name.yaml
+
+      unit:
+        $ref: ./shared-signal-unit.yaml
+
+      type:
+        $ref: ./shared-signal-type.yaml
+
+      init:
+        $ref: ./shared-signal-init.yaml
+
+      enabled:
+        $ref: ./shared-signal-enabled.yaml
+    additionalProperties: false

@@ -1,0 +1,78 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+description: |
+  The netem configuration allows the user to apply network impairments to packets send out by the nodes.
+
+  Please note, that the network emulation feature is currently supported by the following node-types:
+  - [`socket`](/docs/node/nodes/socket)
+  - [`nanomsg`](/docs/node/nodes/nanomsg)
+  - [`zeromq`](/docs/node/nodes/zeromq)
+  - [`rtp`](/docs/node/nodes/rtp)
+
+type: object
+properties:
+  enabled:
+    type: boolean
+    default: true
+    description: |
+      Enable or disable the network emulation for this node.
+
+  distribution:
+    description: |
+      One of the delay distributions supported by the `tc` command (see [tc-netem(8)](https://man7.org/linux/man-pages/man8/tc-netem.8.html)).
+    oneOf:
+    - type: string
+      enum: [uniform, normal, pareto, paretonormal]
+    - type: array
+      items:
+        type: integer
+
+  correlation:
+    type: number
+    minimum: 0
+    maximum: 100
+
+  limit:
+    type: integer
+    minimum: 1
+
+  delay:
+    description: |
+      Delay packets in microseconds.
+    type: integer
+    minimum: 1
+
+  jitter:
+    title: Jitter
+    description: |
+      Apply a jitter to the packet delay (in microseconds).
+    type: integer
+    minimum: 1
+
+  loss:
+    title: Packet Loss Percentage
+    description: |
+      Percentage of packets which will be dropped.
+    type: number
+    minimum: 0
+    maximum: 100
+
+  duplicate:
+    title: Packet Duplication Percentage
+    description: |
+      Percentage of packets which will be duplicated.
+    type: number
+    minimum: 0
+    maximum: 100
+
+  corruption:
+    title: Packet Corruption Percentage
+    description: |
+      Percentage of packets which will be corrupted.
+    type: number
+    minimum: 0
+    maximum: 100
+
+additionalProperties: false

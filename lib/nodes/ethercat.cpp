@@ -10,6 +10,7 @@
 #include <sstream>
 
 #include <villas/exceptions.hpp>
+#include <villas/jansson.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/ethercat.hpp>
 #include <villas/super_node.hpp>
@@ -100,15 +101,16 @@ int villas::node::ethercat_type_start(villas::node::SuperNode *sn) {
   if (sn == nullptr)
     throw RuntimeError("EtherCAT node-type requires super-node");
 
-  json_t *json = sn->getConfig();
+  JanssonPtr json = sn->getConfig();
   if (json) {
-    ret = json_unpack_ex(
-        json, &err, 0, "{ s?: i, s?:i, s?: { s?: { s?: i, s?: i, s?: i } } }",
-        "ethernet", "master", &master_id, "alias", &alias, "coupler",
-        "position", &coupler.position, "product_code", &coupler.product_code,
-        "vendor_id", &coupler.vendor_id);
+    ret =
+        json_unpack_ex(json.get(), &err, 0,
+                       "{ s?: i, s?:i, s?: { s?: { s?: i, s?: i, s?: i } } }",
+                       "ethernet", "master", &master_id, "alias", &alias,
+                       "coupler", "position", &coupler.position, "product_code",
+                       &coupler.product_code, "vendor_id", &coupler.vendor_id);
     if (ret)
-      throw ConfigError(json, err, "node-config-node-ethercat");
+      throw ConfigError(json.get(), err, "node-config-node-ethercat");
   }
 
   master = ecrt_request_master(master_id);

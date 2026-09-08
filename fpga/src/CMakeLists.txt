@@ -15,6 +15,3 @@ add_executable(villas-fpga-pipe villas-fpga-pipe.cpp)
 target_link_libraries(villas-fpga-pipe PUBLIC
     villas-fpga
 )
-
-
-add_executable(pcimem pcimem.c)

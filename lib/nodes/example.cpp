@@ -165,7 +165,7 @@ public:
 
 // Register node
 static char n[] = "example";
-static char d[] = "An example for staring new node-type implementations";
+static char d[] = "An example for starting new node-type implementations";
 static NodePlugin<ExampleNode, n, d,
                   (int)NodeFactory::Flags::SUPPORTS_READ |
                       (int)NodeFactory::Flags::SUPPORTS_WRITE |

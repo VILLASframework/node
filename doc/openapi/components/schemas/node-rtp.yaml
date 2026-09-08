@@ -1,0 +1,135 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+type: object
+required: [type, in, out]
+properties:
+  type:
+    type: string
+    const: rtp
+
+  format:
+    default: villas.binary
+    $ref: ./format.yaml
+
+  rtcp:
+    type: boolean
+    description: Enable Real-time Control Protocol (RTCP)
+
+  aimd:
+    type: object
+    properties:
+      a:
+        type: number
+        default: 10
+
+      b:
+        type: number
+        default: 0.5
+
+      Kp:
+        type: number
+        default: 1.0
+
+      Ki:
+        type: number
+        default: 0.0
+
+      Kd:
+        type: number
+        default: 0.0
+
+      rate_min:
+        type: number
+        default: 1
+
+      rate_source:
+        type: number
+        default: 2000
+
+      rate_init:
+        type: number
+
+      log:
+        type: string
+
+      hook_type:
+        type: string
+        default: disabled
+        enum:
+        - decimate
+        - limit_rate
+        - disabled
+
+    additionalProperties: false
+
+  in:
+    type: object
+    required:
+    - address
+    properties:
+      enabled:
+        default: true
+        $ref: ./shared-node-enabled.yaml
+
+      address:
+        type: string
+        description: |
+          The local address and port number this node should listen for incoming packets.
+
+      builtin:
+        default: true
+        $ref: ./shared-node-builtin.yaml
+
+      vectorize:
+        default: 1
+        $ref: ./shared-node-vectorize.yaml
+
+      hooks:
+        default: []
+        $ref: ./shared-hook-list.yaml
+
+      signals:
+        $ref: ./shared-signal-list.yaml
+
+    additionalProperties: false
+
+  out:
+    type: object
+    required:
+    - address
+    properties:
+      enabled:
+        default: true
+        $ref: ./shared-node-enabled.yaml
+
+      address:
+        type: string
+        description: |
+          The remote address and port number to which this node will send data.
+
+      netem:
+        $ref: ./shared-node-netem.yaml
+
+      fwmark:
+        $ref: ./shared-node-fwmark.yaml
+
+      builtin:
+        default: true
+        $ref: ./shared-node-builtin.yaml
+
+      vectorize:
+        default: 1
+        $ref: ./shared-node-vectorize.yaml
+
+      hooks:
+        default: []
+        $ref: ./shared-hook-list.yaml
+
+      signals:
+        $ref: ./shared-signal-list.yaml
+
+    additionalProperties: false
+
+additionalProperties: false

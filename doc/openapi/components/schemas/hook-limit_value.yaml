@@ -1,0 +1,33 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+type: object
+required: [type, min, max]
+additionalProperties: false
+properties:
+  type:
+    type: string
+    const: limit_value
+
+  min:
+    description: The smallest value which will pass through the hook before getting clipped.
+    type: number
+
+  max:
+    description: The largest value which will pass through the hook before getting clipped.
+    type: number
+
+  priority:
+    default: 99
+    $ref: ./shared-hook-priority.yaml
+
+  signal:
+    $ref: ./shared-hook-signal.yaml
+
+  signals:
+    $ref: ./shared-hook-signals.yaml
+
+oneOf:
+- required: [signals]
+- required: [signal]

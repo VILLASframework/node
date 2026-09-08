@@ -19,6 +19,7 @@ post:
           type: object
           required:
             - position
+          additionalProperties: false
           properties:
             position:
               type: integer

@@ -1,0 +1,44 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+type: object
+required: [type, signal]
+additionalProperties: false
+properties:
+  type:
+    type: string
+    const: pps_ts
+
+  mode:
+    type: string
+    enum:
+    - simple
+    - horizon
+    default: simple
+    description: "The synchronization mode. The `horizon` mode is currently no recommended to use as it is not fully tested."
+
+  threshold:
+    type: number
+    default: 1.5
+    description: "The signal level threshold of the PPS signal which is used to detect an edge."
+
+  expected_smp_rate:
+    type: number
+    default: 1.0
+    description: "The expected sampling rate of the input signal. Only important for a faster initialization."
+
+  horizon_estimation:
+    type: integer
+    default: 10
+
+  horizon_compensation:
+    type: integer
+    default: 10
+
+  priority:
+    default: 99
+    $ref: ./shared-hook-priority.yaml
+
+  signal:
+    $ref: ./shared-hook-signal.yaml

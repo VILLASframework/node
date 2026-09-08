@@ -6,7 +6,7 @@ Author: Steffen Vogel <post@steffenvogel.de>
 Author: Daniel Krebs <github@daniel-krebs.net>
 Author: Hatim Kanchwala <hatim@hatimak.me>
 Author:	Pascal Bauer <pascal.bauer@rwth-aachen.de>
-Author: Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de
+Author: Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
 SPDX-FileCopyrightText: 2017-2022 Steffen Vogel <post@steffenvogel.de>
 SPDX-FileCopyrightText: 2017-2022 Daniel Krebs <github@daniel-krebs.net>
 SPDX-FileCopyrightText: 2017-2022 Hatim Kanchwala <hatim@hatimak.me>
@@ -63,7 +63,7 @@ whitelist = [
     ["acs.eonerc.rwth-aachen.de", "sysgen"],
 ]
 
-# List of VLNI ids of AXI4-Stream infrastructure IP cores
+# List of VLNV ids of AXI4-Stream infrastructure IP cores
 # which do not alter data see
 # PG085 (AXI4-Stream Infrastructure IP Suite v2.2)
 axi_converter_whitelist = [
@@ -71,7 +71,6 @@ axi_converter_whitelist = [
     ["xilinx.com", "ip", "axis_clock_converter"],
     ["xilinx.com", "ip", "axis_register_slice"],
     ["xilinx.com", "ip", "axis_dwidth_converter"],
-    ["xilinx.com", "ip", "axis_register_slice"],
     ["xilinx.com", "ip", "axis_data_fifo"],
     ["xilinx.com", "ip", "floating_point"],
     ["xilinx.com", "module_ref", "prepend_seqnum"],
@@ -160,7 +159,7 @@ for module in modules:
     instance = module.get("INSTANCE")
     vlnv = module.get("VLNV")
 
-    # Ignroing unkown
+    # Ignoring IPs not present in the whitelist
     if not vlnv_match(vlnv, whitelist):
         continue
 

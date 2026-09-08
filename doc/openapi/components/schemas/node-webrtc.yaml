@@ -1,0 +1,84 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+type: object
+required: [type, session]
+properties:
+  type:
+    type: string
+    const: webrtc
+
+  format:
+    default: villas.binary
+    $ref: ./format.yaml
+
+  wait_seconds:
+    type: integer
+    default: 0
+    description: |
+      Suspend start-up of VILLASnode for some seconds until the connection with the remote peer has been established.
+
+  ordered:
+    type: boolean
+    default: false
+    description: |
+      Indicates if data is allowed to be delivered out of order.
+      The default value of false, does not make guarantees that data will be delivered in order.
+
+  max_retransmits:
+    type: integer
+    default: 0
+    description: |
+      Limit the number of times a channel will retransmit data if not successfully delivered.
+      This value may be clamped if it exceeds the maximum value supported.
+
+  session:
+    type: string
+    title: Session identifier
+    description: A unique session identifier which must be shared between two nodes
+
+  peer:
+    type: string
+    title: Peer identifier
+    description: A unique peer identifier within the session. Defaults to the node UUID.
+
+  server:
+    type: string
+    title: Signaling Server Address
+    description: Address to the websocket signaling server
+    default: wss://villas.k8s.eonerc.rwth-aachen.de/ws/signaling
+
+  ice:
+    type: object
+    title: ICE configuration settings
+    properties:
+      servers:
+        title: ICE Servers
+        description: A list of ICE servers used for connection establishment
+        type: array
+        items:
+          type: string
+          format: uri
+          title: STUN & TURN server URI
+          description: |
+            A valid Uniform Resource Identifier (URI) identifying a STUN or TURN server.
+
+            See [RFC7064](https://datatracker.ietf.org/doc/html/rfc7064) and [RFC7065](https://datatracker.ietf.org/doc/html/rfc7065) for details.
+
+            As an extension to the URI format specified additional username & password can be specified as shown in the examples
+
+      tcp:
+        type: boolean
+        title: Enable ICE over TCP
+        description: Whether or not ICE candidates using the TCP transport should be gathered.
+
+    additionalProperties: false
+
+  in:
+    $ref: ./shared-node-in.yaml
+
+  out:
+    $ref: ./shared-node-out.yaml
+
+additionalProperties: false

@@ -900,7 +900,7 @@ void GooseNode::parseOutput(json_t *json) {
   char const *interface_id = "lo";
   ret = json_unpack_ex(
       json, &err, 0,
-      "{ s:o, s:?b, s:?s, s:?i, s:?s, s:?i, s:?i, s:?s, s:?f }", //
+      "{ s:o, s:?b, s:?s, s:?i, s:?s, s:?i, s:?i, s:?s, s:?F }", //
       "publishers", &json_publishers,                            //
       "routed", &routed,                                         //
       "local_address", &local_address,                           //
@@ -979,8 +979,14 @@ void GooseNode::parsePublisherData(json_t *json,
 
     auto signal = std::optional<int>{};
 
-    if (signal_str)
+    if (signal_str) {
       signal = out.signals->getIndexByName(signal_str);
+      if (!signal || *signal == -1)
+        throw RuntimeError("Name not found in output signal section");
+    }
+
+    if (!json_value && !signal_str)
+      throw RuntimeError("Need either signal name or signal value");
 
     OutputData value = {.signal = signal,
                         .default_value =

@@ -19,10 +19,15 @@ set(TEST_SRC
     signal.cpp
 )
 
+if(WITH_NODE_C37_118)
+    list(APPEND TEST_SRC c37_118.cpp)
+endif()
+
 add_executable(unit-tests ${TEST_SRC})
 target_link_libraries(unit-tests PUBLIC
     PkgConfig::CRITERION
     Threads::Threads
+    nodes
     villas
 )
 

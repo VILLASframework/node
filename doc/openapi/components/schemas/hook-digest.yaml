@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+type: object
+required: [type, uri, algorithm]
+additionalProperties: false
+properties:
+  type:
+    type: string
+    const: digest
+
+  uri:
+    description: The output file for digests.
+    example: digest.txt
+    type: string
+
+  algorithm:
+    description: The algorithm used for calculating digests.
+    example: sha256
+    type: string
+
+  mode:
+    description: The file open mode passed to fopen (e.g. "w" to truncate, "a" to append).
+    example: w
+    type: string
+
+  priority:
+    default: 999
+    $ref: ./shared-hook-priority.yaml

@@ -11,8 +11,8 @@
 namespace villas {
 namespace node {
 
-PmuHook::PmuHook(Path *p, Node *n, int fl, int prio, bool en)
-    : MultiSignalHook(p, n, fl, prio, en), windows(), windowsTs(),
+PmuHook::PmuHook(Path *p, Node *n, int fl, int prio)
+    : MultiSignalHook(p, n, fl, prio), windows(), windowsTs(),
       timeAlignType(TimeAlign::CENTER), windowType(WindowType::NONE),
       sampleRate(1), phasorRate(1.0), nominalFreq(1.0), numberPlc(1.),
       windowSize(1), channelNameEnable(true), angleUnitFactor(1.0),
@@ -127,6 +127,8 @@ void PmuHook::parse(json_t *json) {
 
   if (!windowTypeC)
     logger->info("No Window type given, assume no windowing");
+  else if (strcmp(windowTypeC, "none") == 0)
+    windowType = WindowType::NONE;
   else if (strcmp(windowTypeC, "flattop") == 0)
     windowType = WindowType::FLATTOP;
   else if (strcmp(windowTypeC, "hamming") == 0)

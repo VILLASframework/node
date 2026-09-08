@@ -60,6 +60,8 @@ properties:
        - apparentpower: single phase power, unit voltampere
        - frequency: unit hertz
 
+additionalProperties: false
+
 example:
   device: pmu-abc0
   timestamp: '2021-10-07T10:11:12.1231241+02:00'

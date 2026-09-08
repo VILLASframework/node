@@ -8,8 +8,8 @@ set(NODE_SRC
     loopback_internal.cpp
 )
 
-if(WITH_WEB)
-    list(APPEND NODE_SRC api.cpp)
+if(WITH_NODE_C37_118)
+    list(APPEND NODE_SRC c37_118.cpp)
 endif()
 
 if(LIBNL3_ROUTE_FOUND)

@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+$schema: http://json-schema.org/draft-07/schema
+description: Global EtherCAT master configuration
+type: object
+properties:
+  master:
+    type: integer
+  alias:
+    type: integer
+  coupler:
+    type: object
+    properties:
+      position:
+        type: integer
+      product_code:
+        type: integer
+      vendor_id:
+        type: integer
+    additionalProperties: false
+additionalProperties: false

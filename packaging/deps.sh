@@ -23,7 +23,7 @@ should_build() {
         optional) ;;
         required) ;;
         *)
-            echo >&2 "Error: invalid parameter '$2' for should_build. should be one of 'optional' and 'required', default is 'optional'"
+            echo >&2 "Error: invalid parameter '$3' for should_build. should be one of 'optional' and 'required', default is 'optional'"
             exit 1
             ;;
     esac
@@ -31,7 +31,7 @@ should_build() {
     local deps="${@:4}"
 
     if [[ -n "${DEPS_SCAN+x}" ]]; then
-        echo "${requirement} dependendency ${id} should be installed ${use}."
+        echo "${requirement} dependency ${id} should be installed ${use}."
         [[ -n "${deps[*]}" ]] && echo " transitive dependencies: ${deps}"
         echo
         return 1
@@ -45,7 +45,7 @@ should_build() {
 
     if [[ -z "${DEPS_NONINTERACTIVE+x}" ]] && [[ -t 1 ]]; then
         echo
-        read -p "Do you wan't to install '${id}' into '${PREFIX}'? This is used ${use}. (y/N) "
+        read -p "Do you want to install '${id}' into '${PREFIX}'? This is used ${use}. (y/N) "
         case "${REPLY}" in
             y | Y)
                 echo "Installing '${id}'"
@@ -602,6 +602,22 @@ if ! find /usr/{local/,}{lib,lib64} -name "libfmilib_shared.so" -o -name "*FMILI
     popd
 fi
 
+# Build & Install nlohmann_json_schema_validator
+if ! cmake --find-package -DNAME=nlohmann_json_schema_validator -DCOMPILER_ID=GNU -DLANGUAGE=CXX -DMODE=EXIST >/dev/null 2>/dev/null && \
+    should_build "nlohmann_json_schema_validator" "for JSON schema validation" "required"; then
+    git clone ${GIT_OPTS} --branch 2.4.0 https://github.com/pboettch/json-schema-validator.git
+    mkdir -p json-schema-validator/build
+    pushd json-schema-validator/build
+    cmake -DJSON_VALIDATOR_BUILD_TESTS=OFF \
+          -DJSON_VALIDATOR_BUILD_EXAMPLES=OFF \
+          -DBUILD_SHARED_LIBS=ON \
+          ${CMAKE_OPTS} ..
+    cmake --build . \
+        --target install \
+        --parallel ${PARALLEL}
+    popd
+fi
+
 # Build & Install ghc::filesystem
 if ! cmake --find-package -DNAME=ghc_filesystem -DCOMPILER_ID=GNU -DLANGUAGE=CXX -DMODE=EXIST >/dev/null 2>/dev/null && \
     should_build "ghc_filesystem" "for compatability with older compilers"; then
@@ -611,6 +627,19 @@ if ! cmake --find-package -DNAME=ghc_filesystem -DCOMPILER_ID=GNU -DLANGUAGE=CXX
     cmake -DGHC_FILESYSTEM_BUILD_TESTING=OFF \
           -DGHC_FILESYSTEM_BUILD_EXAMPLES=OFF \
           ${CMAKE_OPTS} ..
+    cmake --build . \
+        --target install \
+        --parallel ${PARALLEL}
+    popd
+fi
+
+# Build and install nlohmann_json
+if ! pkg-config "nlohmann_json" &&
+    should_build "nlohman_json" "for configuration parsing"; then
+    git clone --branch v3.12.0 https://github.com/nlohmann/json.git json
+    mkdir -p json/build
+    pushd json/build
+    cmake ${CMAKE_OPTS} ..
     cmake --build . \
         --target install \
         --parallel ${PARALLEL}

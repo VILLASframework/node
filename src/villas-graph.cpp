@@ -53,8 +53,7 @@ public:
 protected:
   GVC_t *gvc;
   graph_t *graph;
-
-  std::string configFilename;
+  fs::path config_path;
 
   void usage() override {
     std::cout << "Usage: villas-graph [OPTIONS]" << std::endl
@@ -74,7 +73,7 @@ protected:
     if (i == 0)
       throw RuntimeError("No configuration file given!");
 
-    configFilename = filenames.front();
+    config_path = filenames.front();
   }
 
   void handler(int signal, siginfo_t *siginfp, void *) override {
@@ -99,18 +98,18 @@ protected:
   }
 
   int main() override {
-    int ret;
+    auto config = load_config_file(config_path, {
+                                                    .allow_libconfig = true,
+                                                    .allow_environment = true,
+                                                    .allow_include = true,
+                                                    .allow_comments = true,
+                                                });
 
-    villas::node::SuperNode sn;
-
-    sn.parse(configFilename);
-    sn.check();
-    sn.prepare();
+    villas::node::SuperNode sn(std::move(config), config_path.parent_path());
 
     graph = sn.getGraph();
-
-    ret = gvLayoutJobs(gvc, graph); // Take layout engine from command line
-    if (ret)
+    if (auto ret =
+            gvLayoutJobs(gvc, graph)) // Take layout engine from command line
       return ret;
 
     return gvRenderJobs(gvc, graph);

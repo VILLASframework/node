@@ -1,0 +1,34 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+type: object
+required: [type, offset]
+additionalProperties: false
+properties:
+  type:
+    type: string
+    const: average
+
+  offset:
+    type: integer
+    description: |
+      The signal offset at which the average signal should be inserted.
+
+      **Examples:**
+      - `0` inserts the averaged signal before all other signals in the sample
+      - `1` inserts the averaged signal after the first signal.
+
+  priority:
+    default: 99
+    $ref: ./shared-hook-priority.yaml
+
+  signal:
+    $ref: ./shared-hook-signal.yaml
+
+  signals:
+    $ref: ./shared-hook-signals.yaml
+
+oneOf:
+- required: [signals]
+- required: [signal]

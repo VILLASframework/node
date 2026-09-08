@@ -18,6 +18,7 @@
 #include <villas/fpga/ips/switch.hpp>
 #include <villas/fpga/pcie_card.hpp>
 #include <villas/fpga/utils.hpp>
+#include <villas/jansson.hpp>
 #include <villas/log.hpp>
 #include <villas/memory.hpp>
 #include <villas/nodes/fpga.hpp>
@@ -126,7 +127,7 @@ int FpgaNode::parse(json_t *json) {
     vfioContainer = std::make_shared<kernel::vfio::Container>();
   }
 
-  ret = json_unpack_ex(json, &err, 0, "{ s: o, s?: o, s?: b, s?: f}", "card",
+  ret = json_unpack_ex(json, &err, 0, "{ s: o, s?: o, s?: b, s?: F}", "card",
                        &jsonCard, "connect", &jsonConnectStrings,
                        "low_latency_mode", &lowLatencyMode, "timestep",
                        &timestep);
@@ -381,9 +382,9 @@ int FpgaNodeFactory::start(SuperNode *sn) {
   }
 
   if (cards.empty()) {
-    auto searchPath =
-        sn->getConfigPath().substr(0, sn->getConfigPath().rfind("/"));
-    createCards(sn->getConfig(), cards, searchPath, vfioContainer);
+    JanssonPtr config = sn->getConfig();
+    auto searchPath = sn->getSearchPath();
+    createCards(config.get(), cards, searchPath, vfioContainer);
   }
 
   return NodeFactory::start(sn);

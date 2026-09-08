@@ -6,7 +6,8 @@
 
 ARG DISTRO=fedora
 ARG FEDORA_VERSION=42
-ARG REF=unknown
+ARG ARCH=x86_64
+ARG REF=villasnode
 
 FROM ${DISTRO}:${FEDORA_VERSION} AS dev
 
@@ -15,7 +16,7 @@ ARG DISTRO
 # Toolchain
 RUN dnf -y install \
 	gcc-14 g++-14 \
-	pkgconfig cmake make meson ninja \
+	pkgconfig cmake make meson ninja ccache \
 	autoconf automake autogen libtool \
 	texinfo git awk git-svn curl tar patchutils \
 	flex bison \
@@ -64,7 +65,8 @@ RUN dnf -y install \
 	protobuf-c-devel \
 	protobuf-devel \
 	spdlog-devel \
-	zeromq-devel
+	zeromq-devel \
+	json-devel
 
 # Install unpackaged dependencies from source
 # TODO: We currently need to build with GCC 14 to get OpenDSSC working
@@ -72,7 +74,7 @@ ENV CC=gcc-14
 ENV CXX=g++-14
 
 # Add local library directory to linker paths
-RUN echo /usr/local/lib   >> /etc/ld.so.conf
+RUN printf "%s\n" /usr/local/lib /usr/local/lib64 >> /etc/ld.so.conf
 
 # Install unpackaged dependencies from source
 ADD packaging/patches /deps/patches
@@ -111,6 +113,10 @@ RUN groupadd --gid $USER_GID $USERNAME \
 FROM dev AS app
 
 ARG CMAKE_OPTS
+ARG DISTRO
+ARG FEDORA_VERSION
+ARG ARCH
+ARG REF
 
 COPY . /villas/
 
@@ -137,4 +143,4 @@ LABEL \
 	org.label-schema.description="A image containing all build-time dependencies for VILLASnode based on Fedora" \
 	org.label-schema.url="http://fein-aachen.org/projects/villas-framework/" \
 	org.label-schema.vcs-url="https://github.com/VILLASframework/node" \
-	org.label-schema.usage="https://villas.fein-aachen.org/docs/node/installation#docker"
+	org.label-schema.usage="https://villas.fein-aachen.org/docs/node/installation#container"

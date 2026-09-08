@@ -11,6 +11,8 @@ set -e
 # Parameters
 INSTALL_DIR=${INSTALL_DIR:-/usr/local/bin}
 INSTALL_PATH="${INSTALL_DIR}/villas"
+GITHUB_REPOSITORY=${GITHUB_REPOSITORY:-VILLASframework/node}
+VILLAS_TAG=${VILLAS_TAG:-latest}
 
 echo "==="
 echo "=== This script will download a single-binary / standalone build of VILLASnode and install it to ${INSTALL_PATH}"
@@ -40,40 +42,35 @@ fi
 
 echo "=== [info]  Detected supported system: ${ARCH}-${OS}"
 
-GITLAB_URL="https://git.rwth-aachen.de"
-GITLAB_PROJECT="79039"
-GITLAB_BRANCH="master"
-GITLAB_ARTIFACT="artifacts/villas-${ARCH}-${OS}"
-GITLAB_JOB="pkg:nix:arx: [${ARCH}-${OS}]"
+RELEASE_ASSET="villas-${ARCH}-${OS}"
 
-DOWNLOAD_URL="${GITLAB_URL}/api/v4/projects/${GITLAB_PROJECT}/jobs/artifacts/${GITLAB_BRANCH}/raw/${GITLAB_ARTIFACT}"
+if [[ "${VILLAS_TAG}" == "latest" ]]; then
+    DOWNLOAD_URL="https://github.com/${GITHUB_REPOSITORY}/releases/latest/download/${RELEASE_ASSET}"
+else
+    DOWNLOAD_URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${VILLAS_TAG}/${RELEASE_ASSET}"
+fi
 
 echo "=== [info]  Downloading VILLASnode binary"
 
-if $(command -v curl >/dev/null 2>&1); then
-    echo "  from ${DOWNLOAD_URL}?job=${GITLAB_JOB}"
+if command -v curl >/dev/null 2>&1; then
+    echo "  from ${DOWNLOAD_URL}"
     echo "  to ${DOWNLOAD_PATH}"
 
     if ! curl \
         --fail-with-body \
-        --get \
         --location \
         --header "Accept-Encoding: gzip, deflate" \
         --output "${DOWNLOAD_PATH}" \
-        --data-urlencode "job=${GITLAB_JOB}" \
          "${DOWNLOAD_URL}"; then
         echo "=== [error] curl failed to download VILLASnode binary"
+        echo "=== [info]  Tried release tag: ${VILLAS_TAG}"
+        echo "=== [info]  Override with: VILLAS_TAG=<tag> ./tools/villas-install.sh"
         exit 1
     fi
 else
     echo "=== [error] curl is not available. Please install it."
     exit 1
 fi
-if [[ $? -ne 0 ]]; then
-    echo "=== [error] Failed to download VILLASnode binary from ${DOWNLOAD_URL}"
-    exit 1
-fi
-
 chmod +x "${DOWNLOAD_PATH}"
 
 if [[ $EUID -ne 0 ]]; then

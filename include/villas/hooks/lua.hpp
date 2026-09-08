@@ -103,7 +103,7 @@ protected:
   }
 
 public:
-  LuaHook(Path *p, Node *n, int fl, int prio, bool en = true);
+  LuaHook(Path *p, Node *n, int fl, int prio);
 
   ~LuaHook() override;
 

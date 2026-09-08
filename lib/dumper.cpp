@@ -40,7 +40,9 @@ int Dumper::openSocket() {
 
   sockaddr_un socketaddrUn;
   socketaddrUn.sun_family = AF_UNIX;
-  strcpy(socketaddrUn.sun_path, socketPath.c_str());
+  strncpy(socketaddrUn.sun_path, socketPath.c_str(),
+          sizeof(socketaddrUn.sun_path) - 1);
+  socketaddrUn.sun_path[sizeof(socketaddrUn.sun_path) - 1] = '\0';
 
   int ret =
       connect(socketFd, (struct sockaddr *)&socketaddrUn, sizeof(socketaddrUn));

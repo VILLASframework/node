@@ -19,7 +19,7 @@ using villas::kernel::devices::IpDevice;
 IpDevice IpDevice::from(const fs::path unsafe_path) {
   if (!is_path_valid(unsafe_path))
     throw RuntimeError(
-        "Path {} failed validation as IpDevicePath [adress in hex].[name] ",
+        "Path {} failed validation as IpDevicePath [address in hex].[name] ",
         unsafe_path.string());
   return IpDevice(unsafe_path);
 }

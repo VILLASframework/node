@@ -81,7 +81,7 @@ protected:
 
     // Reconstruct the original signal
     for (int k = 0; k < fharmonics_len; k++) {
-      double freq = fharmonics[k];
+      double freq = fharmonics[k] * f0;
       // cppcheck-suppress objectIndex
       std::complex<double> coeff = in[k];
       std::complex<double> om = 2.0i * M_PI * freq * time;
@@ -93,10 +93,10 @@ protected:
   }
 
 public:
-  DPHook(Path *p, Node *n, int fl, int prio, bool en = true)
-      : Hook(p, n, fl, prio, en), signal_name(nullptr), signal_index(0),
-        inverse(0), f0(50.0), timestep(50e-6), time(), steps(0), coeffs(),
-        fharmonics(), fharmonics_len(0) {}
+  DPHook(Path *p, Node *n, int fl, int prio)
+      : Hook(p, n, fl, prio), signal_name(nullptr), signal_index(0), inverse(0),
+        f0(50.0), timestep(50e-6), time(), steps(0), coeffs(), fharmonics(),
+        fharmonics_len(0) {}
 
   ~DPHook() override {
     // Release memory

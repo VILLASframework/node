@@ -1,8 +1,15 @@
 # SPDX-FileCopyrightText: 2025 OPAL-RT Germany GmbH
 # SPDX-License-Identifier: Apache-2.0
 
+# Only run hooks for the pre-commit stage unless specified otherwise
+default_stages: [pre-commit]
+
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
+
+# commitlint runs at commit-msg, so plain `pre-commit install` must wire that stage too.
+default_install_hook_types: [pre-commit, commit-msg]
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
@@ -19,7 +26,7 @@ repos:
         exclude: .devcontainer/devcontainer\.json
       - id: check-toml
       - id: check-added-large-files
-        exclude: ^paper\.md$
+        exclude: ^(?:paper\.md|lib/json_schema\.cpp)$
       - id: pretty-format-json
         # black has its own mind of formatting Jupyter notebooks
         exclude: \.ipynb$|^.devcontainer/devcontainer\.json$|package-lock\.json$
@@ -40,18 +47,18 @@ repos:
       - id: editorconfig-checker
         alias: ec
         args:
-        - -disable-indent-size
-        - -exclude
-        - ^LICENSE$|^LICENSES/|\.ecf$
+          - -disable-indent-size
+          - -exclude
+          - ^LICENSE$|^LICENSES/|\.ecf$
 
   # Using this mirror lets us use mypyc-compiled black, which is about 2x faster
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: "23.3.0"
+    rev: "24.10.0"
     hooks:
       - id: black-jupyter
         exclude: .*_pb2.pyi?$
         args:
-        - --line-length=90
+          - --line-length=90
 
   - repo: https://github.com/pycqa/flake8
     rev: "7.3.0"
@@ -59,14 +66,26 @@ repos:
       - id: flake8
         exclude: .*_pb2.pyi?$
         args:
-        - --max-line-length=90
+          - --max-line-length=90
 
   - repo: https://github.com/markdownlint/markdownlint
     rev: "v0.13.0"
     hooks:
       - id: markdownlint
-        exclude: ^paper\.md$
+        exclude: ^paper\.md$|^CHANGELOG\.md$
         args: [-r, "~MD013,~MD033,~MD024"]
+
+  - repo: https://github.com/fsfe/reuse-tool
+    rev: "v6.2.0"
+    hooks:
+      - id: reuse-lint-file
+
+  - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
+    rev: "v9.26.0"
+    hooks:
+      - id: commitlint
+        stages: [commit-msg]
+        additional_dependencies: ["@commitlint/config-conventional@19.8.1"]
 
   - repo: local
     hooks:

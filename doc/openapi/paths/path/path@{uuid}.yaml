@@ -15,7 +15,7 @@ post:
       content:
         application/json:
           schema:
-            $ref: ../../components/schemas/config/path.yaml
+            type: object
           examples:
             example1:
               value:

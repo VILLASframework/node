@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ARG DISTRO=fedora
-ARG FEDORA_VERSION=41
+ARG FEDORA_VERSION=43
 
 FROM ${DISTRO}:${FEDORA_VERSION} AS dev
 
@@ -24,7 +24,9 @@ RUN dnf -y install \
 	jansson-devel \
 	spdlog-devel \
 	fmt-devel \
-	libwebsockets-devel
+	libwebsockets-devel \
+	json-devel \
+	json-schema-validator-devel
 
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
@@ -41,7 +43,7 @@ WORKDIR /villas/build
 RUN cmake ${CMAKE_OPTS} -DCPACK_GENERATOR=RPM .. && \
 	make -j$(nproc) package
 
-FROM ${DISTRO}:${FEDORA_VERSION} as app
+FROM ${DISTRO}:${FEDORA_VERSION} AS app
 
 COPY --from=builder /villas/build/*.rpm /tmp/
 RUN dnf -y install /tmp/*.rpm
@@ -65,4 +67,4 @@ LABEL \
 	org.label-schema.description="A image containing minimal build-time dependencies for VILLASnode based on Fedora" \
 	org.label-schema.url="http://fein-aachen.org/projects/villas-framework/" \
 	org.label-schema.vcs-url="https://github.com/VILLASframework/node" \
-	org.label-schema.usage="https://villas.fein-aachen.org/docs/node/installation#docker"
+	org.label-schema.usage="https://villas.fein-aachen.org/docs/node/installation#container"

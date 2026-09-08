@@ -15,6 +15,11 @@ ARG DISTRO
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Prefer the Azure mirror (archive.ubuntu.com throttles from CI); default kept as fallback
+RUN sed -i -E \
+	's#https?://(archive|security)\.ubuntu\.com/ubuntu/?#http://azure.archive.ubuntu.com/ubuntu/ &#g' \
+	/etc/apt/sources.list.d/ubuntu.sources 2>/dev/null || true
+
 # Toolchain
 RUN apt-get update && \
 	apt-get install -y \
@@ -59,7 +64,8 @@ RUN apt-get update && \
 	libusb-1.0-0-dev \
 	libwebsockets-dev \
 	libzmq3-dev \
-	uuid-dev
+	uuid-dev \
+	nlohmann-json3-dev
 
 # Install unpackaged dependencies from source
 ADD packaging/patches /deps/patches
@@ -99,4 +105,4 @@ LABEL \
 	org.label-schema.description="An image containing all build-time dependencies for VILLASnode based on Ubuntu" \
 	org.label-schema.url="http://fein-aachen.org/projects/villas-framework/" \
 	org.label-schema.vcs-url="https://github.com/VILLASframework/node" \
-	org.label-schema.usage="https://villas.fein-aachen.org/docs/node/installation#docker"
+	org.label-schema.usage="https://villas.fein-aachen.org/docs/node/installation#container"

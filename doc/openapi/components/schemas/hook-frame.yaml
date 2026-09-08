@@ -1,0 +1,45 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2026 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+type: object
+required: [type, interval]
+properties:
+  type:
+    type: string
+    const: frame
+
+  trigger:
+    description: The trigger for new frames.
+    type: string
+    default: timestamp
+    enum:
+    - sequence
+    - timestamp
+
+  interval:
+    description: The interval in which frames are annotated.
+    default: "1s"
+    not:
+      const: null
+
+  priority:
+    default: 10
+    $ref: ./shared-hook-priority.yaml
+
+additionalProperties: false
+
+oneOf:
+- required: [trigger]
+  properties:
+    trigger:
+      const: sequence
+    interval:
+      type: integer
+  additionalProperties: {}
+- properties:
+    trigger:
+      const: timestamp
+    interval:
+      $ref: ./shared-duration.yaml
+  additionalProperties: {}

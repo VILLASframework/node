@@ -1,31 +1,48 @@
-
 #!/usr/bin/env bash
 #
 # Test example configurations
 #
 # Author: Steffen Vogel <post@steffenvogel.de>
+# Author: Philipp Jungkamp <philipp@jungkamp.dev>
 # SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
 # SPDX-License-Identifier: Apache-2.0
 
-set -e
+set -eo pipefail
 
-CONFIGS=$(find ${SRCDIR}/etc/ -name '*.conf' -o -name '*.json')
+cd "${SRCDIR}/etc"
 
-for CONFIG in ${CONFIGS}; do
-    if [ "$(basename ${CONFIG})" == "opal_orchestra.conf" ] ||
-       [ "$(basename ${CONFIG})" == "opal_async.conf" ] ||
-       [ "$(basename ${CONFIG})" == "fpga.conf" ] ||
-       [ "$(basename ${CONFIG})" == "fpga-miob.conf" ] ||
-       [ "$(basename ${CONFIG})" == "paths.conf" ] ||
-       [ "$(basename ${CONFIG})" == "tricks.json" ] ||
-       [ "$(basename ${CONFIG})" == "tricks.conf" ] ||
-       [ "$(basename ${CONFIG})" == "vc707_ips.conf" ] ||
-       [ "$(basename ${CONFIG})" == "infiniband.conf" ] ||
-       [ "$(basename ${CONFIG})" == "global.conf" ]; then
-        echo "=== Skipping config: ${CONFIG}"
-        continue
-    fi
+export SKIP_REGEX='/(fpga|infiniband|opal-orchestra)\.(conf|json)$'
 
-    echo "=== Testing config: ${CONFIG}"
-    villas test-config -c ${CONFIG}
-done
+{
+    # only test examples for node types that have been included in the build
+    villas node -C | jq --raw-output0 '
+      def examples(caps; $prefix): caps[] | $prefix + gsub("\\."; "-");
+      examples(.hooks;   "examples/hooks/"),
+      examples(.nodes;   "examples/nodes/"),
+      examples(.formats; "examples/formats/")
+    '
+
+    # add other configurations explicitly using ls --zero
+    # ls --zero ...
+} | xargs -0 -n1 bash -c '
+    base="$0"
+
+    echo # prepend empty line
+
+    for candidate in "${base}" "${base}.conf" "${base}.json"; do
+        if [ ! -f "${candidate}" ]; then
+            continue
+        fi
+
+        if [[ "${candidate}" =~ $SKIP_REGEX ]]; then
+            echo "=== Skipping config: ${candidate}"
+            exit 0
+        fi
+
+        echo "=== Testing config: ${candidate}"
+        exec villas config -q -m "${candidate}"
+    done
+
+    echo "=== No config for: ${base}"
+    exit 0
+'

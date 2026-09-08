@@ -1,8 +1,49 @@
-# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
-# SPDX-FileCopyrightText: 2014-2025 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-FileCopyrightText: 2014-2026 Institute for Automation of Complex Power Systems, RWTH Aachen University
 # SPDX-License-Identifier: Apache-2.0
+# Author: Philipp Jungkamp <philipp.jungkamp@rwth-aachen.de>
 extends:
 - recommended
+
+plugins:
+- ./villas.js
+
+preprocessors:
+  # expand schema discriminators that a `x-villas-plugin` property.
+  villas/expand-discriminator: on
+
 rules:
+  # TODO: resolve schema issues instead of disabling recommended lints
   security-defined: off
   no-server-example.com: off
+
+  # A `required` key without a corresponding property definition is useful
+  # for expression mutually exclusive properties
+  no-required-schema-properties-undefined: off
+
+  # Redocly doesn't properly check the `jsonSchemaDialect` of an OpenAPI 3.1
+  # schema. This means that the structure and example validation will
+  # not work properly for Draft-07 schemas.
+  struct: off
+  no-invalid-schema-examples: off
+
+  # Because our configuration is parsed as a merge patch,
+  # a null property and a missing property are indistinguishable.
+  # This has two implications for our schema:
+  #
+  # - nullable properties must not be required.
+  # - nullable values must specify an explicit `null` default value.
+  villas/nullable-default: error
+  villas/nullable-optional: error
+
+  # We want to optimize our schema for readable validation error
+  # messages. This means that `additionalProperties` and
+  # `additionalItems` should be `false` to catch typos in property keys.
+  #
+  # We encourage this in schema development by asking for these
+  # keys to always be explicitly specified.
+  villas/additional-properties: error
+  villas/additional-items: error
+
+apis:
+  villas-node:
+    root: ./openapi/openapi.yaml

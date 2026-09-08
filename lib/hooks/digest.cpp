@@ -182,8 +182,8 @@ class DigestHook : public Hook {
   }
 
 public:
-  DigestHook(Path *p, Node *n, int fl, int prio, bool en = true)
-      : Hook(p, n, fl, prio, en), algorithm(), uri(),
+  DigestHook(Path *p, Node *n, int fl, int prio)
+      : Hook(p, n, fl, prio), algorithm(), uri(),
         md_ctx(EVP_MD_CTX_new(), &EVP_MD_CTX_free), md(nullptr),
         file(nullptr, &FILE_free), first_sequence(std::nullopt),
         first_timestamp(std::nullopt), last_sequence(std::nullopt),
@@ -193,8 +193,8 @@ public:
     Hook::parse(json);
 
     char const *uri_str;
-    char const *mode_str;
-    char const *algorithm_str;
+    char const *mode_str = nullptr;
+    char const *algorithm_str = nullptr;
 
     json_error_t err;
     int ret =

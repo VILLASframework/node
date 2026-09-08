@@ -8,6 +8,7 @@
 #pragma once
 
 #include <iostream>
+#include <optional>
 
 #include <fmt/ostream.h>
 #include <jansson.h>
@@ -17,6 +18,7 @@
 #include <villas/common.hpp>
 #include <villas/list.hpp>
 #include <villas/log.hpp>
+#include <villas/node/json_schema.hpp>
 #include <villas/node/memory.hpp>
 #include <villas/node_direction.hpp>
 #include <villas/node_list.hpp>
@@ -58,7 +60,6 @@ class Node {
 public:
   Logger logger;
 
-  uint64_t sequence_init;
   uint64_t
       sequence; // This is a counter of received samples, in case the node-type does not generate sequence numbers itself.
 
@@ -277,6 +278,7 @@ public:
 };
 
 class NodeFactory : public villas::plugin::Plugin {
+  std::optional<JsonSchema> schema;
 
   friend Node;
 
@@ -315,6 +317,29 @@ public:
 
   static Node *make(const std::string &type, const uuid_t &id = {},
                     const std::string &name = "");
+
+  JsonSchema const &getSchema() {
+    if (schema)
+      return *schema;
+
+    static auto const &schemas = bundled_schemas();
+    static auto const &mapping = schemas.at(
+        "/components/schemas/Node/discriminator/mapping"_json_pointer);
+    auto uri = JsonUri(mapping.at(getName()).get_ref<std::string const &>());
+    return schema.emplace(schemas.at(uri.pointer()));
+  }
+
+  /* Compute a JSON Patch which migrates a deprecated node configuration.
+   *
+   * The base implementation covers the settings which are shared between all
+   * node-types. Since the operations of a patch are relative to the state left
+   * by the preceding ones, an override can not merge its own patch with the
+   * one of the base implementation. It has to apply the base patch first and
+   * compute its own operations against the result.
+   *
+   * @return A JSON Patch with paths relative to json.
+   */
+  virtual Json migrate(Json const &json) const;
 
   std::string getType() const override { return "node"; }
 

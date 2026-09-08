@@ -189,7 +189,8 @@ int villas::node::can_start(NodeCompat *n) {
   if (c->socket < 0)
     throw SystemError("Error while opening CAN socket");
 
-  strcpy(ifr.ifr_name, c->interface_name);
+  strncpy(ifr.ifr_name, c->interface_name, IFNAMSIZ - 1);
+  ifr.ifr_name[IFNAMSIZ - 1] = '\0';
 
   ret = ioctl(c->socket, SIOCGIFINDEX, &ifr);
   if (ret != 0)

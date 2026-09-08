@@ -120,7 +120,7 @@ class VillasHuman(Format):
         Load samples from a string.
         """
 
-        s.strip(self.separator + self.delimiter)
+        s = s.strip(self.separator + self.delimiter)
         sample_strs = s.split(sep=self.delimiter)
         samples = (self.load_sample(sample) for sample in sample_strs)
         return [s for s in samples if s is not None]

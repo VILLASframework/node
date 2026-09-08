@@ -8,6 +8,7 @@ SPDX-PackageDownloadLocation = "https://fein-aachen.org/en/projects/villas-node/
 
 [[annotations]]
 path = [
+    "CHANGELOG.md",
     "**.prefs",
     "**.vi",
     "**.opal",

@@ -21,12 +21,12 @@ const char *hook_reasons[] = {"ok", "error", "skip-sample", "stop-processing"};
 using namespace villas;
 using namespace villas::node;
 
-Hook::Hook(Path *p, Node *n, int fl, int prio, bool en)
+Hook::Hook(Path *p, Node *n, int fl, int prio)
     : logger(Log::get("hook")), factory(nullptr),
       state(fl & (int)Hook::Flags::BUILTIN
                 ? State::CHECKED
                 : State::INITIALIZED), // We dont need to parse builtin hooks
-      flags(fl), priority(prio), enabled(en), path(p), node(n),
+      flags(fl), priority(prio), path(p), node(n),
       signals(std::make_shared<SignalList>()), config(nullptr) {}
 
 void Hook::prepare(SignalList::Ptr sigs) {
@@ -46,18 +46,13 @@ void Hook::parse(json_t *json) {
   assert(state != State::STARTED);
 
   int prio = -1;
-  int en = -1;
 
-  ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: b }", "priority", &prio,
-                       "enabled", &en);
+  ret = json_unpack_ex(json, &err, 0, "{ s?: i }", "priority", &prio);
   if (ret)
     throw ConfigError(json, err, "node-config-hook");
 
   if (prio >= 0)
     priority = prio;
-
-  if (en >= 0)
-    enabled = en;
 
   config = json;
 

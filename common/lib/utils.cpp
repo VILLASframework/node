@@ -12,13 +12,14 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <filesystem>
 #include <fstream>
 #include <string>
 #include <vector>
 
 #include <dirent.h>
 #include <fcntl.h>
-#include <jansson.h>
+#include <fnmatch.h>
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
@@ -42,14 +43,14 @@ std::vector<std::string> tokenize(const std::string &s,
   std::vector<std::string> tokens;
 
   size_t lastPos = 0;
-  size_t curentPos;
+  size_t currentPos;
 
-  while ((curentPos = s.find(delimiter, lastPos)) != std::string::npos) {
-    const size_t tokenLength = curentPos - lastPos;
+  while ((currentPos = s.find(delimiter, lastPos)) != std::string::npos) {
+    const size_t tokenLength = currentPos - lastPos;
     tokens.push_back(s.substr(lastPos, tokenLength));
 
     // Advance in string
-    lastPos = curentPos + delimiter.length();
+    lastPos = currentPos + delimiter.length();
   }
 
   // Check if there's a last token behind the last delimiter.
@@ -158,7 +159,7 @@ char *decolor(char *str) {
 }
 
 void killme(int sig) {
-  // Send only to main thread in case the ID was initilized by signalsInit()
+  // Send only to main thread in case the ID was initialized by signalsInit()
   if (main_thread)
     pthread_kill(main_thread, sig);
   else
@@ -197,9 +198,17 @@ char *vstrcatf(char **dest, const char *fmt, va_list ap) {
   int n = *dest ? strlen(*dest) : 0;
   int i = vasprintf(&tmp, fmt, ap);
 
-  *dest = (char *)(realloc(*dest, n + i + 1));
-  if (*dest != nullptr)
-    strncpy(*dest + n, tmp, i + 1);
+  if (i < 0)
+    return *dest;
+
+  char *p = (char *)realloc(*dest, n + i + 1);
+  if (p == nullptr) {
+    free(tmp);
+    return *dest;
+  }
+
+  *dest = p;
+  strncpy(*dest + n, tmp, i + 1);
 
   free(tmp);
 
@@ -350,6 +359,70 @@ bool isPrivileged() {
   fclose(f);
 
   return true;
+}
+
+// internal glob implementation details
+namespace {
+bool isGlobPattern(fs::path const &path) {
+  static const auto specialCharacters = fs::path("?*[").native();
+  auto const &string = path.native();
+  return std::ranges::find_first_of(string, specialCharacters) != string.end();
+}
+
+bool isGlobMatch(fs::path const &pattern, fs::path const &path) {
+  return ::fnmatch(pattern.c_str(), path.c_str(), FNM_PATHNAME) == 0;
+}
+
+void globImpl(std::vector<fs::path> &result, fs::path &&path,
+              std::ranges::subrange<fs::path::iterator> pattern) {
+  [[maybe_unused]] auto discardErrorCode = std::error_code{};
+
+  if (pattern.empty()) {
+    // we've reached the end of our pattern
+    if (fs::exists(path, discardErrorCode))
+      result.push_back(path);
+    return;
+  }
+
+  if (not fs::is_directory(path, discardErrorCode))
+    return;
+
+  if (not isGlobPattern(pattern.front())) {
+    path /= pattern.front();
+    return globImpl(result, std::move(path), std::move(pattern).next());
+  } else {
+    auto nextPattern = pattern.next();
+    for (auto entry : fs::directory_iterator(path)) {
+      if (not isGlobMatch(pattern.front(), entry.path().filename()))
+        continue;
+
+      globImpl(result, fs::path(entry.path()), nextPattern);
+    }
+  }
+}
+} // namespace
+
+std::vector<fs::path> glob(fs::path const &pattern,
+                           std::span<const fs::path> searchDirectories) {
+  auto logger = Log::get("glob");
+  std::vector<fs::path> result;
+  if (pattern.is_absolute()) {
+    logger->debug("Matching absolute pattern {:?}", pattern.string());
+    globImpl(result, pattern.root_path(), pattern);
+  } else {
+    for (auto path : searchDirectories) {
+      logger->debug("Matching relative pattern {:?} in {:?}", pattern.string(),
+                    path.string());
+      globImpl(result, std::move(path), pattern);
+    }
+  }
+
+  if (result.empty()) {
+    throw std::runtime_error(
+        fmt::format("Could not find any file matching {:?}", pattern.string()));
+  }
+
+  return result;
 }
 
 void write_to_file(std::string data, const fs::path file) {

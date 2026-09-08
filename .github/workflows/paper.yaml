@@ -1,32 +1,34 @@
 # SPDX-FileCopyrightText: 2025 OPAL-RT Germany GmbH
 # SPDX-License-Identifier: Apache-2.0
-
----
 name: Draft PDF
 
 on:
-  push:
-    paths:
-        - paper/**
-        - .github/workflows/paper.yaml
+  workflow_call:
+    inputs:
+      ref:
+        required: true
+        type: string
 
 jobs:
   paper:
     runs-on: ubuntu-latest
-    name: Paper Draft
+    name: Build Paper Draft
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
+          allow-unsafe-pr-checkout: true
 
-    - name: Build draft PDF
-      uses: openjournals/openjournals-draft-action@v1.0
-      with:
-        journal: joss
-        paper-path: paper/paper.md
+      - name: Build Draft PDF
+        uses: openjournals/openjournals-draft-action@v1.0
+        with:
+          journal: joss
+          paper-path: paper/paper.md
 
-    - name: Upload
-      uses: actions/upload-artifact@v4
-      with:
-        name: paper
-        path: paper/paper.pdf
+      - name: Upload PDF
+        uses: actions/upload-artifact@v7
+        with:
+          name: paper
+          path: paper/paper.pdf

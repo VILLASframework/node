@@ -11,9 +11,12 @@
 
 #pragma once
 
+#include <optional>
+
 #include <villas/exceptions.hpp>
 #include <villas/list.hpp>
 #include <villas/log.hpp>
+#include <villas/node/json_schema.hpp>
 #include <villas/plugin.hpp>
 #include <villas/signal.hpp>
 #include <villas/signal_list.hpp>
@@ -53,7 +56,6 @@ protected:
   int flags;
   unsigned
       priority; // A priority to change the order of execution within one type of hook.
-  bool enabled; // Is this hook active?
 
   Path *path;
   Node *node;
@@ -63,7 +65,7 @@ protected:
   json_t *config; // A JSON object containing the configuration of the hook.
 
 public:
-  Hook(Path *p, Node *n, int fl, int prio, bool en = true);
+  Hook(Path *p, Node *n, int fl, int prio);
 
   virtual ~Hook() {}
 
@@ -117,8 +119,6 @@ public:
   json_t *getConfig() const { return config; }
 
   HookFactory *getFactory() const { return factory; }
-
-  bool isEnabled() const { return enabled; }
 };
 
 class SingleSignalHook : public Hook {
@@ -128,8 +128,8 @@ protected:
   std::string signalName;
 
 public:
-  SingleSignalHook(Path *p, Node *n, int fl, int prio, bool en = true)
-      : Hook(p, n, fl, prio, en), signalIndex(0) {}
+  SingleSignalHook(Path *p, Node *n, int fl, int prio)
+      : Hook(p, n, fl, prio), signalIndex(0) {}
 
   void parse(json_t *json) override;
 
@@ -175,6 +175,7 @@ public:
 };
 
 class HookFactory : public plugin::Plugin {
+  std::optional<JsonSchema> schema;
 
 protected:
   virtual void init(Hook::Ptr h) {
@@ -184,6 +185,23 @@ protected:
 
 public:
   using plugin::Plugin::Plugin;
+
+  JsonSchema const &getSchema() {
+    if (schema)
+      return *schema;
+
+    static auto const &schemas = bundled_schemas();
+    static auto const &mapping = schemas.at(
+        "/components/schemas/Hook/discriminator/mapping"_json_pointer);
+    auto uri = JsonUri(mapping.at(getName()).get_ref<std::string const &>());
+    return schema.emplace(schemas.at(uri.pointer()));
+  }
+
+  /* Compute a JSON Patch which migrates a deprecated hook configuration.
+   *
+   * @return A JSON Patch with paths relative to json.
+   */
+  virtual Json migrate(Json const &json) const { return Json::array(); }
 
   virtual Hook::Ptr make(Path *p, Node *n) = 0;
 

@@ -43,13 +43,13 @@ protected:
   std::vector<uintmax_t> filterWindow;
 
 public:
-  PpsTsHook(Path *p, Node *n, int fl, int prio, bool en = true)
-      : SingleSignalHook(p, n, fl, prio, en), mode(Mode::SIMPLE),
-        lastSequence(0), lastValue(0), threshold(1.5), isSynced(false),
-        isLocked(false), timeError(0.0), periodEstimate(0.0),
-        periodErrorCompensation(0.0), period(0.0), cntEdges(0), cntSmps(0),
-        cntSmpsTotal(0), horizonCompensation(10), horizonEstimation(10),
-        currentSecond(0), filterWindow(horizonEstimation + 1, 0) {}
+  PpsTsHook(Path *p, Node *n, int fl, int prio)
+      : SingleSignalHook(p, n, fl, prio), mode(Mode::SIMPLE), lastSequence(0),
+        lastValue(0), threshold(1.5), isSynced(false), isLocked(false),
+        timeError(0.0), periodEstimate(0.0), periodErrorCompensation(0.0),
+        period(0.0), cntEdges(0), cntSmps(0), cntSmpsTotal(0),
+        horizonCompensation(10), horizonEstimation(10), currentSecond(0),
+        filterWindow(horizonEstimation + 1, 0) {}
 
   void parse(json_t *json) override {
     int ret;
@@ -62,7 +62,7 @@ public:
     const char *mode_str = nullptr;
 
     double fSmps = 1.0;
-    ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: f, s?: F, s?: i, s?: i }",
+    ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: F, s?: F, s?: i, s?: i }",
                          "mode", &mode_str, "threshold", &threshold,
                          "expected_smp_rate", &fSmps, "horizon_estimation",
                          &horizonEstimation, "horizon_compensation",

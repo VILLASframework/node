@@ -9,10 +9,10 @@
 
 #ifdef WITH_CONFIG
 
-#include <jansson.h>
 #include <libconfig.h>
 
 #include <villas/config_helper.hpp>
+#include <villas/jansson.hpp>
 #include <villas/utils.hpp>
 
 using namespace villas::node;

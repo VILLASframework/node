@@ -1,4 +1,4 @@
-/* Memory managment.
+/* Memory management.
  *
  * Author: Daniel Krebs <github@daniel-krebs.net>
  * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University

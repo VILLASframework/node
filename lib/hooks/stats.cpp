@@ -25,9 +25,8 @@ protected:
   StatsHook *parent;
 
 public:
-  StatsWriteHook(StatsHook *pa, Path *p, Node *n, int fl, int prio,
-                 bool en = true)
-      : Hook(p, n, fl, prio, en), parent(pa) {
+  StatsWriteHook(StatsHook *pa, Path *p, Node *n, int fl, int prio)
+      : Hook(p, n, fl, prio), parent(pa) {
     // This hook has no config. We never call parse() for it
     state = State::PARSED;
   }
@@ -43,9 +42,8 @@ protected:
   StatsHook *parent;
 
 public:
-  StatsReadHook(StatsHook *pa, Path *p, Node *n, int fl, int prio,
-                bool en = true)
-      : Hook(p, n, fl, prio, en), last(nullptr), parent(pa) {
+  StatsReadHook(StatsHook *pa, Path *p, Node *n, int fl, int prio)
+      : Hook(p, n, fl, prio), last(nullptr), parent(pa) {
     // This hook has no config. We never call parse() for it
     state = State::PARSED;
   }
@@ -90,11 +88,11 @@ protected:
   std::string uri;
 
 public:
-  StatsHook(Path *p, Node *n, int fl, int prio, bool en = true)
-      : Hook(p, n, fl, prio, en), format(Stats::Format::HUMAN), verbose(0),
+  StatsHook(Path *p, Node *n, int fl, int prio)
+      : Hook(p, n, fl, prio), format(Stats::Format::HUMAN), verbose(0),
         warmup(500), buckets(20), output(nullptr), uri() {
-    readHook = std::make_shared<StatsReadHook>(this, p, n, fl, prio, en);
-    writeHook = std::make_shared<StatsWriteHook>(this, p, n, fl, prio, en);
+    readHook = std::make_shared<StatsReadHook>(this, p, n, fl, prio);
+    writeHook = std::make_shared<StatsWriteHook>(this, p, n, fl, prio);
 
     if (!readHook || !writeHook)
       throw MemoryAllocationError();

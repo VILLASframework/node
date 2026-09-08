@@ -1,4 +1,4 @@
-/* Receive messages from server snd print them on stdout.
+/* Receive messages from server and print them on stdout.
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
  * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
@@ -199,7 +199,7 @@ protected:
 
     ret = pool_init(&p, 10 * cnt, SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH));
     if (ret)
-      throw RuntimeError("Failed to initilize memory pool");
+      throw RuntimeError("Failed to initialize memory pool");
 
     // Initialize IO
     struct desc {

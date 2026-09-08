@@ -66,18 +66,18 @@ char *decolor(char *str);
 // @return Normal variate random variable (Gaussian)
 double boxMuller(float m, float s);
 
-// Double precission uniform random variable
+// Double precision uniform random variable
 double randf();
 
 // Concat formatted string to an existing string.
 //
 // This function uses realloc() to resize the destination.
-// Please make sure to only on dynamic allocated destionations!!!
+// Please make sure to only use it on dynamically allocated destinations!!!
 //
 // @param dest A pointer to a malloc() allocated memory region
 // @param fmt A format string like for printf()
 // @param ... Optional parameters like for printf()
-// @retval The the new value of the dest buffer.
+// @retval The new value of the dest buffer.
 char *strcatf(char **dest, const char *fmt, ...)
     __attribute__((format(printf, 2, 3)));
 
@@ -130,6 +130,10 @@ template <class... Ts> struct overloaded : Ts... {
 
 // Explicit deduction guide (not needed as of C++20)
 template <class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
+
+// glob-style filesystem pattern matching
+std::vector<fs::path> glob(fs::path const &pattern,
+                           std::span<const fs::path> searchDirectories);
 
 void write_to_file(std::string data, const fs::path file);
 

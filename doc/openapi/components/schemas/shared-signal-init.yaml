@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+title: Initial signal value.
+description: |
+  The initial value of the signal.
+
+oneOf:
+- type: number
+- type: boolean
+- type: object
+  required:
+  - real
+  - imag
+  additionalProperties: false
+  properties:
+    real:
+      type: number
+    imag:
+      type: number

@@ -32,8 +32,8 @@ protected:
   timespec startTime;
 
 public:
-  GateHook(Path *p, Node *n, int fl, int prio, bool en = true)
-      : SingleSignalHook(p, n, fl, prio, en), mode(Mode::RISING_EDGE),
+  GateHook(Path *p, Node *n, int fl, int prio)
+      : SingleSignalHook(p, n, fl, prio), mode(Mode::RISING_EDGE),
         threshold(0.5), duration(-1), samples(-1),
         previousValue(std::numeric_limits<double>::quiet_NaN()), active(false),
         startSequence(0) {}
@@ -43,7 +43,7 @@ public:
 
     json_error_t err;
 
-    const char *mode_str;
+    const char *mode_str = nullptr;
 
     assert(state != State::STARTED);
 

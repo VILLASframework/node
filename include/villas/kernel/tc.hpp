@@ -1,9 +1,9 @@
-/* Setup interface queuing desciplines for network emulation.
+/* Setup interface queuing disciplines for network emulation.
  *
  * We use the firewall mark to apply individual netem qdiscs
  * per node. Every node uses an own BSD socket.
  * By using so SO_MARK socket option (see socket(7))
- * we can classify traffic originating from a node seperately.
+ * we can classify traffic originating from a node separately.
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
  * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University

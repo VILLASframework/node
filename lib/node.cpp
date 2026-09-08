@@ -5,6 +5,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <charconv>
+#include <optional>
 #include <regex>
 
 #include <openssl/md5.h>
@@ -27,6 +29,7 @@ extern "C" {
 #include <villas/path.hpp>
 #include <villas/sample.hpp>
 #include <villas/signal.hpp>
+#include <villas/signal_type.hpp>
 #include <villas/timing.hpp>
 #include <villas/utils.hpp>
 #include <villas/uuid.hpp>
@@ -41,9 +44,10 @@ extern "C" {
 using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
+using namespace std::string_view_literals;
 
 Node::Node(const uuid_t &id, const std::string &name)
-    : logger(Log::get("node")), sequence_init(0), sequence(0),
+    : logger(Log::get("node")), sequence(0),
       in(NodeDirection::Direction::IN, this),
       out(NodeDirection::Direction::OUT, this), configPath(),
 #ifdef __linux__
@@ -101,18 +105,10 @@ int Node::parse(json_t *json) {
   assert(state == State::INITIALIZED || state == State::PARSED ||
          state == State::CHECKED);
 
-  int ret, en = enabled, init_seq = -1;
+  int ret;
 
   json_error_t err;
   json_t *json_netem = nullptr;
-
-  ret = json_unpack_ex(json, &err, 0, "{ s?: b, s?: i }", "enabled", &en,
-                       "initial_sequenceno", &init_seq);
-  if (ret)
-    return ret;
-
-  if (init_seq >= 0)
-    sequence_init = init_seq;
 
 #ifdef __linux__
   ret = json_unpack_ex(json, &err, 0, "{ s?: { s?: o, s?: i } }", "out",
@@ -120,8 +116,6 @@ int Node::parse(json_t *json) {
   if (ret)
     return ret;
 #endif // __linux__
-
-  enabled = en;
 
   if (json_netem) {
 #ifdef WITH_NETEM
@@ -138,34 +132,11 @@ int Node::parse(json_t *json) {
 #endif // WITH_NETEM
   }
 
-  struct {
-    const char *str;
-    NodeDirection *dir;
-  } dirs[] = {{"in", &in}, {"out", &out}};
+  if (auto ret = in.parse(json_object_get(json, "in")))
+    return ret;
 
-  const char *fields[] = {"signals", "builtin", "vectorize", "hooks"};
-
-  for (unsigned j = 0; j < std::size(dirs); j++) {
-    json_t *json_dir = json_object_get(json, dirs[j].str);
-
-    // Skip if direction is unused
-    if (!json_dir) {
-      json_dir = json_pack("{ s: b }", "enabled", 0);
-    }
-
-    // Copy missing fields from main node config to direction config
-    for (unsigned i = 0; i < std::size(fields); i++) {
-      json_t *json_field_dir = json_object_get(json_dir, fields[i]);
-      json_t *json_field_node = json_object_get(json, fields[i]);
-
-      if (json_field_node && !json_field_dir)
-        json_object_set(json_dir, fields[i], json_field_node);
-    }
-
-    ret = dirs[j].dir->parse(json_dir);
-    if (ret)
-      return ret;
-  }
+  if (auto ret = out.parse(json_object_get(json, "out")))
+    return ret;
 
   config = json;
 
@@ -213,7 +184,6 @@ int Node::start() {
 #endif // __linux__
 
   state = State::STARTED;
-  sequence = sequence_init;
 
   return 0;
 }
@@ -468,6 +438,182 @@ Node *NodeFactory::make(const std::string &type, const uuid_t &id,
     throw RuntimeError("Unknown node-type: {}", type);
 
   return nf->make(id, name);
+}
+
+/* A homogenous signal list used to be expressed as a single signal description
+ * carrying a `count` attribute. Expand it into a list of `count` copies, with
+ * the index appended to the name of each copy.
+ *
+ * @return The expanded list, or nothing if signals is not a `count` shorthand.
+ */
+static std::optional<Json> expand_signal_count(Json const &signals) {
+  if (not signals.is_object())
+    return std::nullopt;
+
+  auto count = signals.find("count");
+  if (count == signals.end() or not count->is_number_integer())
+    return std::nullopt;
+
+  auto n = count->get<std::int64_t>();
+  if (n < 0)
+    return std::nullopt;
+
+  auto signal = signals;
+  signal.erase("count");
+
+  auto expanded = Json::array();
+  for (std::int64_t index = 0; index < n; index++) {
+    auto element = signal;
+
+    if (auto name = element.find("name");
+        name != element.end() and name->is_string())
+      *name = fmt::format("{}{}", name->get_ref<std::string const &>(), index);
+
+    expanded.push_back(std::move(element));
+  }
+
+  return expanded;
+}
+
+/* A signal list used to be expressed as a format string of type characters,
+ * each optionally prefixed by a repetition count. Expand it into a list of
+ * consecutively numbered signals.
+ *
+ * @return The expanded list, or nothing if format is not a valid format
+ *         string. Schema validation reports it in that case.
+ */
+static std::optional<Json> expand_signal_format(std::string const &format) {
+  auto expanded = Json::array();
+
+  for (auto pos = std::size_t{0}; pos < format.size();) {
+    auto digits = format.find_first_not_of("0123456789", pos);
+    if (digits == std::string::npos)
+      return std::nullopt; // A repetition count without a type character.
+
+    // The repetition count is optional and defaults to one.
+    auto count = std::size_t{1};
+    if (digits != pos) {
+      auto [_, ec] =
+          std::from_chars(format.data() + pos, format.data() + digits, count);
+      if (ec != std::errc{})
+        return std::nullopt;
+    }
+
+    auto type = signalTypeFromFormatString(format[digits]);
+    if (type == SignalType::INVALID)
+      return std::nullopt;
+
+    for (auto index = std::size_t{0}; index < count; index++)
+      expanded.push_back(Json::object({
+          {"name", fmt::format("signal{}", expanded.size())},
+          {"type", signalTypeToString(type)},
+      }));
+
+    pos = digits + 1;
+  }
+
+  return expanded;
+}
+
+// Expand the deprecated shorthands for a signal list.
+static std::optional<Json> migrate_signal_list(Json const &signals) {
+  if (signals.is_object())
+    return expand_signal_count(signals);
+
+  if (signals.is_string())
+    return expand_signal_format(signals.get_ref<std::string const &>());
+
+  return std::nullopt;
+}
+
+Json NodeFactory::migrate(Json const &json) const {
+  auto patch = Json::array();
+
+  if (not json.is_object())
+    return patch;
+
+  auto create = false;
+  for (auto const &setting : {"builtin"sv, "vectorize"sv, "hooks"sv}) {
+    auto value = json.find(setting);
+    if (value == json.end())
+      continue;
+
+    for (auto const &direction : {"in"sv, "out"sv}) {
+      auto dir = json.find(direction);
+      if (dir != json.end() and (!dir->is_object() or dir->contains(setting)))
+        continue;
+
+      auto path = JsonPointer{} / std::string(direction) / std::string(setting);
+      patch.push_back(Json::object({
+          {"op", "add"},
+          {"path", path.to_string()},
+          {"value", *value},
+      }));
+
+      create = true;
+    }
+
+    auto path = JsonPointer{} / std::string(setting);
+    patch.push_back(Json::object({
+        {"op", "remove"},
+        {"path", path.to_string()},
+    }));
+  }
+
+  auto signals = std::invoke([&]() -> std::optional<Json> {
+    if (auto it = json.find("signals"); it != json.end()) {
+      patch.push_back(Json::object({
+          {"op", "remove"},
+          {"path", "/signals"},
+      }));
+
+      return migrate_signal_list(*it).value_or(*it);
+    }
+
+    return std::nullopt;
+  });
+
+  for (auto const &direction : {"in"sv, "out"sv}) {
+    auto dir = json.find(direction);
+    auto path = JsonPointer{} / std::string(direction) / "signals";
+
+    if (dir != json.end() and dir->contains("signals")) {
+      if (auto new_signals = migrate_signal_list(dir->at("signals")))
+        patch.push_back(Json::object({
+            {"op", "replace"},
+            {"path", path.to_string()},
+            {"value", *new_signals},
+        }));
+    } else if (signals) {
+      patch.push_back(Json::object({
+          {"op", "add"},
+          {"path", path.to_string()},
+          {"value", *signals},
+      }));
+
+      create = true;
+    }
+  }
+
+  if (create) {
+    if (not json.contains("in"))
+      patch.insert(patch.begin(),
+                   {Json::object({
+                       {"op", "add"},
+                       {"path", "/in"},
+                       {"value", Json::object({{"enabled", false}})},
+                   })});
+
+    if (not json.contains("out"))
+      patch.insert(patch.begin(),
+                   {Json::object({
+                       {"op", "add"},
+                       {"path", "/out"},
+                       {"value", Json::object({{"enabled", false}})},
+                   })});
+  }
+
+  return patch;
 }
 
 int NodeFactory::start(SuperNode *sn) {

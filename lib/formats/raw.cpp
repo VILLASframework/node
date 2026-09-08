@@ -504,11 +504,6 @@ void RawFormat::parse(json_t *json) {
                       "Failed to parse format configuration");
 
   if (end) {
-    if (bits <= 8)
-      throw ConfigError(
-          json, "node-config-format-raw-endianess",
-          "An endianess settings must only provided for bits > 8");
-
     if (!strcmp(end, "little"))
       endianess = Endianess::LITTLE;
     else if (!strcmp(end, "big"))

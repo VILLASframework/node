@@ -19,8 +19,8 @@ protected:
   unsigned offset;
 
 public:
-  AverageHook(Path *p, Node *n, int fl, int prio, bool en = true)
-      : MultiSignalHook(p, n, fl, prio, en), offset(0) {}
+  AverageHook(Path *p, Node *n, int fl, int prio)
+      : MultiSignalHook(p, n, fl, prio), offset(0) {}
 
   void prepare() override {
     assert(state == State::CHECKED);

@@ -43,12 +43,7 @@ public:
 
   ::json_t *release() { return std::exchange(inner, nullptr); }
 
-  void reset() {
-    json_decref(inner);
-    inner = nullptr;
-  }
-
-  void reset(::json_t *json) {
+  void reset(::json_t *json = nullptr) {
     json_decref(inner);
     inner = json_incref(json);
   }
@@ -56,8 +51,12 @@ public:
   void swap(JanssonPtr &other) { std::swap(inner, other.inner); }
 
   operator bool() { return inner != nullptr; }
-  ::json_t *get() const { return inner; }
-  ::json_t *operator->() const { return inner; }
+
+  ::json_t const *get() const { return inner; }
+  ::json_t *get() { return inner; }
+
+  ::json_t const *operator->() const { return inner; }
+  ::json_t *operator->() { return inner; }
 
   friend void swap(JanssonPtr &lhs, JanssonPtr &rhs) { lhs.swap(rhs); }
   friend auto operator<=>(JanssonPtr const &, JanssonPtr const &) = default;

@@ -61,8 +61,8 @@ private:
   }
 
 public:
-  FrameHook(Path *p, Node *n, int fl, int prio, bool en = true)
-      : Hook(p, n, fl, prio, en), interval(TimeInterval(0)),
+  FrameHook(Path *p, Node *n, int fl, int prio)
+      : Hook(p, n, fl, prio), interval(TimeInterval(0)),
         last_smp{nullptr, &sample_decref} {}
 
   ~FrameHook() override { (void)last_smp.release(); }

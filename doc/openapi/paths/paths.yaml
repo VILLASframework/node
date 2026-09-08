@@ -13,9 +13,9 @@ get:
       content:
         application/json:
           schema:
-              type: array
-              items:
-                $ref: ../components/schemas/config/path.yaml
+            type: array
+            items:
+              type: object
           examples:
             example1:
               value:

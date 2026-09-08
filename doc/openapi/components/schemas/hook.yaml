@@ -1,0 +1,42 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+description: |
+  Hooks form a pipeline of steps which process, filter or alter sample data.
+example: print
+
+type: [object, string]
+discriminator:
+  x-villas-expand: hook
+  propertyName: type
+  mapping:
+    average: ./hook-average.yaml
+    cast: ./hook-cast.yaml
+    decimate: ./hook-decimate.yaml
+    digest: ./hook-digest.yaml
+    dp: ./hook-dp.yaml
+    drop: ./hook-drop.yaml
+    dump: ./hook-dump.yaml
+    ebm: ./hook-ebm.yaml
+    fix: ./hook-fix.yaml
+    frame: ./hook-frame.yaml
+    gate: ./hook-gate.yaml
+    jitter_calc: ./hook-jitter_calc.yaml
+    limit_rate: ./hook-limit_rate.yaml
+    limit_value: ./hook-limit_value.yaml
+    lua: ./hook-lua.yaml
+    ma: ./hook-ma.yaml
+    pmu_dft: ./hook-pmu_dft.yaml
+    pps_ts: ./hook-pps_ts.yaml
+    print: ./hook-print.yaml
+    reorder_ts: ./hook-reorder_ts.yaml
+    restart: ./hook-restart.yaml
+    rms: ./hook-rms.yaml
+    round: ./hook-round.yaml
+    scale: ./hook-scale.yaml
+    shift_seq: ./hook-shift_seq.yaml
+    shift_ts: ./hook-shift_ts.yaml
+    skip_first: ./hook-skip_first.yaml
+    stats: ./hook-stats.yaml
+    ts: ./hook-ts.yaml

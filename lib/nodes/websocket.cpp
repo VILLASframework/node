@@ -206,7 +206,7 @@ int villas::node::websocket_protocol_cb(struct lws *wsi,
       websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_POLICY_VIOLATION,
                                  "Internal error");
       c->node->logger->warn(
-          "Failed to intialize WebSocket connection: reason={}", ret);
+          "Failed to initialize WebSocket connection: reason={}", ret);
       return -1;
     }
 
@@ -230,11 +230,12 @@ int villas::node::websocket_protocol_cb(struct lws *wsi,
 
     return -1;
 
-  case LWS_CALLBACK_CLOSED:
+  case LWS_CALLBACK_CLOSED: {
+    auto old_state = c->state;
     c->state = websocket_connection::State::CLOSED;
     c->node->logger->debug("Closed WebSocket connection: {}", c->toString());
 
-    if (c->state != websocket_connection::State::CLOSING) {
+    if (old_state != websocket_connection::State::CLOSING) {
       // TODO: Attempt reconnect here
     }
 
@@ -251,6 +252,7 @@ int villas::node::websocket_protocol_cb(struct lws *wsi,
       delete c;
 
     break;
+  }
 
   case LWS_CALLBACK_CLIENT_WRITEABLE:
   case LWS_CALLBACK_SERVER_WRITEABLE: {

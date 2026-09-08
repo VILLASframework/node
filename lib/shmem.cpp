@@ -194,6 +194,10 @@ int villas::node::shmem_int_write(struct ShmemInterface *shm,
 
   atomic_fetch_add(&shm->writers, 1);
 
+  // Signals is a heap shared_ptr; a reader in another process can't deref it.
+  for (unsigned i = 0; i < cnt; i++)
+    const_cast<struct Sample *>(smps[i])->signals.reset();
+
   ret =
       queue_signalled_push_many(&shm->write.shared->queue, (void **)smps, cnt);
 

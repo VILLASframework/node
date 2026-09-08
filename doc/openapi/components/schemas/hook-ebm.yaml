@@ -1,0 +1,34 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2026 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+$schema: http://json-schema.org/draft-07/schema
+
+type: object
+required: [type, phases]
+additionalProperties: false
+properties:
+  type:
+    type: string
+    const: ebm
+
+  phases:
+    description: Signal indices for voltage & current values for each phase.
+    type: array
+    items:
+      type: array
+      minItems: 2
+      examples:
+      - [0, 1]
+      - [2, 3]
+      - [4, 5]
+      additionalItems: false
+      items:
+      - title: Voltage Signal Index
+        type: integer
+      - title: Current Signal Index
+        type: integer
+
+  priority:
+    default: 99
+    $ref: ./shared-hook-priority.yaml

@@ -18,11 +18,12 @@ class LimitValueHook : public MultiSignalHook {
 protected:
   unsigned offset;
 
-  float min, max;
+  // jansson unpacks 'F' through a double *
+  double min, max;
 
 public:
-  LimitValueHook(Path *p, Node *n, int fl, int prio, bool en = true)
-      : MultiSignalHook(p, n, fl, prio, en), offset(0), min(0), max(0) {}
+  LimitValueHook(Path *p, Node *n, int fl, int prio)
+      : MultiSignalHook(p, n, fl, prio), offset(0), min(0), max(0) {}
 
   void parse(json_t *json) override {
     int ret;
@@ -32,7 +33,7 @@ public:
 
     MultiSignalHook::parse(json);
 
-    ret = json_unpack_ex(json, &err, 0, "{ s: f, s: f }", "min", &min, "max",
+    ret = json_unpack_ex(json, &err, 0, "{ s: F, s: F }", "min", &min, "max",
                          &max);
     if (ret)
       throw ConfigError(json, err, "node-config-hook-average");

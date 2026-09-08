@@ -18,8 +18,8 @@ protected:
   double offset;
 
 public:
-  ScaleHook(Path *p, Node *n, int fl, int prio, bool en = true)
-      : MultiSignalHook(p, n, fl, prio, en), scale(1.0), offset(0.0) {}
+  ScaleHook(Path *p, Node *n, int fl, int prio)
+      : MultiSignalHook(p, n, fl, prio), scale(1.0), offset(0.0) {}
 
   void parse(json_t *json) override {
     int ret;

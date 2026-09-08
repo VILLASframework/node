@@ -17,8 +17,8 @@ protected:
   unsigned precision;
 
 public:
-  RoundHook(Path *p, Node *n, int fl, int prio, bool en = true)
-      : MultiSignalHook(p, n, fl, prio, en), precision(1) {}
+  RoundHook(Path *p, Node *n, int fl, int prio)
+      : MultiSignalHook(p, n, fl, prio), precision(1) {}
 
   void parse(json_t *json) override {
     int ret;

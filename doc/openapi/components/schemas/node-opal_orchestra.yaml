@@ -1,0 +1,314 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2025 OPAL-RT Germany GmbH
+# SPDX-License-Identifier: Apache-2.0
+---
+title: OPAL-RT Orchestra
+type: object
+required: [type, domain]
+properties:
+  type:
+    type: string
+    const: opal.orchestra
+
+  domain:
+    type: string
+    description: >-
+      The name of the domain to which the connection is requested. This domain must exist in the DDF read by an RT-LAB subsystem.
+
+  synchronous:
+    type: boolean
+    description: >-
+      Determines whether domain participants exchange simulation data synchronously or asynchronously.
+
+  states:
+    type: boolean
+
+  connection:
+    $ref: "#/definitions/opal-orchestra-connection"
+
+  ddf:
+    type: string
+    description: >-
+      The path to the DDF file that describes the data exchanged in the specified domain.
+
+  connect_timeout:
+    $ref: ./shared-duration.yaml
+    default: 5s
+    description: >-
+      The duration after which a failed connection attempt times out.
+
+  flag_delay:
+    $ref: ./shared-duration.yaml
+    default: 0s
+    description: >-
+      Forces the local Orchestra communication to be made with flags instead of semaphores when using an external communication process.
+      Flags are recommended for better performance: they are faster but also more CPU-consuming.
+
+  flag_delay_tool:
+    $ref: ./shared-duration.yaml
+    description: >-
+      Forces the local Orchestra communication to be made with flags instead of semaphores when using an external communication process.
+      Flags are recommended for better performance: they are faster but also more CPU-consuming.
+
+  skip_wait_to_go:
+    type: boolean
+    default: false
+    description: >-
+      Sets the WaitToGo setting of the model.
+      When true, VILLASnode ignores the WaitToGo during the connection step.
+      When false, VILLASnode performs the WaitToGo during the connection step.
+
+  ddf_overwrite:
+    type: boolean
+    default: false
+    description: >-
+      If true, the DDF file provided in the 'dff' setting will be overwriting with settings and signals from the VILLASnode configuration.
+
+  ddf_overwrite_only:
+    type: boolean
+    default: false
+    description: >-
+      If true, VILLASnode will overwrite the file provided in the 'ddf' setting, and terminate immediately afterwards.
+
+  rate:
+    type: number
+    default: 1
+    description: >-
+      In asynchronous mode (see 'synchronous' setting), this rate defines how often per second the data exchange with the Orchestra domain takes place.
+
+  in:
+    type: object
+    properties:
+      enabled:
+        default: true
+        $ref: ./shared-node-enabled.yaml
+
+      builtin:
+        default: true
+        $ref: ./shared-node-builtin.yaml
+
+      vectorize:
+        default: 1
+        $ref: ./shared-node-vectorize.yaml
+
+      hooks:
+        default: []
+        $ref: ./shared-hook-list.yaml
+
+      signals:
+        type: array
+        items:
+          $ref: "#/definitions/node-opal_orchestra-signal"
+
+    additionalProperties: false
+
+  out:
+    type: object
+    properties:
+      enabled:
+        default: true
+        $ref: ./shared-node-enabled.yaml
+
+      netem:
+        $ref: ./shared-node-netem.yaml
+
+      fwmark:
+        $ref: ./shared-node-fwmark.yaml
+
+      builtin:
+        default: true
+        $ref: ./shared-node-builtin.yaml
+
+      vectorize:
+        default: 1
+        $ref: ./shared-node-vectorize.yaml
+
+      hooks:
+        default: []
+        $ref: ./shared-hook-list.yaml
+
+      signals:
+        type: array
+        items:
+          $ref: "#/definitions/node-opal_orchestra-signal"
+
+    additionalProperties: false
+
+additionalProperties: false
+
+definitions:
+  opal-orchestra-connection:
+    type: object
+    description: |
+      Configuration of the connection to the OPAL-RT Orchestra framework.
+    required:
+      - type
+    properties:
+      type:
+        description: The type of connection to the OPAL-RT Orchestra framework.
+        type: string
+    discriminator:
+      propertyName: type
+      mapping:
+        local: "#/definitions/opal-orchestra-connection-local"
+        remote: "#/definitions/opal-orchestra-connection-remote"
+        dolphin: "#/definitions/opal-orchestra-connection-dolphin"
+    oneOf:
+      - $ref: "#/definitions/opal-orchestra-connection-local"
+      - $ref: "#/definitions/opal-orchestra-connection-remote"
+      - $ref: "#/definitions/opal-orchestra-connection-dolphin"
+    additionalProperties: true
+
+  opal-orchestra-connection-local:
+    type: object
+    properties:
+      type:
+        description: The type of connection to the OPAL-RT Orchestra framework.
+        type: string
+
+      extcomm:
+        type: string
+        default: none
+        enum:
+          - udp
+          - tcp
+          - none
+        description: Type of external communication protocol helper which should be started.
+
+      addr_framework:
+        type: string
+        description: >-
+          The IP address of the target on which the framework is running.
+
+      port_framework:
+        type: integer
+        minimum: 0
+        maximum: 65535
+        description: >-
+          The port on which the framework will be reachable.
+
+      nic_framework:
+        type: string
+        description: >-
+          The network interface that the framework will use to communicate with the client.
+
+      nic_client:
+        type: string
+        description: >-
+          The network interface that the client will use to communicate with the framework.
+
+      core_framework:
+        type: integer
+        minimum: 0
+        description: >-
+          The core on which the tool of the framework is running. The index starts at 0.
+
+      core_client:
+        type: integer
+        minimum: 0
+        description: >-
+          The core on which the tool of the client is running. The index starts at 0.
+
+    additionalProperties: false
+
+  opal-orchestra-connection-remote:
+    type: object
+    required:
+      - card
+      - pci_index
+    properties:
+      type:
+        description: The type of connection to the OPAL-RT Orchestra framework.
+        type: string
+
+      card:
+        type: string
+        example: VMIPCI5565-64M
+        description: >-
+          Type of reflective memory card used for a remote connection.
+
+      pci_index:
+        type: integer
+        minimum: 1
+        description: >-
+          PCI index that corresponds to the communication card used for remote connection.
+
+    additionalProperties: false
+
+  opal-orchestra-connection-dolphin:
+    type: object
+    required:
+      - node_id_framework
+      - segment_id
+    properties:
+      type:
+        description: The type of connection to the OPAL-RT Orchestra framework.
+        type: string
+
+      node_id_framework:
+        type: integer
+        minimum: 4
+        maximum: 4096
+        description: >-
+          Node ID for Dolphin node which hosts the Orchestra framework.
+
+      segment_id:
+        type: integer
+        minimum: 1
+        maximum: 65535
+        description: >-
+          Segment ID used to uniquely identify the framework domain.
+          Note that another segment ID is automatically calculated outside of this range to identify the client segment.
+
+    additionalProperties: false
+
+  node-opal_orchestra-signal:
+    type: object
+    properties:
+      orchestra_name:
+        type: string
+        description: >-
+          Name of the corresponding Orchestra data item.
+          Defaults to the VILLAS signal name.
+
+      orchestra_type:
+        type: string
+        enum:
+          - boolean
+          - unsigned int8
+          - unsigned int16
+          - unsigned int32
+          - unsigned int64
+          - int8
+          - int16
+          - int32
+          - int64
+          - float32
+          - float64
+          - bus
+        description: >-
+          Type of the corresponding Orchestra data item.
+          Defaults to a type derived from the VILLAS signal type.
+
+      orchestra_index:
+        type: integer
+        minimum: 0
+        description: >-
+          Index of this signal within the Orchestra data item (for bus/array items).
+
+      name:
+        $ref: ./shared-signal-name.yaml
+
+      unit:
+        $ref: ./shared-signal-unit.yaml
+
+      type:
+        $ref: ./shared-signal-type.yaml
+
+      init:
+        $ref: ./shared-signal-init.yaml
+
+      enabled:
+        $ref: ./shared-signal-enabled.yaml
+
+    additionalProperties: false

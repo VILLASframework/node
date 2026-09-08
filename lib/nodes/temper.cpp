@@ -388,7 +388,7 @@ int villas::node::temper_read(NodeCompat *n, struct Sample *const smps[],
 
 __attribute__((constructor(110))) static void register_plugin() {
   p.name = "temper";
-  p.description = "An temper for staring new node-type implementations";
+  p.description = "A template for starting new node-type implementations";
   p.vectorize = 1;
   p.flags = (int)NodeFactory::Flags::PROVIDES_SIGNALS;
   p.size = sizeof(struct temper);

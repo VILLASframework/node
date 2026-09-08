@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2026 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+title: Source Index
+description: |
+  VILLASnode source index for outgoing messages.
+  The source index of incoming messages will be verified against this value if `validate_source_index` is enabled.
+type: integer
+minimum: 0

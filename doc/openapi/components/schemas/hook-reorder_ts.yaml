@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+type: object
+required: [type]
+additionalProperties: false
+properties:
+  type:
+    type: string
+    const: reorder_ts
+
+  window_size:
+    type: integer
+    default: 16
+    minimum: 1
+    description: The number of samples buffered for reordering.
+
+  priority:
+    default: 2
+    $ref: ./shared-hook-priority.yaml

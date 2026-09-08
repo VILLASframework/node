@@ -116,17 +116,17 @@ int TestRTT::prepare() {
 }
 
 static enum TestRTT::Mode parseMode(const char *mode_str) {
-  if (strcmp(mode_str, "min"))
+  if (strcmp(mode_str, "min") == 0)
     return TestRTT::Mode::MIN;
-  else if (strcmp(mode_str, "max"))
-    return TestRTT::Mode::MIN;
-  else if (strcmp(mode_str, "stop_after_count"))
+  else if (strcmp(mode_str, "max") == 0)
+    return TestRTT::Mode::MAX;
+  else if (strcmp(mode_str, "stop_after_count") == 0)
     return TestRTT::Mode::STOP_COUNT;
-  else if (strcmp(mode_str, "stop_after_duration"))
+  else if (strcmp(mode_str, "stop_after_duration") == 0)
     return TestRTT::Mode::STOP_DURATION;
-  else if (strcmp(mode_str, "at_least_count"))
+  else if (strcmp(mode_str, "at_least_count") == 0)
     return TestRTT::Mode::AT_LEAST_COUNT;
-  else if (strcmp(mode_str, "at_least_duration"))
+  else if (strcmp(mode_str, "at_least_duration") == 0)
     return TestRTT::Mode::AT_LEAST_DURATION;
   else
     return TestRTT::Mode::UNKNOWN;

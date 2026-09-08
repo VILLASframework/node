@@ -72,7 +72,7 @@ protected:
   uint64_t calcCount;
   unsigned sampleRate;
   double startFrequency;
-  double endFreqency;
+  double endFrequency;
   double frequencyResolution;
   unsigned rate;
   unsigned ppsIndex;
@@ -113,8 +113,8 @@ protected:
   double rocofOffset;
 
 public:
-  PmuDftHook(Path *p, Node *n, int fl, int prio, bool en = true)
-      : MultiSignalHook(p, n, fl, prio, en), windowType(WindowType::NONE),
+  PmuDftHook(Path *p, Node *n, int fl, int prio)
+      : MultiSignalHook(p, n, fl, prio), windowType(WindowType::NONE),
         paddingType(PaddingType::ZERO), estType(EstimationType::NONE),
         timeAlignType(TimeAlign::CENTER), smpMemoryData(), smpMemoryTs(),
 #ifdef DFT_MEM_DUMP
@@ -122,7 +122,7 @@ public:
 #endif
         matrix(), results(), filterWindowCoefficents(), absResults(),
         absFrequencies(), calcCount(0), sampleRate(0), startFrequency(0),
-        endFreqency(0), frequencyResolution(0), rate(0), ppsIndex(0),
+        endFrequency(0), frequencyResolution(0), rate(0), ppsIndex(0),
         windowSize(0), windowMultiplier(0), freqCount(0), channelNameEnable(1),
         smpMemPos(0), lastSequence(0), windowCorrectionFactor(0),
         lastCalc({0, 0}), nextCalc(0.0), lastResult(),
@@ -207,7 +207,7 @@ public:
                          "Current window multiplyer factor is {}",
                          windowMultiplier);
 
-    freqCount = ceil((endFreqency - startFrequency) / frequencyResolution) + 1;
+    freqCount = ceil((endFrequency - startFrequency) / frequencyResolution) + 1;
 
     // Initialize matrix of dft coeffients
     matrix.clear();
@@ -253,8 +253,8 @@ public:
         json, &err, 0,
         "{ s?: i, s?: F, s?: F, s?: F, s?: i, s?: i, s?: s, s?: s, s?: s, s?: "
         "i, s?: s, s?: b, s?: s, s?: F, s?: F, s?: F, s?: F}",
-        "sample_rate", &sampleRate, "start_freqency", &startFrequency,
-        "end_freqency", &endFreqency, "frequency_resolution",
+        "sample_rate", &sampleRate, "start_frequency", &startFrequency,
+        "end_frequency", &endFrequency, "frequency_resolution",
         &frequencyResolution, "dft_rate", &rate, "window_size_factor",
         &windowSizeFactor, "window_type", &windowTypeC, "padding_type",
         &paddingTypeC, "estimate_type", &estimateTypeC, "pps_index", &ppsIndex,
@@ -265,6 +265,14 @@ public:
     if (ret)
       throw ConfigError(json, err, "node-config-hook-dft");
 
+    // Backward-compatibility: accept the previously misspelled keys.
+    json_t *json_start = json_object_get(json, "start_freqency");
+    if (json_start)
+      startFrequency = json_number_value(json_start);
+    json_t *json_end = json_object_get(json, "end_frequency");
+    if (json_end)
+      endFrequency = json_number_value(json_end);
+
     windowSize = sampleRate * windowSizeFactor / (double)rate;
     logger->info(
         "Set windows size to {} samples which fits {} times the rate {}s",
@@ -272,6 +280,8 @@ public:
 
     if (!windowTypeC)
       logger->info("No Window type given, assume no windowing");
+    else if (strcmp(windowTypeC, "none") == 0)
+      windowType = WindowType::NONE;
     else if (strcmp(windowTypeC, "flattop") == 0)
       windowType = WindowType::FLATTOP;
     else if (strcmp(windowTypeC, "hamming") == 0)
@@ -327,7 +337,7 @@ public:
   void check() override {
     assert(state == State::PARSED);
 
-    if (endFreqency < 0 || endFreqency > sampleRate)
+    if (endFrequency < 0 || endFrequency > sampleRate)
       throw RuntimeError("End frequency must be smaller than sampleRate {}",
                          sampleRate);
 

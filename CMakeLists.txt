@@ -7,7 +7,7 @@
 cmake_minimum_required(VERSION 3.14)
 
 project(villas-node
-    VERSION 1.1.0
+    VERSION 1.3.0 # x-release-please-version
     DESCRIPTION "Open-Source Real-time Multi-protocol Gateway"
     HOMEPAGE_URL "https://www.fein-aachen.org/projects/villas-node/"
     LANGUAGES C CXX
@@ -65,6 +65,8 @@ add_compile_options(
 check_include_file("sys/eventfd.h" HAS_EVENTFD)
 check_include_file("semaphore.h" HAS_SEMAPHORE)
 check_include_file("sys/mman.h" HAS_MMAN)
+check_include_file("netdb.h" HAS_NETDB)
+check_include_file("poll.h" HAS_POLL)
 
 # Use the switch NO_EVENTFD to deactivate eventfd usage indepentent of availability on OS
 if(${NO_EVENTFD})
@@ -78,6 +80,8 @@ find_package(OpenSSL 1.0.0 REQUIRED)
 find_package(PkgConfig REQUIRED)
 find_package(spdlog REQUIRED)
 find_package(Threads REQUIRED)
+find_package(nlohmann_json REQUIRED)
+find_package(nlohmann_json_schema_validator REQUIRED)
 find_package(OpenMP)
 find_package(IBVerbs)
 find_package(RDMACM)
@@ -108,7 +112,7 @@ pkg_check_modules(LIBWEBSOCKETS IMPORTED_TARGET REQUIRED libwebsockets>=3.1.0)
 pkg_check_modules(PROTOBUF IMPORTED_TARGET protobuf>=2.6.0)
 pkg_check_modules(PROTOBUFC IMPORTED_TARGET libprotobuf-c>=1.1.0)
 pkg_check_modules(CRITERION IMPORTED_TARGET criterion>=2.3.1)
-pkg_check_modules(LIBNL3_ROUTE IMPORTED_TARGET libnl-route-3.0>=3.2.27)
+pkg_check_modules(LIBNL3_ROUTE IMPORTED_TARGET libnl-route-3.0>=3.5.0)
 pkg_check_modules(LIBIEC61850 IMPORTED_TARGET libiec61850>=1.6.0)
 pkg_check_modules(LIB60870 IMPORTED_TARGET lib60870>=2.3.1)
 pkg_check_modules(LIBCONFIG IMPORTED_TARGET libconfig>=1.4.9)
@@ -194,6 +198,7 @@ cmake_dependent_option(WITH_TOOLS               "Build auxilary tools"          
 cmake_dependent_option(WITH_WEB                 "Build with internal webserver"                         "${WITH_DEFAULTS}" "LIBWEBSOCKETS_FOUND" OFF)
 
 cmake_dependent_option(WITH_NODE_AMQP           "Build with amqp node-type"                             "${WITH_DEFAULTS}" "RABBITMQ_C_FOUND" OFF)
+cmake_dependent_option(WITH_NODE_C37_118        "Build with c37_118 node-type"                          "${WITH_DEFAULTS}" "HAS_NETDB; HAS_POLL" OFF)
 cmake_dependent_option(WITH_NODE_CAN            "Build with can node-type"                              "${WITH_DEFAULTS}" "" OFF)
 cmake_dependent_option(WITH_NODE_COMEDI         "Build with comedi node-type"                           "${WITH_DEFAULTS}" "COMEDILIB_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_ETHERCAT       "Build with ethercat node-type"                         "${WITH_DEFAULTS}" "ETHERLAB_FOUND; NOT WITHOUT_GPL" OFF)

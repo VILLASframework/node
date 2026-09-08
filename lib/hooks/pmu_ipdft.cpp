@@ -21,8 +21,8 @@ protected:
   double estimationRange;  // The range around nominalFreq used for estimation
 
 public:
-  IpDftPmuHook(Path *p, Node *n, int fl, int prio, bool en = true)
-      : PmuHook(p, n, fl, prio, en), frequencyCount(0), estimationRange(0)
+  IpDftPmuHook(Path *p, Node *n, int fl, int prio)
+      : PmuHook(p, n, fl, prio), frequencyCount(0), estimationRange(0)
 
   {}
 
