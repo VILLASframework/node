@@ -25,6 +25,8 @@
     let
       inherit (nixpkgs) lib;
 
+      version = "1.2.0"; # x-release-please-version
+
       nixDir = ./packaging/nix;
 
       # Add separateDebugInfo to a derivation
@@ -66,15 +68,18 @@
       packagesWith = pkgs: rec {
         default = villas-node;
 
-        villas-node-python = pkgs.callPackage (nixDir + "/python.nix") { src = ./.; };
+        villas-node-python = pkgs.callPackage (nixDir + "/python.nix") {
+          src = ./.;
+          inherit version;
+        };
 
         villas-node-minimal = pkgs.callPackage (nixDir + "/villas.nix") {
           src = ./.;
-          version = "minimal";
+          version = "${version}-minimal";
         };
 
         villas-node = villas-node-minimal.override {
-          version = "full";
+          version = "${version}-full";
           withAllExtras = true;
           withAllFormats = true;
           withAllHooks = true;

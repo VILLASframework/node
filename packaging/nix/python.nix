@@ -4,9 +4,11 @@
   src,
   pkgs,
   python3Packages,
+  version,
 }:
 python3Packages.buildPythonPackage {
-  name = "villas-node";
+  pname = "villas-node";
+  inherit version;
   src = "${src}/python";
   format = "pyproject";
   propagatedBuildInputs = with python3Packages; [
