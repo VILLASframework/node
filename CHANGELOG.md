@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/VILLASframework/node/compare/v1.3.0...v1.3.1) (2026-09-09)
+
+
+### Bug Fixes
+
+* **ci:** Add version to Nix builds ([6357645](https://github.com/VILLASframework/node/commit/6357645d63aa70926f22b837a912541ef39f73e8))
+
 ## [1.3.0](https://github.com/VILLASframework/node/compare/v1.2.2...v1.3.0) (2026-09-07)
 
 
