@@ -4,17 +4,19 @@
 ---
 title: FMU node-type
 type: object
-required: [fmu_path, fmu_unpack_path, fmu_writing_turn, start_time, stop_time, step_size]
+required: [type, fmu_path, fmu_unpack_path, fmu_writing_turn, start_time, stop_time, step_size]
 properties:
+  type:
+    type: string
+    const: fmu
+
   fmu_path:
     type: string
-    format: uri
     description: |
       Specifies the URI to a FMU model
 
   fmu_unpack_path:
     type: string
-    format: uri
     description: |
       Specifies the URI to a directory which has the unpacked files of the FMU model (mainly the shared library and the modelDescription.xml for the model).
 
