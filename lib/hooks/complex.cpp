@@ -7,6 +7,7 @@
 
 #include <cassert>
 #include <cmath>
+#include <string>
 #include <jansson.h>
 
 #include <villas/hook.hpp>
@@ -27,8 +28,8 @@ protected:
   int polar_to_rect;
 
 public:
-  PolarToRectHook(Path *p, Node *n, int fl, int prio, bool en = true)
-      : MultiSignalHook(p, n, fl, prio, en), angle("deg"), polar_to_rect(0) {}
+  PolarToRectHook(Path *p, Node *n, int fl, int prio)
+      : MultiSignalHook(p, n, fl, prio), angle("deg"), polar_to_rect(0) {}
 
   void parse(json_t *json) override {
     int ret;

@@ -7,6 +7,7 @@
 set(HOOK_SRC
     average.cpp
     cast.cpp
+    complex.cpp
     decimate.cpp
     digest.cpp
     dp.cpp
