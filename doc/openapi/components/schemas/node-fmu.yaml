@@ -62,6 +62,8 @@ properties:
       signals:
         $ref: ./shared-signal-list.yaml
 
+    additionalProperties: false
+
   out:
     type: object
     properties:
@@ -90,6 +92,6 @@ properties:
       signals:
         $ref: ./shared-signal-list.yaml
 
-  additionalProperties: false
+    additionalProperties: false
 
 additionalProperties: false
