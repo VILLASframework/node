@@ -62,8 +62,8 @@ public:
       if (json_is_string(json_config))
         configUri = json_string_value(json_config);
       else if (json_is_object(json_config)) {
-        char configUriBuf[] = "villas-node.json.XXXXXX";
-        int configFd = mkstemp(configUriBuf);
+        char configUriBuf[] = "villas-node.XXXXXX.json";
+        int configFd = mkstemps(configUriBuf, strlen(".json"));
 
         FILE *configFile = fdopen(configFd, "w+");
 
