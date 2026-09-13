@@ -10,31 +10,18 @@ properties:
     type: string
     const: pps_ts
 
-  mode:
-    type: string
-    enum:
-    - simple
-    - horizon
-    default: simple
-    description: "The synchronization mode. The `horizon` mode is currently no recommended to use as it is not fully tested."
-
   threshold:
     type: number
     default: 1.5
     description: "The signal level threshold of the PPS signal which is used to detect an edge."
 
-  expected_smp_rate:
-    type: number
-    default: 1.0
-    description: "The expected sampling rate of the input signal. Only important for a faster initialization."
-
-  horizon_estimation:
-    type: integer
-    default: 10
-
-  horizon_compensation:
-    type: integer
-    default: 10
+  time_source:
+    type: string
+    enum:
+    - sample
+    - os
+    default: os
+    description: Defines from where the second value is derived.
 
   priority:
     default: 99
