@@ -3,7 +3,7 @@
 # Integration test for pps_ts hook.
 #
 # Author: Manuel Pitz <post@cl0.de>
-# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-FileCopyrightText: 2026 Institute for Automation of Complex Power Systems, RWTH Aachen University
 # SPDX-License-Identifier: Apache-2.0
 
 set -e
