@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.2](https://github.com/VILLASframework/node/compare/v1.3.1...v1.3.2) (2026-09-14)
+
+
+### Bug Fixes
+
+* **api:** Restart temp config file needs a .json at the end for corret config selection ([a169249](https://github.com/VILLASframework/node/commit/a16924952e4e42fcb66dd175114a1856b5652b52))
+
 ## [1.3.1](https://github.com/VILLASframework/node/compare/v1.3.0...v1.3.1) (2026-09-09)
 
 
