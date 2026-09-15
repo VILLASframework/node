@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.3](https://github.com/VILLASframework/node/compare/v1.3.2...v1.3.3) (2026-09-15)
+
+
+### Bug Fixes
+
+* **doc:** Update example for pps_ts hook ([019a669](https://github.com/VILLASframework/node/commit/019a6694f7f3e7185d58d41904aa6fa39eb176a0))
+* **pps_ts:** Cleanup code and make sure variables are initialized ([5d24936](https://github.com/VILLASframework/node/commit/5d24936fcea4529fae64e4d4496337703ff39219))
+
 ## [1.3.2](https://github.com/VILLASframework/node/compare/v1.3.1...v1.3.2) (2026-09-14)
 
 
