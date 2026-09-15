@@ -315,11 +315,10 @@ int FmuNode::parse(json_t *json) {
   step_size = 0.1;
   stop_time = INT_MAX;
   ret = json_unpack_ex(
-      json, &err, 0, "{s:s, s:s, s?:b, s?:f, s?:f, s?:f, s?:{s:o}, s?:{s:o}}",
-      "fmu_path", &path, "fmu_unpack_path", &unpackPath, "fmu_writing_turn",
-      &writing_turn, "stop_time", &stop_time, "start_time", &start_time,
-      "step_size", &step_size, "in", "signals", &json_signals_in, "out",
-      "signals", &json_signals_out);
+      json, &err, 0, "{s:s, s:s, s?:f, s?:f, s?:f, s?:{s:o}, s?:{s:o}}",
+      "fmu_path", &path, "fmu_unpack_path", &unpackPath, "stop_time",
+      &stop_time, "start_time", &start_time, "step_size", &step_size, "in",
+      "signals", &json_signals_in, "out", "signals", &json_signals_out);
   if (ret)
     throw ConfigError(json, err, "node-config-node-fmu");
   if (stop_time == INT_MAX) {
