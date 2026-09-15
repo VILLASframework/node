@@ -13,6 +13,7 @@ discriminator:
   mapping:
     average: ./hook-average.yaml
     cast: ./hook-cast.yaml
+    complex: ./hook-complex.yaml
     decimate: ./hook-decimate.yaml
     digest: ./hook-digest.yaml
     dp: ./hook-dp.yaml
