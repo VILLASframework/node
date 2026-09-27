@@ -48,7 +48,6 @@
           inherit system;
           overlays = with self.overlays; [
             default
-            patches
           ];
         };
 
@@ -59,7 +58,6 @@
           inherit system;
           overlays = with self.overlays; [
             default
-            patches
             debug
           ];
         };
@@ -136,8 +134,6 @@
       # Standard flake attribute allowing you to add the villas packages to your nixpkgs
       overlays = {
         default = final: prev: packagesWith final;
-
-        patches = import ./packaging/nix/patches.nix;
 
         debug = final: prev: {
           jansson = addSeparateDebugInfo prev.jansson;
@@ -239,7 +235,6 @@
           imports = [ (nixDir + "/module.nix") ];
           nixpkgs.overlays = [
             self.overlays.default
-            self.overlays.patches
           ];
         };
       };
