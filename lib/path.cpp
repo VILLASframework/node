@@ -296,10 +296,13 @@ void Path::prepare(NodeList &nodes) {
 #endif // WITH_HOOKS
 
   // Prepare pool
+  // Size for the max signal count across the path (pre- and post-hook), so
+  // remapping still fits when a hook shrinks the signal list (e.g. polar_to_rect).
   auto osigs = getOutputSignals();
   unsigned pool_size = std::max(1UL, destinations.size()) * queuelen;
+  unsigned pool_signals = getOutputSignalsMaxCount();
 
-  ret = pool_init(&pool, pool_size, SAMPLE_LENGTH(osigs->size()), pool_mt);
+  ret = pool_init(&pool, pool_size, SAMPLE_LENGTH(pool_signals), pool_mt);
   if (ret)
     throw RuntimeError("Failed to initialize pool of path: {}",
                        this->toString());
