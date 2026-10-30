@@ -16,6 +16,7 @@ discriminator:
     ethercat: ./node-ethercat.yaml
     example: ./node-example.yaml
     exec: ./node-exec.yaml
+    fmu: ./node-fmu.yaml
     file: ./node-file.yaml
     fpga: ./node-fpga.yaml
     iec60870-5-104: ./node-iec60870-5-104.yaml

@@ -46,7 +46,7 @@ jobs:
       options: --user root
     steps:
       - name: Install Git and Ruby
-        run: apt-get update && apt-get -y install git ruby
+        run: apt-get update && apt-get -y install git ruby ruby-dev make gcc
 
       - name: Checkout
         uses: actions/checkout@v7
