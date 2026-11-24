@@ -5,18 +5,27 @@
 # SPDX-License-Identifier: Apache-2.0
 
 set(TEST_SRC
+    base64.cpp
+    buffer.cpp
     config_json.cpp
     config.cpp
     format.cpp
     helpers.cpp
+    hist.cpp
     json.cpp
+    kernel.cpp
+    list.cpp
     main.cpp
     mapping.cpp
     memory.cpp
     pool.cpp
+    popen.cpp
     queue_signalled.cpp
     queue.cpp
     signal.cpp
+    task.cpp
+    timing.cpp
+    utils.cpp
 )
 
 if(WITH_NODE_C37_118)

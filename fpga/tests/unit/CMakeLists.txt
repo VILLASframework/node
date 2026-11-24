@@ -8,6 +8,7 @@ set(SOURCES
     dma.cpp
     fifo.cpp
     fpga.cpp
+    graph.cpp
     logging.cpp
     main.cpp
     rtds.cpp
@@ -26,6 +27,6 @@ target_include_directories(unit-tests-fpga PUBLIC
 )
 
 target_link_libraries(unit-tests-fpga PUBLIC
-    villas-fpga
+    villas
     ${CRITERION_LIBRARIES}
 )

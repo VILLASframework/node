@@ -21,7 +21,7 @@ set(PROJECT_COPYRIGHT "2014-2025 The VILLASframework Authors")
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_THREAD_PREFER_PTHREAD ON)
-set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake;${PROJECT_SOURCE_DIR}/common/cmake")
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
@@ -261,7 +261,6 @@ if(WITH_FPGA)
     add_subdirectory(fpga)
 endif()
 
-add_subdirectory(common)
 add_subdirectory(etc)
 add_subdirectory(lib)
 add_subdirectory(packaging)
@@ -286,6 +285,11 @@ endif()
 if(WITH_TESTS)
     add_subdirectory(tests)
 endif()
+
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/villas/config.hpp.in
+    ${CMAKE_CURRENT_BINARY_DIR}/include/villas/config.hpp
+)
 
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/include/villas/node/config.hpp.in

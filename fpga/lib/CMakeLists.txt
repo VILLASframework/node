@@ -13,6 +13,17 @@ set(SOURCES
     core.cpp
     node.cpp
     utils.cpp
+    memory.cpp
+    memory_manager.cpp
+
+    kernel/vfio_container.cpp
+    kernel/vfio_device.cpp
+    kernel/vfio_group.cpp
+    kernel/devices/device_connection.cpp
+    kernel/devices/ip_device.cpp
+    kernel/devices/linux_driver.cpp
+    kernel/devices/pci_device.cpp
+    kernel/devices/platform_device.cpp
 
     ips/aurora_xilinx.cpp
     ips/aurora.cpp
@@ -41,20 +52,27 @@ set(SOURCES
 set_source_files_properties(ips/rtds2gpu/xrtds2gpu.c
     PROPERTIES COMPILE_FLAGS -Wno-int-to-pointer-cast)
 
-add_library(villas-fpga SHARED ${SOURCES})
+# Linked into libvillas with --whole-archive (see lib/CMakeLists.txt)
+add_library(villas-fpga STATIC ${SOURCES})
 
-target_link_libraries(villas-fpga PUBLIC villas-common)
+set_target_properties(villas-fpga PROPERTIES
+    POSITION_INDEPENDENT_CODE ON
+)
 
-target_compile_definitions(villas-fpga PRIVATE
-    BUILDID=\"abc\"
-    _GNU_SOURCE
+target_compile_definitions(villas-fpga
+    PUBLIC
+        __STDC_FORMAT_MACROS
+        _GNU_SOURCE
+    PRIVATE
+        BUILDID=\"abc\"
 )
 
 target_include_directories(villas-fpga
     PUBLIC
         ${PROJECT_BINARY_DIR}/include
+        ${PROJECT_SOURCE_DIR}/include
         ${PROJECT_SOURCE_DIR}/fpga/include
-        ${JANSSON_INCLUDE_DIRS}
+        ${OPENSSL_INCLUDE_DIR}
 )
 
 target_link_libraries(villas-fpga PUBLIC
@@ -62,16 +80,10 @@ target_link_libraries(villas-fpga PUBLIC
     ${CMAKE_DL_LIBS}
     m
     xil
-    villas-common
+    PkgConfig::JANSSON
+    spdlog::spdlog
+    fmt::fmt
     "$<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,9.0>>:stdc++fs>"
-)
-
-include(GNUInstallDirs)
-
-install(TARGETS villas-fpga
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}/static
 )
 
 install(DIRECTORY ../include/villas DESTINATION include)
