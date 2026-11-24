@@ -8,8 +8,8 @@
 #include <villas/api/request.hpp>
 #include <villas/api/response.hpp>
 #include <villas/api/session.hpp>
+#include <villas/exceptions.hpp>
 #include <villas/log.hpp>
-#include <villas/node/exceptions.hpp>
 #include <villas/super_node.hpp>
 #include <villas/utils.hpp>
 

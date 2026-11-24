@@ -15,10 +15,11 @@
 #include <villas/exceptions.hpp>
 #include <villas/format.hpp>
 #include <villas/hook.hpp>
+#include <villas/jansson.hpp>
+#include <villas/json.hpp>
 #include <villas/kernel/rt.hpp>
 #include <villas/log.hpp>
 #include <villas/node/config.hpp>
-#include <villas/node/exceptions.hpp>
 #include <villas/plugin.hpp>
 #include <villas/pool.hpp>
 #include <villas/sample.hpp>
@@ -79,8 +80,8 @@ protected:
               << std::endl
               << "  OPTIONS is one or more of the following options:"
               << std::endl
-              << "    -c CONFIG       a JSON file containing just the hook "
-                 "configuration"
+              << "    -c CONFIG       a JSON or libconfig file containing just "
+                 "the hook configuration"
               << std::endl
               << "    -f FMT          the input data format" << std::endl
               << "    -F FMT          the output data format (defaults to "
@@ -174,12 +175,14 @@ protected:
       output_format = input_format;
 
     if (!file.empty()) {
-      json_error_t err;
-      json_t *j = json_load_file(file.c_str(), 0, &err);
-      if (!j)
-        throw JanssonParseError(err);
+      JanssonPtr j = load_config_file(file, {
+                                                .allow_libconfig = true,
+                                                .allow_environment = true,
+                                                .allow_include = true,
+                                                .allow_comments = true,
+                                            });
 
-      json_object_update_missing(config, j);
+      json_object_update_missing_new(config, j.release());
     }
 
     if (argc < optind + 1) {

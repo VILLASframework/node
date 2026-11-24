@@ -7,10 +7,10 @@
 
 #include <cstring>
 
+#include <villas/exceptions.hpp>
 #include <villas/hook.hpp>
 #include <villas/node.hpp>
 #include <villas/node/config.hpp>
-#include <villas/node/exceptions.hpp>
 #include <villas/path.hpp>
 #include <villas/signal_list.hpp>
 #include <villas/timing.hpp>

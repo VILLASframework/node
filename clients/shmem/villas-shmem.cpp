@@ -12,10 +12,10 @@
 #include <iostream>
 
 #include <villas/colors.hpp>
+#include <villas/exceptions.hpp>
 #include <villas/log.hpp>
 #include <villas/node.hpp>
 #include <villas/node/config.hpp>
-#include <villas/node/exceptions.hpp>
 #include <villas/pool.hpp>
 #include <villas/sample.hpp>
 #include <villas/shmem.hpp>

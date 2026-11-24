@@ -20,7 +20,6 @@
 #include <villas/kernel/rt.hpp>
 #include <villas/log.hpp>
 #include <villas/node.hpp>
-#include <villas/node/exceptions.hpp>
 #include <villas/node/json_schema.hpp>
 #include <villas/node/memory.hpp>
 #include <villas/path.hpp>

@@ -8,9 +8,9 @@
 #include <memory>
 
 #include <villas/common.hpp>
+#include <villas/exceptions.hpp>
 #include <villas/hook.hpp>
 #include <villas/node.hpp>
-#include <villas/node/exceptions.hpp>
 #include <villas/stats.hpp>
 #include <villas/timing.hpp>
 

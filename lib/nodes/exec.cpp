@@ -9,9 +9,9 @@
 
 #include <unistd.h>
 
+#include <villas/exceptions.hpp>
 #include <villas/format.hpp>
 #include <villas/node/config.hpp>
-#include <villas/node/exceptions.hpp>
 #include <villas/nodes/exec.hpp>
 #include <villas/utils.hpp>
 

@@ -5,8 +5,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <villas/exceptions.hpp>
 #include <villas/hook.hpp>
-#include <villas/node/exceptions.hpp>
 #include <villas/sample.hpp>
 #include <villas/signal.hpp>
 

@@ -10,8 +10,8 @@
 #include <villas/api.hpp>
 #include <villas/api/session.hpp>
 #include <villas/config.hpp>
+#include <villas/exceptions.hpp>
 #include <villas/node/config.hpp>
-#include <villas/node/exceptions.hpp>
 #include <villas/nodes/websocket.hpp>
 #include <villas/utils.hpp>
 #include <villas/web.hpp>
