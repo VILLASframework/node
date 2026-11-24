@@ -252,7 +252,7 @@ enum class C37MessageTimeQuality : uint32_t {
   WITHIN_100_MILLIS_OF_UTC,
   WITHIN_1_SECS_OF_UTC,
   WITHIN_10_SECS_OF_UTC,
-  TIME_NOT_RELIABLE,
+  NOT_RELIABLE = 0xF,
 };
 
 struct C37FrameMetadata {

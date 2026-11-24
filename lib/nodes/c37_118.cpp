@@ -10,6 +10,7 @@
 #include <bit>
 #include <cassert>
 #include <cerrno>
+#include <chrono>
 #include <climits>
 #include <cmath>
 #include <cstdint>
@@ -37,6 +38,7 @@
 #include <villas/json.hpp>
 #include <villas/node.hpp>
 #include <villas/nodes/c37_118.hpp>
+#include <villas/path.hpp>
 #include <villas/queue_signalled.h>
 #include <villas/sample.hpp>
 #include <villas/timing.hpp>
@@ -63,6 +65,38 @@ void from_json(Json const &json, C37AnalogUnit &unit) {
     unit = C37AnalogUnit::PEAK;
   else
     throw RuntimeError("Invalid analog unit '{}'", str);
+}
+
+void from_json(Json const &json, C37MessageTimeQuality &quality) {
+  auto const &str = json.get_ref<Json::string_t const &>();
+  if (str == "locked_to_utc")
+    quality = C37MessageTimeQuality::LOCKED_TO_UTC;
+  else if (str == "within_1_nanos_of_utc")
+    quality = C37MessageTimeQuality::WITHIN_1_NANOS_OF_UTC;
+  else if (str == "within_10_nanos_of_utc")
+    quality = C37MessageTimeQuality::WITHIN_10_NANOS_OF_UTC;
+  else if (str == "within_100_nanos_of_utc")
+    quality = C37MessageTimeQuality::WITHIN_100_NANOS_OF_UTC;
+  else if (str == "within_1_micros_of_utc")
+    quality = C37MessageTimeQuality::WITHIN_1_MICROS_OF_UTC;
+  else if (str == "within_10_micros_of_utc")
+    quality = C37MessageTimeQuality::WITHIN_10_MICROS_OF_UTC;
+  else if (str == "within_100_micros_of_utc")
+    quality = C37MessageTimeQuality::WITHIN_100_MICROS_OF_UTC;
+  else if (str == "within_1_millis_of_utc")
+    quality = C37MessageTimeQuality::WITHIN_1_MILLIS_OF_UTC;
+  else if (str == "within_10_millis_of_utc")
+    quality = C37MessageTimeQuality::WITHIN_10_MILLIS_OF_UTC;
+  else if (str == "within_100_millis_of_utc")
+    quality = C37MessageTimeQuality::WITHIN_100_MILLIS_OF_UTC;
+  else if (str == "within_1_secs_of_utc")
+    quality = C37MessageTimeQuality::WITHIN_1_SECS_OF_UTC;
+  else if (str == "within_10_secs_of_utc")
+    quality = C37MessageTimeQuality::WITHIN_10_SECS_OF_UTC;
+  else if (str == "not_reliable")
+    quality = C37MessageTimeQuality::NOT_RELIABLE;
+  else
+    throw RuntimeError("Invalid message time quality '{}'", str);
 }
 
 void from_json(Json const &json, C37PhasorComponent &component) {
@@ -1258,6 +1292,8 @@ parse_address(std::string const &address, std::string default_service) {
   return {std::move(host), std::move(service)};
 }
 
+static constexpr unsigned CLIENT_RECONNECT_MAX_DELAY = 10;
+
 class C37Node : public Node {
   struct {
     std::string host;
@@ -1275,6 +1311,7 @@ class C37Node : public Node {
     std::string service;
     bool testing = false;
     uint16_t idcode = 1;
+    C37MessageTimeQuality time_quality = {};
     C37Config config = {};
 
     int listen_sd = -1;
@@ -1309,8 +1346,12 @@ class C37Node : public Node {
 
   void clientConnect();
   void clientDisconnect();
+  void clientHandshake();
+  void clientReconnect();
+  void clientReconfigureAddress(Json const &json);
+  C37Config clientRequestConfig();
   void clientSendCommand(C37CommandType cmd);
-  void clientBuildSignals();
+  SignalList::Ptr clientBuildSignals();
 
   void serverListen();
   void serverShutdown();
@@ -1382,7 +1423,21 @@ void C37Node::clientConnect() {
     throw SystemError("Failed to connect to '{}:{}'", client.host,
                       client.service);
 
-  client.sd = fd;
+  if (client.sd >= 0) {
+    if (::dup2(fd, client.sd) < 0) {
+      ::close(fd);
+      throw SystemError("Failed to replace socket descriptor");
+    }
+
+    ::close(fd);
+
+    for (auto ps : sources)
+      ps->getPath()->repoll();
+  } else {
+    client.sd = fd;
+  }
+
+  client.rx = {};
 }
 
 void C37Node::clientDisconnect() {
@@ -1449,7 +1504,88 @@ void C37Node::clientSendCommand(C37CommandType cmd) {
   sendAll(client.sd, client.tx);
 }
 
-void C37Node::clientBuildSignals() {
+C37Config C37Node::clientRequestConfig() {
+  clientSendCommand(C37CommandType::R1_GET_CONFIG2);
+
+  C37Config config = {};
+  C37Frame frame;
+  std::vector<std::byte> segmentation_buffer;
+  for (;;) {
+    if (auto result = recvFrame(client.sd, client.rx, frame);
+        result != C37Result::OK)
+      throw RuntimeError("Failed to load frame ({})", int(result));
+
+    auto sync = frame.sync();
+    if (sync != C37Sync::R1_CONFIG2 && sync != C37Sync::R2_CONFIG3) {
+      logger->debug("Ignoring frame type {:#x}", int(sync));
+      continue;
+    }
+
+    auto result = frame.deserialize_config(config, segmentation_buffer);
+    if (result == C37Result::OK)
+      break;
+
+    if (result == C37Result::SEGMENTED)
+      continue;
+
+    throw RuntimeError("Failed to deserialize configuration frame ({})",
+                       int(result));
+  }
+
+  return config;
+}
+
+void C37Node::clientHandshake() {
+  auto const signal_count = in.signals ? in.signals->size() : 0;
+
+  clientConnect();
+  client.config = clientRequestConfig();
+  clientSendCommand(C37CommandType::R1_DATA_START);
+
+  if (auto signals = clientBuildSignals(); signals->size() != signal_count)
+    logger->error("Server changed its configuration from {} to {} signal(s). "
+                  "Restart the node to apply it.",
+                  signal_count, signals->size());
+}
+
+void C37Node::clientReconnect() {
+  for (unsigned attempt = 1; state == State::STARTED; attempt++) {
+    auto const delay = std::min(attempt, CLIENT_RECONNECT_MAX_DELAY);
+
+    logger->info("Reconnecting to '{}:{}' in {}s (attempt {})", client.host,
+                 client.service, delay, attempt);
+
+    std::this_thread::sleep_for(std::chrono::seconds(delay));
+
+    if (state != State::STARTED)
+      break;
+
+    try {
+      clientHandshake();
+    } catch (std::exception &e) {
+      logger->warn("Failed to reconnect: {}", e.what());
+      continue;
+    }
+
+    logger->info("Reconnected to '{}:{}'", client.host, client.service);
+    return;
+  }
+}
+
+void C37Node::clientReconfigureAddress(Json const &json) {
+  auto const &address = json.get_ref<Json::string_t const &>();
+
+  std::tie(client.host, client.service) = parse_address(address, "4712");
+
+  if (state != State::STARTED)
+    return;
+
+  clientHandshake();
+
+  logger->info("Connected to '{}:{}'", client.host, client.service);
+}
+
+SignalList::Ptr C37Node::clientBuildSignals() {
   auto signals = std::make_shared<SignalList>();
 
   for (auto const i : std::views::iota(size_t(0), client.config.pmu.size())) {
@@ -1478,7 +1614,7 @@ void C37Node::clientBuildSignals() {
               SignalType::BOOLEAN));
   }
 
-  in.signals = signals;
+  return signals;
 }
 
 C37PhasorInfo C37Node::parsePhasor(Json const &json,
@@ -1667,6 +1803,7 @@ int C37Node::parse(json_t *json) {
     auto address = out->at("address").get<std::string>();
     server.idcode = out->value("idcode", server.idcode);
     server.testing = out->value("testing", server.testing);
+    out->at("time_quality").get_to(server.time_quality);
 
     // The configuration properties are inlined into the "out" object.
     server.names.clear();
@@ -1680,6 +1817,9 @@ int C37Node::parse(json_t *json) {
 
 int C37Node::prepare() {
   if (out.enabled) {
+    reconfiguration_callbacks["/out/time_quality"_json_pointer] =
+        [this](Json json) { json.get_to(server.time_quality); };
+
     serverListen();
 
     if (auto ret = queue_signalled_init(&server.queue); ret)
@@ -1690,36 +1830,13 @@ int C37Node::prepare() {
   }
 
   if (in.enabled) {
+    reconfiguration_callbacks["/in/address"_json_pointer] = [this](Json json) {
+      clientReconfigureAddress(json);
+    };
+
     clientConnect();
-
-    clientSendCommand(C37CommandType::R1_GET_CONFIG2);
-
-    C37Frame frame;
-    std::vector<std::byte> segmentation_buffer;
-    for (;;) {
-      if (auto result = recvFrame(client.sd, client.rx, frame);
-          result != C37Result::OK)
-        throw RuntimeError("Failed to load frame ({})", int(result));
-
-      auto sync = frame.sync();
-      if (sync != C37Sync::R1_CONFIG2 && sync != C37Sync::R2_CONFIG3) {
-        logger->debug("Ignoring frame type {:#x}", int(sync));
-        continue;
-      }
-
-      auto result =
-          frame.deserialize_config(client.config, segmentation_buffer);
-      if (result == C37Result::OK)
-        break;
-
-      if (result == C37Result::SEGMENTED)
-        continue;
-
-      throw RuntimeError("Failed to deserialize configuration frame ({})",
-                         int(result));
-    }
-
-    clientBuildSignals();
+    client.config = clientRequestConfig();
+    in.signals = clientBuildSignals();
 
     logger->info("Received configuration with {} PMU(s) and {} signal(s)",
                  client.config.pmu.size(), in.signals->size());
@@ -1743,7 +1860,12 @@ int C37Node::start() {
 
 int C37Node::stop() {
   if (in.enabled) {
-    clientSendCommand(C37CommandType::R1_DATA_STOP);
+    try {
+      clientSendCommand(C37CommandType::R1_DATA_STOP);
+    } catch (std::exception &e) {
+      logger->debug("Failed to send data stop command: {}", e.what());
+    }
+
     clientDisconnect();
   }
 
@@ -1794,9 +1916,20 @@ const std::string &C37Node::getDetails() {
 
 int C37Node::_read(struct Sample *smps[], unsigned cnt) {
   C37Frame frame;
+  C37Result result;
 
-  if (auto result = recvFrame(client.sd, client.rx, frame);
-      result != C37Result::OK) {
+  try {
+    result = recvFrame(client.sd, client.rx, frame);
+  } catch (std::exception &e) {
+    logger->warn("Connection to '{}:{}' lost: {}", client.host, client.service,
+                 e.what());
+
+    clientReconnect();
+
+    return 0;
+  }
+
+  if (result != C37Result::OK) {
     logger->warn("Dropping invalid frame ({})", int(result));
     return 0;
   }
@@ -2015,6 +2148,7 @@ void C37Node::serverHandleCommand() {
   C37FrameMetadata metadata = {
       .idcode = server.idcode,
       .soc = time_now(),
+      .message_time_quality = server.time_quality,
   };
 
   switch (command.cmd) {
@@ -2181,6 +2315,7 @@ void C37Node::serverSendSample(struct Sample const *smp) {
       .idcode = server.idcode,
       .soc = (smp->flags & (int)SampleFlags::HAS_TS_ORIGIN) ? smp->ts.origin
                                                             : time_now(),
+      .message_time_quality = server.time_quality,
   };
 
   C37Frame::serialize_data(data, metadata, config, server.tx);

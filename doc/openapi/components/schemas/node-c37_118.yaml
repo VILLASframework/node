@@ -55,7 +55,7 @@ properties:
 
   out:
     type: object
-    required: [address, data_rate, pmus]
+    required: [address, data_rate, pmus, time_quality]
     description: |
       Server (PMU / PDC) side. When an address is given, the node listens for
       a connecting PDC, answers configuration and command frames and streams
@@ -112,6 +112,27 @@ properties:
           connected. This option effectively makes the server busy-wait
           for a client to connect and can easily exhaust the internal
           queue of sent samples.
+
+      time_quality:
+        type: string
+        enum:
+          - locked_to_utc
+          - within_1_nanos_of_utc
+          - within_10_nanos_of_utc
+          - within_100_nanos_of_utc
+          - within_1_micros_of_utc
+          - within_10_micros_of_utc
+          - within_100_micros_of_utc
+          - within_1_millis_of_utc
+          - within_10_millis_of_utc
+          - within_100_millis_of_utc
+          - within_1_secs_of_utc
+          - within_10_secs_of_utc
+          - not_reliable
+        description: |
+          Message time quality (TQ) reported in the FRACSEC field of every
+          frame served to the connecting PDC. It indicates the maximum
+          deviation of the timestamps from UTC.
 
       time_base:
         type: integer

@@ -31,6 +31,7 @@ cat > config.json <<EOF
                 "address": "localhost",
                 "idcode": 1,
                 "testing": true,
+                "time_quality": "locked_to_utc",
                 "data_rate": 10,
                 "pmus": [{
                     "name": "VILLASnode",
