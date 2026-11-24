@@ -10,11 +10,11 @@
 #include <stdexcept>
 
 #include <villas/exceptions.hpp>
+#include <villas/fpga/devices/ip_device.hpp>
 #include <villas/fs.hpp>
-#include <villas/kernel/devices/ip_device.hpp>
 #include <villas/utils.hpp>
 
-using villas::kernel::devices::IpDevice;
+using villas::fpga::devices::IpDevice;
 
 IpDevice IpDevice::from(const fs::path unsafe_path) {
   if (!is_path_valid(unsafe_path))
@@ -54,13 +54,13 @@ bool IpDevice::is_path_valid(const fs::path unsafe_path) {
   return true;
 }
 
-std::vector<villas::kernel::devices::IpDevice>
+std::vector<villas::fpga::devices::IpDevice>
 IpDevice::from_directory(fs::path devices_directory) {
-  std::vector<villas::kernel::devices::IpDevice> devices;
+  std::vector<villas::fpga::devices::IpDevice> devices;
 
   for (auto devicetree : fs::directory_iterator{devices_directory}) {
     try {
-      auto device = villas::kernel::devices::IpDevice::from(devicetree.path());
+      auto device = villas::fpga::devices::IpDevice::from(devicetree.path());
       devices.push_back(device);
     } catch (std::runtime_error &e) {
     }

@@ -16,11 +16,11 @@
 #include <villas/fpga/ips/dino.hpp>
 #include <villas/fpga/ips/register.hpp>
 #include <villas/fpga/ips/switch.hpp>
+#include <villas/fpga/memory.hpp>
 #include <villas/fpga/pcie_card.hpp>
 #include <villas/fpga/utils.hpp>
 #include <villas/jansson.hpp>
 #include <villas/log.hpp>
-#include <villas/memory.hpp>
 #include <villas/nodes/fpga.hpp>
 #include <villas/sample.hpp>
 #include <villas/super_node.hpp>
@@ -34,7 +34,7 @@ using namespace villas::utils;
 // Global state
 static std::list<std::shared_ptr<fpga::Card>> cards;
 
-static std::shared_ptr<kernel::vfio::Container> vfioContainer;
+static std::shared_ptr<fpga::vfio::Container> vfioContainer;
 
 FpgaNode::FpgaNode(const uuid_t &id, const std::string &name)
     : Node(id, name), cardName(""), connectStrings(), lowLatencyMode(false),
@@ -124,7 +124,7 @@ int FpgaNode::parse(json_t *json) {
   json_t *jsonConnectStrings = nullptr;
 
   if (vfioContainer == nullptr) {
-    vfioContainer = std::make_shared<kernel::vfio::Container>();
+    vfioContainer = std::make_shared<fpga::vfio::Container>();
   }
 
   ret = json_unpack_ex(json, &err, 0, "{ s: o, s?: o, s?: b, s?: F}", "card",
@@ -378,7 +378,7 @@ std::vector<int> FpgaNode::getPollFDs() {
 
 int FpgaNodeFactory::start(SuperNode *sn) {
   if (vfioContainer == nullptr) {
-    vfioContainer = std::make_shared<kernel::vfio::Container>();
+    vfioContainer = std::make_shared<fpga::vfio::Container>();
   }
 
   if (cards.empty()) {

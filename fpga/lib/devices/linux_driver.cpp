@@ -6,11 +6,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <villas/kernel/devices/device.hpp>
-#include <villas/kernel/devices/linux_driver.hpp>
+#include <villas/fpga/devices/device.hpp>
+#include <villas/fpga/devices/linux_driver.hpp>
 #include <villas/utils.hpp>
 
-using villas::kernel::devices::Device, villas::kernel::devices::LinuxDriver;
+using villas::fpga::devices::Device, villas::fpga::devices::LinuxDriver;
 using villas::utils::write_to_file;
 
 void LinuxDriver::attach(const Device &device) const {

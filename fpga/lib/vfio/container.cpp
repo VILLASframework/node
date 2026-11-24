@@ -32,11 +32,11 @@
 #include <unistd.h>
 
 #include <villas/exceptions.hpp>
+#include <villas/fpga/vfio/container.hpp>
 #include <villas/kernel/kernel.hpp>
-#include <villas/kernel/vfio_container.hpp>
 #include <villas/log.hpp>
 
-using namespace villas::kernel::vfio;
+using namespace villas::fpga::vfio;
 
 #ifndef VFIO_NOIOMMU_IOMMU
 #define VFIO_NOIOMMU_IOMMU 8

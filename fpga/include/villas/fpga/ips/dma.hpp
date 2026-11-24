@@ -14,8 +14,8 @@
 
 #include <villas/config.hpp>
 #include <villas/exceptions.hpp>
+#include <villas/fpga/memory.hpp>
 #include <villas/fpga/node.hpp>
-#include <villas/memory.hpp>
 
 namespace villas {
 namespace fpga {

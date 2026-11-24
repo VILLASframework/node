@@ -16,11 +16,11 @@
 #include <villas/fpga/ips/pcie.hpp>
 #include <villas/fpga/ips/platform_intc.hpp>
 #include <villas/fpga/ips/switch.hpp>
+#include <villas/fpga/memory.hpp>
 #include <villas/fpga/platform_card.hpp>
 #include <villas/fpga/utils.hpp>
 #include <villas/fpga/vlnv.hpp>
 #include <villas/log.hpp>
-#include <villas/memory.hpp>
 #include <villas/utils.hpp>
 
 using namespace villas::fpga;

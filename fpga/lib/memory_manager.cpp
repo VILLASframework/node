@@ -10,13 +10,14 @@
 #include <memory>
 
 #include <villas/exceptions.hpp>
-#include <villas/memory_manager.hpp>
+#include <villas/fpga/memory_manager.hpp>
 #include <villas/utils.hpp>
 
 using namespace villas;
 using namespace villas::utils;
 
 namespace villas {
+namespace fpga {
 
 MemoryManager *MemoryManager::instance = nullptr;
 
@@ -247,4 +248,5 @@ void MemoryManager::printGraph() {
   }
 }
 
+} // namespace fpga
 } // namespace villas

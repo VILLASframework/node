@@ -12,9 +12,10 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-#include <villas/memory.hpp>
+#include <villas/fpga/memory.hpp>
 
 namespace villas {
+namespace fpga {
 
 std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn>
 HostRam::HostRamAllocator::allocateBlock(size_t size) {
@@ -262,4 +263,5 @@ HostDmaRam::HostDmaRamAllocator &HostDmaRam::getAllocator(int num) {
   return *allocator;
 }
 
+} // namespace fpga
 } // namespace villas

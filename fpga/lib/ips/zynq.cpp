@@ -7,7 +7,7 @@
 
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/ips/zynq.hpp>
-#include <villas/memory.hpp>
+#include <villas/fpga/memory.hpp>
 
 using namespace villas::fpga::ip;
 

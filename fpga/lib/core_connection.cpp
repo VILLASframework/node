@@ -18,21 +18,21 @@ namespace fpga {
 
 CoreConnection::CoreConnection(
     std::shared_ptr<villas::fpga::ip::Core> ip,
-    villas::kernel::devices::DeviceConnection device_connection)
+    villas::fpga::devices::DeviceConnection device_connection)
     : logger(villas::Log::get("CoreConnection")), ip(ip),
       device_connection(device_connection){};
 
 CoreConnection
 CoreConnection::from(std::shared_ptr<villas::fpga::ip::Core> ip,
-                     std::shared_ptr<kernel::vfio::Container> vfio_container) {
+                     std::shared_ptr<vfio::Container> vfio_container) {
   // Find matching OS device for ip
   const fs::path PLATFORM_DEVICES_DIRECTORY("/sys/bus/platform/devices");
-  std::vector<villas::kernel::devices::IpDevice> devices =
-      villas::kernel::devices::IpDevice::from_directory(
+  std::vector<villas::fpga::devices::IpDevice> devices =
+      villas::fpga::devices::IpDevice::from_directory(
           PLATFORM_DEVICES_DIRECTORY);
 
   auto it_device = std::find_if(devices.begin(), devices.end(),
-                                [ip](villas::kernel::devices::IpDevice device) {
+                                [ip](villas::fpga::devices::IpDevice device) {
                                   return ip->getBaseaddr() == device.addr();
                                 });
 
@@ -41,7 +41,7 @@ CoreConnection::from(std::shared_ptr<villas::fpga::ip::Core> ip,
         "No device found with address matching ip baseadress."));
   }
 
-  return CoreConnection(ip, villas::kernel::devices::DeviceConnection::from(
+  return CoreConnection(ip, villas::fpga::devices::DeviceConnection::from(
                                 *it_device, vfio_container));
 }
 

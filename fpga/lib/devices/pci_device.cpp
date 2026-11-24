@@ -19,10 +19,10 @@
 
 #include <villas/config.hpp>
 #include <villas/exceptions.hpp>
-#include <villas/kernel/devices/pci_device.hpp>
+#include <villas/fpga/devices/pci_device.hpp>
 #include <villas/utils.hpp>
 
-using namespace villas::kernel::devices;
+using namespace villas::fpga::devices;
 
 #define PCI_BASE_ADDRESS_N(n) (PCI_BASE_ADDRESS_0 + sizeof(uint32_t) * (n))
 

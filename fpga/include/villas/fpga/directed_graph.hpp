@@ -16,12 +16,12 @@
 #include <string>
 #include <unordered_map>
 
-#include <villas/graph/edge.hpp>
-#include <villas/graph/vertex.hpp>
+#include <villas/fpga/edge.hpp>
+#include <villas/fpga/vertex.hpp>
 #include <villas/log.hpp>
 
 namespace villas {
-namespace graph {
+namespace fpga {
 
 template <typename VertexType = Vertex, typename EdgeType = Edge>
 class DirectedGraph {
@@ -251,5 +251,5 @@ protected:
   Logger logger;
 };
 
-} // namespace graph
+} // namespace fpga
 } // namespace villas

@@ -8,21 +8,20 @@
 
 #include <memory>
 
-#include <villas/kernel/devices/device_connection.hpp>
-#include <villas/kernel/devices/linux_driver.hpp>
-#include <villas/memory_manager.hpp>
+#include <villas/fpga/devices/device_connection.hpp>
+#include <villas/fpga/devices/linux_driver.hpp>
+#include <villas/fpga/memory_manager.hpp>
 
 namespace villas {
-namespace kernel {
+namespace fpga {
 namespace devices {
 
-DeviceConnection::DeviceConnection(
-    std::shared_ptr<kernel::vfio::Device> vfio_device)
+DeviceConnection::DeviceConnection(std::shared_ptr<vfio::Device> vfio_device)
     : logger(villas::Log::get("DeviceConnection")), vfio_device(vfio_device){};
 
-DeviceConnection DeviceConnection::from(
-    const villas::kernel::devices::Device &device,
-    std::shared_ptr<kernel::vfio::Container> vfio_container) {
+DeviceConnection
+DeviceConnection::from(const villas::fpga::devices::Device &device,
+                       std::shared_ptr<vfio::Container> vfio_container) {
   auto logger = villas::Log::get("Builder: DeviceConnection");
 
   // Bind the devicetree device to vfio driver
@@ -35,7 +34,7 @@ DeviceConnection DeviceConnection::from(
   logger->debug("Device: {}, Iommu: {}", device.name(), iommu_group);
 
   // Open Vfio Device
-  auto vfio_device = std::make_shared<kernel::vfio::Device>(
+  auto vfio_device = std::make_shared<vfio::Device>(
       device.name(), vfio_group->getFileDescriptor());
 
   // Attach device to group
@@ -64,5 +63,5 @@ void DeviceConnection::addToMemorygraph() const {
 }
 
 } // namespace devices
-} // namespace kernel
+} // namespace fpga
 } // namespace villas

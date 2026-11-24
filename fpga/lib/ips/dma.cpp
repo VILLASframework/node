@@ -17,7 +17,7 @@
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/ips/dma.hpp>
 #include <villas/fpga/ips/intc.hpp>
-#include <villas/memory.hpp>
+#include <villas/fpga/memory.hpp>
 
 // Max. size of a DMA transfer in simple mode
 #define FPGA_DMA_BOUNDARY 0x1000
@@ -71,7 +71,7 @@ bool Dma::init() {
 
 void Dma::setupScatterGather() {
   // Allocate and map space for BD ring in host RAM
-  auto &alloc = villas::HostRam::getAllocator();
+  auto &alloc = villas::fpga::HostRam::getAllocator();
   sgRing = alloc.allocateBlock(2 * requestedRingBdSizeMemory);
 
   if (not card->mapMemoryBlock(sgRing))

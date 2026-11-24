@@ -11,11 +11,11 @@
 #include <fstream>
 #include <iostream>
 
+#include <villas/fpga/devices/driver.hpp>
 #include <villas/fs.hpp>
-#include <villas/kernel/devices/driver.hpp>
 
 namespace villas {
-namespace kernel {
+namespace fpga {
 namespace devices {
 
 class LinuxDriver : public Driver {
@@ -48,5 +48,5 @@ public:
 };
 
 } // namespace devices
-} // namespace kernel
+} // namespace fpga
 } // namespace villas

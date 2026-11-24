@@ -12,7 +12,7 @@
 #include <string>
 
 namespace villas {
-namespace kernel {
+namespace fpga {
 namespace devices {
 
 class Device;
@@ -28,5 +28,5 @@ public:
 };
 
 } // namespace devices
-} // namespace kernel
+} // namespace fpga
 } // namespace villas

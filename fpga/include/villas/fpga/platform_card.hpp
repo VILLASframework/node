@@ -23,7 +23,7 @@ namespace fpga {
 
 class PlatformCard : public Card {
 public:
-  PlatformCard(std::shared_ptr<kernel::vfio::Container> vfioContainer);
+  PlatformCard(std::shared_ptr<vfio::Container> vfioContainer);
 
   ~PlatformCard() override{};
 
@@ -36,9 +36,10 @@ public:
 
 class PlatformCardFactory {
 public:
-  static std::shared_ptr<PlatformCard>
-  make(json_t *json_card, std::string card_name,
-       std::shared_ptr<kernel::vfio::Container> vc, const fs::path &searchPath);
+  static std::shared_ptr<PlatformCard> make(json_t *json_card,
+                                            std::string card_name,
+                                            std::shared_ptr<vfio::Container> vc,
+                                            const fs::path &searchPath);
 };
 
 } /* namespace fpga */

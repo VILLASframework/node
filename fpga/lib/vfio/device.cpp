@@ -28,9 +28,9 @@
 #include <unistd.h>
 
 #include <villas/exceptions.hpp>
-#include <villas/kernel/vfio_device.hpp>
+#include <villas/fpga/vfio/device.hpp>
 
-using namespace villas::kernel::vfio;
+using namespace villas::fpga::vfio;
 
 static const char *vfio_pci_region_names[] = {
     "PCI_BAR0",   // VFIO_PCI_BAR0_REGION_INDEX
@@ -53,7 +53,7 @@ static const char *vfio_pci_irq_names[] = {
 };
 
 Device::Device(const std::string &name, int groupFileDescriptor,
-               const kernel::devices::PciDevice *pci_device)
+               const devices::PciDevice *pci_device)
     : name(name), fd(-1), attachedToGroup(false), groupFd(groupFileDescriptor),
       info(), info_irq_vectors(), regions(), mappings(),
       log(Log::get("kernel:vfio:device")) {

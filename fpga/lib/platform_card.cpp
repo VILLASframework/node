@@ -15,17 +15,16 @@
 #include <jansson.h>
 
 #include <villas/fpga/card_parser.hpp>
+#include <villas/fpga/memory_manager.hpp>
 #include <villas/fpga/platform_card.hpp>
 #include <villas/kernel/kernel.hpp>
-#include <villas/memory_manager.hpp>
 
 using namespace villas;
 using namespace villas::fpga;
 using namespace villas::kernel;
-using namespace villas::kernel::devices;
+using namespace villas::fpga::devices;
 
-PlatformCard::PlatformCard(
-    std::shared_ptr<kernel::vfio::Container> vfioContainer) {
+PlatformCard::PlatformCard(std::shared_ptr<vfio::Container> vfioContainer) {
   this->vfioContainer = vfioContainer;
   this->logger = villas::Log::get("PlatformCard");
 }
@@ -87,7 +86,7 @@ bool PlatformCard::mapMemoryBlock(const std::shared_ptr<MemoryBlock> block) {
 
 std::shared_ptr<PlatformCard>
 PlatformCardFactory::make(json_t *json_card, std::string card_name,
-                          std::shared_ptr<kernel::vfio::Container> vc,
+                          std::shared_ptr<vfio::Container> vc,
                           const fs::path &searchPath) {
   auto logger = villas::Log::get("PlatformCardFactory");
 

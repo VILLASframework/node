@@ -12,8 +12,8 @@
 #include <villas/exceptions.hpp>
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/ips/pcie.hpp>
+#include <villas/fpga/memory.hpp>
 #include <villas/fpga/pcie_card.hpp>
-#include <villas/memory.hpp>
 
 using namespace villas::fpga::ip;
 

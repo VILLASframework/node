@@ -16,14 +16,14 @@ set(SOURCES
     memory.cpp
     memory_manager.cpp
 
-    kernel/vfio_container.cpp
-    kernel/vfio_device.cpp
-    kernel/vfio_group.cpp
-    kernel/devices/device_connection.cpp
-    kernel/devices/ip_device.cpp
-    kernel/devices/linux_driver.cpp
-    kernel/devices/pci_device.cpp
-    kernel/devices/platform_device.cpp
+    vfio/container.cpp
+    vfio/device.cpp
+    vfio/group.cpp
+    devices/device_connection.cpp
+    devices/ip_device.cpp
+    devices/linux_driver.cpp
+    devices/pci_device.cpp
+    devices/platform_device.cpp
 
     ips/aurora_xilinx.cpp
     ips/aurora.cpp

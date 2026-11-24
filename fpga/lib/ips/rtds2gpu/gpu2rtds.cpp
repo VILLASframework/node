@@ -10,8 +10,8 @@
 #include <unistd.h>
 
 #include <villas/fpga/ips/gpu2rtds.hpp>
+#include <villas/fpga/memory_manager.hpp>
 #include <villas/log.hpp>
-#include <villas/memory_manager.hpp>
 
 using namespace villas::fpga::ip;
 

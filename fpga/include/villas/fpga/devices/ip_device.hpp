@@ -10,11 +10,11 @@
 
 #include <vector>
 
+#include <villas/fpga/devices/platform_device.hpp>
 #include <villas/fs.hpp>
-#include <villas/kernel/devices/platform_device.hpp>
 
 namespace villas {
-namespace kernel {
+namespace fpga {
 namespace devices {
 
 class IpDevice : public PlatformDevice {
@@ -31,10 +31,10 @@ public:
   size_t addr() const;
   std::string ip_name() const;
 
-  static std::vector<villas::kernel::devices::IpDevice>
+  static std::vector<villas::fpga::devices::IpDevice>
   from_directory(fs::path devices_directory);
 };
 
 } // namespace devices
-} // namespace kernel
+} // namespace fpga
 } // namespace villas

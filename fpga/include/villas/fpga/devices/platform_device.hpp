@@ -8,12 +8,12 @@
 
 #pragma once
 
+#include <villas/fpga/devices/device.hpp>
+#include <villas/fpga/devices/driver.hpp>
 #include <villas/fs.hpp>
-#include <villas/kernel/devices/device.hpp>
-#include <villas/kernel/devices/driver.hpp>
 
 namespace villas {
-namespace kernel {
+namespace fpga {
 namespace devices {
 
 class PlatformDevice : public Device {
@@ -46,5 +46,5 @@ public:
 };
 
 } // namespace devices
-} // namespace kernel
+} // namespace fpga
 } // namespace villas

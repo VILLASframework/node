@@ -16,10 +16,11 @@
 #include <unistd.h>
 
 #include <villas/config.hpp>
-#include <villas/graph/directed.hpp>
+#include <villas/fpga/directed_graph.hpp>
 #include <villas/log.hpp>
 
 namespace villas {
+namespace fpga {
 
 // Translation between a local (master) to a foreign (slave) address space
 //
@@ -92,7 +93,7 @@ private:
   // The application allocates a block 1kB at address 0x843001000 in its
   // address space. The mapping would then have a #dest address of 0x843001000
   // and a #size of 1024.
-  class Mapping : public graph::Edge {
+  class Mapping : public Edge {
   public:
     std::string name; // Human-readable name
     uintptr_t src;    // Base address in "from" address space
@@ -119,7 +120,7 @@ private:
   // Since most information in the memory graph is stored in the edges (memory
   // mappings), this is just a small extension to the default vertex. It only
   // associates an additional string #name for human-readability.
-  class AddressSpace : public graph::Vertex {
+  class AddressSpace : public Vertex {
   public:
     std::string name; // Human-readable name
 
@@ -131,7 +132,7 @@ private:
   };
 
   // Memory graph with custom edges and vertices for address resolution
-  using MemoryGraph = graph::DirectedGraph<AddressSpace, Mapping>;
+  using MemoryGraph = DirectedGraph<AddressSpace, Mapping>;
 
 public:
   using AddressSpaceId = MemoryGraph::VertexIdentifier;
@@ -225,16 +226,17 @@ private:
   static MemoryManager *instance;
 };
 
+} // namespace fpga
 } // namespace villas
 
 #ifndef FMT_LEGACY_OSTREAM_FORMATTER
 template <>
-class fmt::formatter<villas::MemoryTranslation>
+class fmt::formatter<villas::fpga::MemoryTranslation>
     : public fmt::ostream_formatter {};
 template <>
-class fmt::formatter<villas::MemoryManager::Mapping>
+class fmt::formatter<villas::fpga::MemoryManager::Mapping>
     : public fmt::ostream_formatter {};
 template <>
-class fmt::formatter<villas::MemoryManager::AddressSpaceId>
+class fmt::formatter<villas::fpga::MemoryManager::AddressSpaceId>
     : public fmt::ostream_formatter {};
 #endif

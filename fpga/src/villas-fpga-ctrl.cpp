@@ -33,14 +33,14 @@
 
 using namespace villas;
 
-static std::shared_ptr<kernel::devices::PciDeviceList> pciDevices;
+static std::shared_ptr<fpga::devices::PciDeviceList> pciDevices;
 static auto logger = villas::Log::get("ctrl");
 
 void writeToDmaFromStdIn(std::shared_ptr<villas::fpga::ip::Dma> dma) {
-  auto &alloc = villas::HostRam::getAllocator();
-  const std::shared_ptr<villas::MemoryBlock> block =
+  auto &alloc = villas::fpga::HostRam::getAllocator();
+  const std::shared_ptr<villas::fpga::MemoryBlock> block =
       alloc.allocateBlock(0x200 * sizeof(float));
-  villas::MemoryAccessor<float> mem = *block;
+  villas::fpga::MemoryAccessor<float> mem = *block;
   dma->makeAccesibleFromVA(block);
 
   logger->info("Please enter values to write to the device, separated by ';'");
@@ -74,12 +74,12 @@ void readFromDmaToStdOut(
     std::shared_ptr<villas::fpga::ip::Dma> dma,
     std::unique_ptr<fpga::BufferedSampleFormatter> formatter) {
 
-  auto &alloc = villas::HostRam::getAllocator();
+  auto &alloc = villas::fpga::HostRam::getAllocator();
 
-  const std::shared_ptr<villas::MemoryBlock> block[] = {
+  const std::shared_ptr<villas::fpga::MemoryBlock> block[] = {
       alloc.allocateBlock(0x200 * sizeof(uint32_t)),
       alloc.allocateBlock(0x200 * sizeof(uint32_t))};
-  villas::MemoryAccessor<int32_t> mem[] = {*block[0], *block[1]};
+  villas::fpga::MemoryAccessor<int32_t> mem[] = {*block[0], *block[1]};
 
   for (auto b : block) {
     dma->makeAccesibleFromVA(b);
@@ -167,7 +167,7 @@ int main(int argc, char *argv[]) {
     auto card = fpga::setupFpgaCard(configFile, fpgaName);
 
     if (dumpGraph) {
-      auto &mm = MemoryManager::get();
+      auto &mm = fpga::MemoryManager::get();
       mm.getGraph().dump("graph.dot");
     }
 

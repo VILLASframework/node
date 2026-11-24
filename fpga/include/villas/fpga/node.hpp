@@ -18,16 +18,16 @@
 
 #include <villas/config.hpp>
 #include <villas/fpga/core.hpp>
-#include <villas/graph/directed.hpp>
+#include <villas/fpga/directed_graph.hpp>
 
 namespace villas {
 namespace fpga {
 namespace ip {
 
-class StreamVertex : public graph::Vertex {
+class StreamVertex : public Vertex {
 public:
   StreamVertex(const std::string &node, const std::string &port, bool isMaster)
-      : graph::Vertex(), nodeName(node), portName(port), isMaster(isMaster) {}
+      : Vertex(), nodeName(node), portName(port), isMaster(isMaster) {}
 
   std::string getName() const {
     return nodeName + "/" + portName + "(" + (isMaster ? "M" : "S") + ")";
@@ -44,9 +44,9 @@ public:
   bool isMaster;
 };
 
-class StreamGraph : public graph::DirectedGraph<StreamVertex> {
+class StreamGraph : public DirectedGraph<StreamVertex> {
 public:
-  StreamGraph() : graph::DirectedGraph<StreamVertex>("stream:graph") {}
+  StreamGraph() : DirectedGraph<StreamVertex>("stream:graph") {}
 
   std::shared_ptr<StreamVertex> getOrCreateStreamVertex(const std::string &node,
                                                         const std::string &port,

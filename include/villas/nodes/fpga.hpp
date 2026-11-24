@@ -62,12 +62,12 @@ protected:
   // State
   std::shared_ptr<fpga::Card> card;
   std::shared_ptr<villas::fpga::ip::Dma> dma;
-  std::shared_ptr<villas::MemoryBlock> blockRx;
-  std::shared_ptr<MemoryAccessor<uint32_t>> accessorRxInt;
-  std::shared_ptr<MemoryAccessor<float>> accessorRxFloat;
-  std::shared_ptr<villas::MemoryBlock> blockTx;
-  std::shared_ptr<MemoryAccessor<uint32_t>> accessorTxInt;
-  std::shared_ptr<MemoryAccessor<float>> accessorTxFloat;
+  std::shared_ptr<villas::fpga::MemoryBlock> blockRx;
+  std::shared_ptr<villas::fpga::MemoryAccessor<uint32_t>> accessorRxInt;
+  std::shared_ptr<villas::fpga::MemoryAccessor<float>> accessorRxFloat;
+  std::shared_ptr<villas::fpga::MemoryBlock> blockTx;
+  std::shared_ptr<villas::fpga::MemoryAccessor<uint32_t>> accessorTxInt;
+  std::shared_ptr<villas::fpga::MemoryAccessor<float>> accessorTxFloat;
 
   // Non-public methods
   int fastRead(Sample *smps[], unsigned cnt);

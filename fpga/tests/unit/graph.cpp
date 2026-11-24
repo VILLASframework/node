@@ -9,9 +9,9 @@
 
 #include <criterion/criterion.h>
 
-#include <villas/graph/directed.hpp>
+#include <villas/fpga/directed_graph.hpp>
+#include <villas/fpga/memory_manager.hpp>
 #include <villas/log.hpp>
-#include <villas/memory_manager.hpp>
 
 using namespace villas;
 
@@ -20,13 +20,13 @@ TestSuite(graph, .description = "Graph library");
 
 Test(graph, basic, .description = "DirectedGraph") {
   Logger logger = Log::get("test:graph:basic");
-  villas::graph::DirectedGraph<> g("test:graph:basic");
+  villas::fpga::DirectedGraph<> g("test:graph:basic");
 
   logger->info("Testing basic graph construction and modification");
 
-  std::shared_ptr<villas::graph::Vertex> v1(new villas::graph::Vertex);
-  std::shared_ptr<villas::graph::Vertex> v2(new villas::graph::Vertex);
-  std::shared_ptr<villas::graph::Vertex> v3(new villas::graph::Vertex);
+  std::shared_ptr<villas::fpga::Vertex> v1(new villas::fpga::Vertex);
+  std::shared_ptr<villas::fpga::Vertex> v2(new villas::fpga::Vertex);
+  std::shared_ptr<villas::fpga::Vertex> v3(new villas::fpga::Vertex);
 
   auto v1id = g.addVertex(v1);
   auto v2id = g.addVertex(v2);
@@ -52,15 +52,15 @@ Test(graph, path, .description = "Find path") {
   Logger logger = Log::get("test:graph:path");
   logger->info("Testing path finding algorithm");
 
-  using Graph = villas::graph::DirectedGraph<>;
+  using Graph = villas::fpga::DirectedGraph<>;
   Graph g("test:graph:path");
 
-  std::shared_ptr<villas::graph::Vertex> v1(new villas::graph::Vertex);
-  std::shared_ptr<villas::graph::Vertex> v2(new villas::graph::Vertex);
-  std::shared_ptr<villas::graph::Vertex> v3(new villas::graph::Vertex);
-  std::shared_ptr<villas::graph::Vertex> v4(new villas::graph::Vertex);
-  std::shared_ptr<villas::graph::Vertex> v5(new villas::graph::Vertex);
-  std::shared_ptr<villas::graph::Vertex> v6(new villas::graph::Vertex);
+  std::shared_ptr<villas::fpga::Vertex> v1(new villas::fpga::Vertex);
+  std::shared_ptr<villas::fpga::Vertex> v2(new villas::fpga::Vertex);
+  std::shared_ptr<villas::fpga::Vertex> v3(new villas::fpga::Vertex);
+  std::shared_ptr<villas::fpga::Vertex> v4(new villas::fpga::Vertex);
+  std::shared_ptr<villas::fpga::Vertex> v5(new villas::fpga::Vertex);
+  std::shared_ptr<villas::fpga::Vertex> v6(new villas::fpga::Vertex);
 
   auto v1id = g.addVertex(v1);
   auto v2id = g.addVertex(v2);
@@ -111,7 +111,7 @@ Test(graph, path, .description = "Find path") {
 
 Test(graph, memory_manager, .description = "Global Memory Manager") {
   Logger logger = Log::get("test:graph:mm");
-  auto &mm = villas::MemoryManager::get();
+  auto &mm = villas::fpga::MemoryManager::get();
 
   logger->info("Create address spaces");
   auto dmaRegs = mm.getOrCreateAddressSpace("DMA Registers");

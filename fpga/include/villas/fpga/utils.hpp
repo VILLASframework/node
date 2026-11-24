@@ -20,17 +20,15 @@ std::shared_ptr<fpga::Card> setupFpgaCard(const std::string &configFile,
 
 std::shared_ptr<fpga::Card>
 createCard(json_t *config, const fs::path &searchPath,
-           std::shared_ptr<kernel::vfio::Container> vfioContainer,
+           std::shared_ptr<vfio::Container> vfioContainer,
            std::string card_name = "anonymous Card");
 
-int createCards(
-    json_t *config, std::list<std::shared_ptr<fpga::Card>> &cards,
-    const fs::path &searchPath,
-    std::shared_ptr<kernel::vfio::Container> vfioContainer = nullptr);
-int createCards(
-    json_t *config, std::list<std::shared_ptr<fpga::Card>> &cards,
-    const std::string &searchPath,
-    std::shared_ptr<kernel::vfio::Container> vfioContainer = nullptr);
+int createCards(json_t *config, std::list<std::shared_ptr<fpga::Card>> &cards,
+                const fs::path &searchPath,
+                std::shared_ptr<vfio::Container> vfioContainer = nullptr);
+int createCards(json_t *config, std::list<std::shared_ptr<fpga::Card>> &cards,
+                const std::string &searchPath,
+                std::shared_ptr<vfio::Container> vfioContainer = nullptr);
 
 std::shared_ptr<std::vector<std::shared_ptr<fpga::ip::Node>>>
 getAuroraChannels(std::shared_ptr<fpga::Card> card);

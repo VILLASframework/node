@@ -15,7 +15,7 @@
 #include <villas/log.hpp>
 
 namespace villas {
-namespace kernel {
+namespace fpga {
 namespace devices {
 
 #define PCI_SLOT(devfn) (((devfn) >> 3) & 0x1f)
@@ -125,5 +125,5 @@ public:
 };
 
 } // namespace devices
-} // namespace kernel
+} // namespace fpga
 } // namespace villas

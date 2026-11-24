@@ -18,10 +18,10 @@
 #include <linux/vfio.h>
 #include <sys/mman.h>
 
-#include <villas/kernel/vfio_group.hpp>
+#include <villas/fpga/vfio/group.hpp>
 
 namespace villas {
-namespace kernel {
+namespace fpga {
 namespace vfio {
 
 // Backwards compatibility with older kernels
@@ -79,5 +79,5 @@ private:
 };
 
 } // namespace vfio
-} // namespace kernel
+} // namespace fpga
 } // namespace villas

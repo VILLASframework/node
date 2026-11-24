@@ -26,7 +26,7 @@
 
 using namespace villas;
 
-static std::shared_ptr<kernel::devices::PciDeviceList> pciDevices;
+static std::shared_ptr<fpga::devices::PciDeviceList> pciDevices;
 static auto logger = villas::Log::get("streamer");
 
 int main(int argc, char *argv[]) {
@@ -87,16 +87,16 @@ int main(int argc, char *argv[]) {
 #else
     dma->connectLoopback();
 #endif
-    auto &alloc = villas::HostRam::getAllocator();
-    const std::shared_ptr<villas::MemoryBlock> block[] = {
+    auto &alloc = villas::fpga::HostRam::getAllocator();
+    const std::shared_ptr<villas::fpga::MemoryBlock> block[] = {
         alloc.allocateBlock(0x200 * sizeof(uint32_t)),
         alloc.allocateBlock(0x200 * sizeof(uint32_t))};
-    villas::MemoryAccessor<int32_t> mem[] = {*block[0], *block[1]};
+    villas::fpga::MemoryAccessor<int32_t> mem[] = {*block[0], *block[1]};
 
     for (auto b : block) {
       dma->makeAccesibleFromVA(b);
     }
-    auto &mm = MemoryManager::get();
+    auto &mm = fpga::MemoryManager::get();
     mm.getGraph().dump("graph.dot");
 
     while (true) {

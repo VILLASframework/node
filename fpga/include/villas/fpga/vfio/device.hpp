@@ -19,11 +19,11 @@
 #include <linux/vfio.h>
 #include <sys/mman.h>
 
-#include <villas/kernel/devices/pci_device.hpp>
+#include <villas/fpga/devices/pci_device.hpp>
 #include <villas/log.hpp>
 
 namespace villas {
-namespace kernel {
+namespace fpga {
 namespace vfio {
 
 class Device {
@@ -35,7 +35,7 @@ public:
   };
 
   Device(const std::string &name, int groupFileDescriptor,
-         const kernel::devices::PciDevice *pci_device = nullptr);
+         const devices::PciDevice *pci_device = nullptr);
   ~Device();
 
   // No copying allowed because we manage the vfio state in constructor and destructors
@@ -102,5 +102,5 @@ private:
 };
 
 } // namespace vfio
-} // namespace kernel
+} // namespace fpga
 } // namespace villas

@@ -18,11 +18,11 @@
 #include <linux/vfio.h>
 #include <sys/mman.h>
 
-#include <villas/kernel/vfio_device.hpp>
+#include <villas/fpga/vfio/device.hpp>
 #include <villas/log.hpp>
 
 namespace villas {
-namespace kernel {
+namespace fpga {
 namespace vfio {
 
 #define VFIO_PATH "/dev/vfio/"
@@ -48,7 +48,7 @@ public:
   std::shared_ptr<Device> attachDevice(std::shared_ptr<Device> device);
   std::shared_ptr<Device>
   attachDevice(const std::string &name,
-               const kernel::devices::PciDevice *pci_device = nullptr);
+               const devices::PciDevice *pci_device = nullptr);
 
   bool checkStatus();
   void dump();
@@ -72,5 +72,5 @@ private:
 };
 
 } // namespace vfio
-} // namespace kernel
+} // namespace fpga
 } // namespace villas

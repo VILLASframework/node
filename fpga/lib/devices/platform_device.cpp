@@ -6,12 +6,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <villas/kernel/devices/linux_driver.hpp>
-#include <villas/kernel/devices/platform_device.hpp>
+#include <villas/fpga/devices/linux_driver.hpp>
+#include <villas/fpga/devices/platform_device.hpp>
 #include <villas/utils.hpp>
 
-using villas::kernel::devices::Driver, villas::kernel::devices::LinuxDriver;
-using villas::kernel::devices::PlatformDevice;
+using villas::fpga::devices::Driver, villas::fpga::devices::LinuxDriver;
+using villas::fpga::devices::PlatformDevice;
 using villas::utils::write_to_file;
 
 std::optional<std::unique_ptr<Driver>> PlatformDevice::driver() const {

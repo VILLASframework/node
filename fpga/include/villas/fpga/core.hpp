@@ -19,9 +19,9 @@
 
 #include <villas/colors.hpp>
 #include <villas/config.hpp>
+#include <villas/fpga/memory.hpp>
 #include <villas/fpga/vlnv.hpp>
 #include <villas/log.hpp>
-#include <villas/memory.hpp>
 #include <villas/plugin.hpp>
 
 namespace villas {

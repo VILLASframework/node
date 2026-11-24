@@ -31,9 +31,9 @@
 #include <unistd.h>
 
 #include <villas/exceptions.hpp>
-#include <villas/kernel/vfio_group.hpp>
+#include <villas/fpga/vfio/group.hpp>
 
-using namespace villas::kernel::vfio;
+using namespace villas::fpga::vfio;
 
 Group::Group(int index, bool iommuEnabled)
     : fd(-1), index(index), attachedToContainer(false), status(), devices(),
@@ -67,7 +67,7 @@ std::shared_ptr<Device> Group::attachDevice(std::shared_ptr<Device> device) {
 
 std::shared_ptr<Device>
 Group::attachDevice(const std::string &name,
-                    const kernel::devices::PciDevice *pci_device) {
+                    const devices::PciDevice *pci_device) {
   auto device = std::make_shared<Device>(name, fd, pci_device);
   return attachDevice(device);
 }

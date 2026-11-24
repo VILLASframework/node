@@ -1,4 +1,4 @@
-/* A graph vertex.
+/* A graph edge.
  *
  * Author: Daniel Krebs <github@daniel-krebs.net>
  * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
@@ -7,31 +7,29 @@
 
 #pragma once
 
-#include <list>
-#include <sstream>
-
 #include <fmt/ostream.h>
 
 #include <villas/config.hpp>
+#include <villas/fpga/vertex.hpp>
 
 namespace villas {
-namespace graph {
+namespace fpga {
 
-class Vertex {
+class Edge {
   template <typename VertexType, typename EdgeType> friend class DirectedGraph;
 
 public:
   using Identifier = std::size_t;
 
-  Vertex() : id(0) {}
-
-  const Identifier &getIdentifier() const { return id; }
-
-  friend std::ostream &operator<<(std::ostream &stream, const Vertex &vertex) {
-    return stream << vertex.id;
+  friend std::ostream &operator<<(std::ostream &stream, const Edge &edge) {
+    return stream << edge.id;
   }
 
-  bool operator==(const Vertex &other) { return this->id == other.id; }
+  bool operator==(const Edge &other) { return this->id == other.id; }
+
+  Vertex::Identifier getVertexTo() const { return to; }
+
+  Vertex::Identifier getVertexFrom() const { return from; }
 
   std::string toString() {
     std::stringstream ss;
@@ -41,14 +39,14 @@ public:
 
 private:
   Identifier id;
-  // HACK: how to resolve this circular type dependency?
-  std::list<std::size_t> edges;
+  Vertex::Identifier from;
+  Vertex::Identifier to;
 };
 
-} // namespace graph
+} // namespace fpga
 } // namespace villas
 
 #ifndef FMT_LEGACY_OSTREAM_FORMATTER
 template <>
-class fmt::formatter<villas::graph::Vertex> : public fmt::ostream_formatter {};
+class fmt::formatter<villas::fpga::Edge> : public fmt::ostream_formatter {};
 #endif

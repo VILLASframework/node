@@ -11,10 +11,11 @@
 
 #include <unistd.h>
 
+#include <villas/fpga/memory_manager.hpp>
 #include <villas/log.hpp>
-#include <villas/memory_manager.hpp>
 
 namespace villas {
+namespace fpga {
 
 // Basic memory block backed by an address space in the memory graph
 //
@@ -288,4 +289,5 @@ private:
   static uintptr_t getUdmaBufPhysAddr(int num);
 };
 
+} // namespace fpga
 } // namespace villas
