@@ -7,6 +7,7 @@
 
 #include <villas/exceptions.hpp>
 #include <villas/hook.hpp>
+#include <villas/json.hpp>
 #include <villas/sample.hpp>
 #include <villas/signal.hpp>
 
@@ -36,7 +37,7 @@ public:
     ret = json_unpack_ex(json, &err, 0, "{ s: F, s: F }", "min", &min, "max",
                          &max);
     if (ret)
-      throw ConfigError(json, err, "node-config-hook-average");
+      throw JsonError(""_json_pointer, "{}", err.text);
 
     state = State::PARSED;
   }

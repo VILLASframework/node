@@ -11,6 +11,7 @@
 #include <netdb.h>
 
 #include <villas/exceptions.hpp>
+#include <villas/json.hpp>
 #include <villas/memory/ib.h>
 #include <villas/node/config.hpp>
 #include <villas/node/memory.hpp>
@@ -161,7 +162,8 @@ int villas::node::ib_reverse(NodeCompat *n) {
 int villas::node::ib_parse(NodeCompat *n, json_t *json) {
   auto *ib = n->getData<struct infiniband>();
 
-  throw ConfigError(json, "The infiniband node-type is currently broken!");
+  throw JsonError(""_json_pointer,
+                  "The infiniband node-type is currently broken!");
 
   int ret;
   char *local = nullptr, *remote = nullptr, *lasts;
@@ -187,7 +189,7 @@ int villas::node::ib_parse(NodeCompat *n, json_t *json) {
       json_unpack_ex(json, &err, 0, "{ s?: o, s?: o, s?: s }", "in", &json_in,
                      "out", &json_out, "rdma_transport_mode", &transport_mode);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-ib");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   if (json_in) {
     ret = json_unpack_ex(
@@ -195,7 +197,7 @@ int villas::node::ib_parse(NodeCompat *n, json_t *json) {
         &local, "cq_size", &recv_cq_size, "max_wrs", &max_recv_wr, "vectorize",
         &vectorize_in, "buffer_subtraction", &buffer_subtraction);
     if (ret)
-      throw ConfigError(json_in, err, "node-config-node-ib-in");
+      throw JsonError("/in"_json_pointer, "{}", err.text);
   }
 
   if (json_out) {
@@ -208,7 +210,7 @@ int villas::node::ib_parse(NodeCompat *n, json_t *json) {
         &vectorize_out, "use_fallback", &use_fallback, "periodic_signaling",
         &ib->periodic_signaling);
     if (ret)
-      throw ConfigError(json_out, err, "node-config-node-ib-out");
+      throw JsonError("/out"_json_pointer, "{}", err.text);
 
     if (remote) {
       ib->is_source = 1;

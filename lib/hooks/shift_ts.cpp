@@ -8,6 +8,7 @@
 #include <cstring>
 
 #include <villas/hook.hpp>
+#include <villas/json.hpp>
 #include <villas/sample.hpp>
 #include <villas/timing.hpp>
 
@@ -37,7 +38,7 @@ public:
     ret = json_unpack_ex(json, &err, 0, "{ s?: s, s: F }", "mode", &m, "offset",
                          &o);
     if (ret)
-      throw ConfigError(json, err, "node-config-hook-shift_ts");
+      throw JsonError(""_json_pointer, "{}", err.text);
 
     if (m) {
       if (!strcmp(m, "origin"))
@@ -45,8 +46,7 @@ public:
       else if (!strcmp(m, "received"))
         mode = SHIFT_RECEIVED;
       else
-        throw ConfigError(json, "node-config-hook-shift_ts-mode",
-                          "Invalid mode parameter '{}'", m);
+        throw JsonError("/mode"_json_pointer, "Invalid mode parameter '{}'", m);
     }
 
     offset = time_from_double(o);

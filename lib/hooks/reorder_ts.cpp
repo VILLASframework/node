@@ -11,6 +11,7 @@
 #include <vector>
 
 #include <villas/hook.hpp>
+#include <villas/json.hpp>
 #include <villas/sample.hpp>
 #include <villas/timing.hpp>
 
@@ -54,7 +55,7 @@ public:
     int ret =
         json_unpack_ex(json, &err, 0, "{ s?: i }", "window_size", &window_size);
     if (ret)
-      throw ConfigError(json, err, "node-config-hook-reorder-ts");
+      throw JsonError(""_json_pointer, "{}", err.text);
 
     state = State::PARSED;
   }

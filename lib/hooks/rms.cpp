@@ -6,6 +6,7 @@
  */
 
 #include <villas/hook.hpp>
+#include <villas/json.hpp>
 #include <villas/sample.hpp>
 
 namespace villas {
@@ -60,12 +61,12 @@ public:
     ret =
         json_unpack_ex(json, &err, 0, "{ s: i }", "window_size", &windowSizeIn);
     if (ret)
-      throw ConfigError(json, err, "node-config-hook-rms");
+      throw JsonError(""_json_pointer, "{}", err.text);
 
     if (windowSizeIn < 1)
-      throw ConfigError(json, "node-config-hook-rms",
-                        "Window size must be greater 0 but is set to {}",
-                        windowSizeIn);
+      throw JsonError("/window_size"_json_pointer,
+                      "Window size must be greater 0 but is set to {}",
+                      windowSizeIn);
 
     windowSize = (unsigned)windowSizeIn;
 

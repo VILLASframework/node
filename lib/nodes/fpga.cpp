@@ -20,6 +20,7 @@
 #include <villas/fpga/pcie_card.hpp>
 #include <villas/fpga/utils.hpp>
 #include <villas/jansson.hpp>
+#include <villas/json.hpp>
 #include <villas/log.hpp>
 #include <villas/nodes/fpga.hpp>
 #include <villas/sample.hpp>
@@ -53,8 +54,8 @@ int FpgaNode::prepare() {
       }
     }
     if (card == nullptr) {
-      throw ConfigError(config, "node-config-fpga",
-                        "There is no FPGA card with the name: {}", cardName);
+      throw JsonError("/nodes"_json_pointer / getName() / "card",
+                      "There is no FPGA card with the name: {}", cardName);
     }
   }
 
@@ -132,9 +133,9 @@ int FpgaNode::parse(json_t *json) {
                        "low_latency_mode", &lowLatencyMode, "timestep",
                        &timestep);
   if (ret) {
-    throw ConfigError(json, err, "node-config-fpga",
-                      "Failed to parse configuration of node {}",
-                      this->getName());
+    throw JsonError(""_json_pointer,
+                    "Failed to parse configuration of node {}: {}",
+                    this->getName(), err.text);
   }
   if (json_is_string(jsonCard)) {
     cardName = std::string(json_string_value(jsonCard));
@@ -146,23 +147,24 @@ int FpgaNode::parse(json_t *json) {
       cardName = "anonymous Card";
     }
     auto searchPath = configPath.substr(0, configPath.rfind("/"));
-    card = createCard(jsonCard, searchPath, vfioContainer, cardName);
+    card = JsonError::context("/card"_json_pointer, [&] {
+      return createCard(jsonCard, searchPath, vfioContainer, cardName);
+    });
     if (card == nullptr) {
-      throw ConfigError(jsonCard, "node-config-fpga", "Failed to create card");
+      throw JsonError("/card"_json_pointer, "Failed to create card");
     } else {
       cards.push_back(card);
     }
   } else {
-    throw ConfigError(jsonCard, "node-config-fpga",
-                      "Failed to parse card name");
+    throw JsonError("/card"_json_pointer, "Failed to parse card name");
   }
 
   if (jsonConnectStrings != nullptr && json_is_array(jsonConnectStrings)) {
     for (size_t i = 0; i < json_array_size(jsonConnectStrings); i++) {
       json_t *jsonConnectString = json_array_get(jsonConnectStrings, i);
       if (jsonConnectString == nullptr || !json_is_string(jsonConnectString)) {
-        throw ConfigError(jsonConnectString, "node-config-fpga",
-                          "Failed to parse connect string");
+        throw JsonError("/connect"_json_pointer / i,
+                        "Failed to parse connect string");
       }
       connectStrings.push_back(
           std::string(json_string_value(jsonConnectString)));

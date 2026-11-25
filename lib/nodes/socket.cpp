@@ -13,6 +13,7 @@
 #include <unistd.h>
 
 #include <villas/compat.hpp>
+#include <villas/json.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/socket.hpp>
 #include <villas/queue.h>
@@ -589,16 +590,18 @@ int villas::node::socket_parse(NodeCompat *n, json_t *json) {
       "address", &local, "verify_source", &s->verify_source, "multicast",
       &json_multicast);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-socket");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   // Format
   if (s->formatter)
     delete s->formatter;
-  s->formatter = json_format ? FormatFactory::make(json_format)
-                             : FormatFactory::make("villas.binary");
+  s->formatter =
+      json_format
+          ? JsonError::context("/format"_json_pointer,
+                               [&] { return FormatFactory::make(json_format); })
+          : FormatFactory::make("villas.binary");
   if (!s->formatter)
-    throw ConfigError(json_format, "node-config-node-socket-format",
-                      "Invalid format configuration");
+    throw JsonError("/format"_json_pointer, "Invalid format configuration");
 
   // IP layer
   if (layer) {
@@ -646,9 +649,8 @@ int villas::node::socket_parse(NodeCompat *n, json_t *json) {
         "enabled", &s->multicast.enabled, "group", &group, "interface",
         &interface, "loop", &s->multicast.loop, "ttl", &s->multicast.ttl);
     if (ret)
-      throw ConfigError(json_multicast, err,
-                        "node-config-node-socket-multicast",
-                        "Failed to parse multicast settings");
+      throw JsonError("/in/multicast"_json_pointer,
+                      "Failed to parse multicast settings: {}", err.text);
 
     ret = inet_aton(group, &s->multicast.mreq.imr_multiaddr);
     if (!ret)

@@ -15,6 +15,7 @@
 #include <villas/config_helper.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/hook.hpp>
+#include <villas/json.hpp>
 #include <villas/sample.hpp>
 
 #include "villas/timing.hpp"
@@ -77,18 +78,20 @@ public:
     auto ret = json_unpack_ex(json, &err, 0, "{ s?: s, s: o }", "trigger",
                               &trigger_str, "interval", &json_interval);
     if (ret)
-      throw ConfigError(json, err, "node-config-hook-frame");
+      throw JsonError(""_json_pointer, "{}", err.text);
 
     if (trigger_str == nullptr || !strcmp(trigger_str, "timestamp")) {
-      interval = parse_duration<TimeInterval>(json_interval);
+      interval = JsonError::context("/interval"_json_pointer, [&] {
+        return parse_duration<TimeInterval>(json_interval);
+      });
 
       if (std::get<TimeInterval>(interval) == TimeInterval::zero())
-        throw ConfigError(json, "node-config-hook-frame-interval",
-                          "Interval must be greater than zero");
+        throw JsonError("/interval"_json_pointer,
+                        "Interval must be greater than zero");
     } else if (!strcmp(trigger_str, "sequence")) {
       if (!json_is_integer(json_interval))
-        throw ConfigError(json_interval, "node-config-hook-frame-interval",
-                          "Interval must be an integer");
+        throw JsonError("/interval"_json_pointer,
+                        "Interval must be an integer");
 
       interval = SequenceInterval(json_integer_value(json_interval));
     }

@@ -14,6 +14,7 @@
 #include <unistd.h>
 
 #include <villas/exceptions.hpp>
+#include <villas/json.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/iec61850_sv.hpp>
 #include <villas/sample.hpp>
@@ -181,7 +182,7 @@ int villas::node::iec61850_sv_parse(NodeCompat *n, json_t *json) {
                      "out", &json_out, "in", &json_in, "interface", &interface,
                      "app_id", &i->app_id, "dst_address", &dst_address);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-iec61850-sv");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   if (interface)
     i->interface = strdup(interface);
@@ -189,8 +190,8 @@ int villas::node::iec61850_sv_parse(NodeCompat *n, json_t *json) {
   if (dst_address) {
     struct ether_addr *addr = ether_aton_r(dst_address, &i->dst_address);
     if (addr == nullptr)
-      throw ConfigError(json, "node-config-node-iec61850-sv-dst-address",
-                        "Invalid setting 'dst_address': {}", dst_address);
+      throw JsonError("/dst_address"_json_pointer,
+                      "Invalid setting 'dst_address': {}", dst_address);
   }
 
   if (json_out) {
@@ -202,7 +203,7 @@ int villas::node::iec61850_sv_parse(NodeCompat *n, json_t *json) {
         "smp_mod", &smp_mod, "smp_rate", &i->out.smp_rate, "smp_synch",
         &smp_synch, "vlan", &json_vlan);
     if (ret)
-      throw ConfigError(json_out, err, "node-config-node-iec61850-sv-out");
+      throw JsonError("/out"_json_pointer, "{}", err.text);
 
     if (json_vlan != nullptr) {
       int enabled = -1;
@@ -223,8 +224,8 @@ int villas::node::iec61850_sv_parse(NodeCompat *n, json_t *json) {
       else if (!strcmp(smp_mod, "seconds_per_sample"))
         i->out.smp_mod = IEC61850_SV_SMPMOD_SECONDS_PER_SAMPLE;
       else
-        throw ConfigError(json_out, "node-config-node-iec61850-sv-out-smp-mod",
-                          "Invalid value '{}' for setting 'smp_mod'", smp_mod);
+        throw JsonError("/out/smp_mod"_json_pointer,
+                        "Invalid value '{}' for setting 'smp_mod'", smp_mod);
     }
 
     if (smp_synch) {
@@ -235,9 +236,9 @@ int villas::node::iec61850_sv_parse(NodeCompat *n, json_t *json) {
       else if (!strcmp(smp_synch, "global_clock"))
         i->out.smp_synch = IEC61850_SV_SMPSYNC_SYNCED_GLOBAL_CLOCK;
       else
-        throw ConfigError(
-            json_out, "node-config-node-iec61850-sv-out-smp-synch",
-            "Invalid value '{}' for setting 'smp_synch'", smp_synch);
+        throw JsonError("/out/smp_synch"_json_pointer,
+                        "Invalid value '{}' for setting 'smp_synch'",
+                        smp_synch);
     }
 
     i->out.sv_id = sv_id ? strdup(sv_id) : nullptr;
@@ -245,9 +246,8 @@ int villas::node::iec61850_sv_parse(NodeCompat *n, json_t *json) {
     ret = iec61850_parse_signals(json_signals, &i->out.signals,
                                  n->getOutputSignals());
     if (ret <= 0)
-      throw ConfigError(json_signals,
-                        "node-config-node-iec61850-sv-out-signals",
-                        "Failed to parse setting 'signals'");
+      throw JsonError("/out/signals"_json_pointer,
+                      "Failed to parse setting 'signals'");
   }
 
   if (json_in) {
@@ -258,7 +258,7 @@ int villas::node::iec61850_sv_parse(NodeCompat *n, json_t *json) {
         json_unpack_ex(json_in, &err, 0, "{ s: o, s?: b }", "signals",
                        &json_signals, "check_dst_address", &check_dst_address);
     if (ret)
-      throw ConfigError(json_in, err, "node-config-node-iec61850-in");
+      throw JsonError("/in"_json_pointer, "{}", err.text);
 
     if (check_dst_address > 0)
       i->in.check_dst_address = check_dst_address > 0;
@@ -266,8 +266,8 @@ int villas::node::iec61850_sv_parse(NodeCompat *n, json_t *json) {
     ret = iec61850_parse_signals(json_signals, &i->in.signals,
                                  n->getInputSignals(false));
     if (ret <= 0)
-      throw ConfigError(json_signals, "node-config-node-iec61850-sv-in-signals",
-                        "Failed to parse setting 'signals'");
+      throw JsonError("/in/signals"_json_pointer,
+                      "Failed to parse setting 'signals'");
 
     i->in.total_size = ret;
   }

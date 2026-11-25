@@ -8,6 +8,7 @@
 #include <vector>
 
 #include <villas/hook.hpp>
+#include <villas/json.hpp>
 #include <villas/sample.hpp>
 #include <villas/timing.hpp>
 
@@ -37,17 +38,18 @@ public:
 
     ret = json_unpack_ex(json, &err, 0, "{ s: o }", "phases", &json_phases);
     if (ret)
-      throw ConfigError(json, err, "node-config-hook-ebm");
+      throw JsonError(""_json_pointer, "{}", err.text);
 
     if (!json_is_array(json_phases))
-      throw ConfigError(json_phases, "node-config-hook-ebm-phases");
+      throw JsonError("/phases"_json_pointer,
+                      "The 'phases' setting must be an array");
 
     json_array_foreach (json_phases, i, json_phase) {
       int voltage, current;
 
       ret = json_unpack_ex(json_phase, &err, 0, "[ i, i ]", &voltage, &current);
       if (ret)
-        throw ConfigError(json, err, "node-config-hook-ebm-phases");
+        throw JsonError("/phases"_json_pointer / i, "{}", err.text);
 
       phases.emplace_back(voltage, current);
     }

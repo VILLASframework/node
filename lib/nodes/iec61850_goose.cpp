@@ -16,6 +16,7 @@
 #include <libiec61850/r_session.h>
 
 #include <villas/exceptions.hpp>
+#include <villas/json.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/iec61850_goose.hpp>
 #include <villas/sample.hpp>
@@ -644,7 +645,7 @@ int GooseNode::parse(json_t *json) {
                        "in", &json_in,         //
                        "out", &json_out);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-iec61850-8-1");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   if (json_keys) {
     size_t index;
@@ -653,15 +654,17 @@ int GooseNode::parse(json_t *json) {
     keys.reserve(json_array_size(json_keys));
     json_array_foreach (json_keys, index, json_key) {
       assert(json_is_object(json_key));
-      parseSessionKey(json_key);
+      JsonError::context("/keys"_json_pointer / index,
+                         [&] { return parseSessionKey(json_key); });
     }
   }
 
   if (json_in)
-    parseInput(json_in);
+    JsonError::context("/in"_json_pointer, [&] { return parseInput(json_in); });
 
   if (json_out)
-    parseOutput(json_out);
+    JsonError::context("/out"_json_pointer,
+                       [&] { return parseOutput(json_out); });
 
   return 0;
 }
@@ -689,7 +692,7 @@ void GooseNode::parseInput(json_t *json) {
                        "interface", &interface_id,                         //
                        "with_timestamp", &with_timestamp);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-iec61850-8-1");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   if (routed) {
     input.local_address = local_address;
@@ -713,8 +716,12 @@ void GooseNode::parseInput(json_t *json) {
     input.interface_id = interface_id;
   }
 
-  parseSubscribers(json_subscribers, input.contexts);
-  parseInputSignals(json_signals, input.mappings);
+  JsonError::context("/subscribers"_json_pointer, [&] {
+    return parseSubscribers(json_subscribers, input.contexts);
+  });
+  JsonError::context("/signals"_json_pointer, [&] {
+    return parseInputSignals(json_signals, input.mappings);
+  });
 
   input.with_timestamp = with_timestamp;
 }
@@ -738,7 +745,7 @@ void GooseNode::parseSessionKey(json_t *json) {
                        "string", &data_str, &data_str_len, //
                        "base64", &data_base64, &data_base64_len);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-iec61850-8-1");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   RSecurityAlgorithm security;
   if (security_str == "aes_128_gcm"sv)
@@ -808,7 +815,7 @@ void GooseNode::parseSubscriber(json_t *json, GooseNode::SubscriberConfig &sc) {
                        "dst_address", &dst_address_str,            //
                        "app_id", &app_id);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-iec61850-8-1");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   sc.go_cb_ref = std::string{go_cb_ref};
 
@@ -841,7 +848,8 @@ void GooseNode::parseSubscribers(
   json_object_foreach (json, key, json_subscriber) {
     SubscriberConfig sc;
 
-    parseSubscriber(json_subscriber, sc);
+    JsonError::context(""_json_pointer / key,
+                       [&] { return parseSubscriber(json_subscriber, sc); });
 
     ctx[key] = InputEventContext{sc};
   }
@@ -866,7 +874,7 @@ void GooseNode::parseInputSignals(
                          "index", &mapping_index,           //
                          "mms_type", &mapping_type_name);
     if (ret)
-      throw ConfigError(json, err, "node-config-node-iec61850-8-1");
+      throw JsonError(""_json_pointer / index, "{}", err.text);
 
     auto mapping_type =
         GooseSignal::lookupMmsTypeName(mapping_type_name).value();
@@ -911,7 +919,7 @@ void GooseNode::parseOutput(json_t *json) {
       "interface", &interface_id,                                //
       "resend_interval", &output.resend_interval);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-iec61850-8-1");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   if (!routed) {
     output.interface_id = interface_id;
@@ -936,7 +944,9 @@ void GooseNode::parseOutput(json_t *json) {
     output.key_id = key_id;
   }
 
-  parsePublishers(json_publishers, output.contexts);
+  JsonError::context("/publishers"_json_pointer, [&] {
+    return parsePublishers(json_publishers, output.contexts);
+  });
 }
 
 void GooseNode::parsePublisherData(json_t *json,
@@ -961,7 +971,7 @@ void GooseNode::parsePublisherData(json_t *json,
                          "value", &json_value,            //
                          "mms_bitstring_size", &bitstring_size);
     if (ret)
-      throw ConfigError(json, err, "node-config-node-iec61850-8-1");
+      throw JsonError(""_json_pointer / index, "{}", err.text);
 
     auto goose_type = GooseSignal::lookupMmsTypeName(mms_type).value();
     std::optional<GooseSignal::Meta> meta = std::nullopt;
@@ -974,7 +984,8 @@ void GooseNode::parsePublisherData(json_t *json,
     if (json_value) {
       ret = signal_data.parseJson(goose_type->signal_type, json_value);
       if (ret)
-        throw ConfigError(json, err, "node-config-node-iec61850-8-1");
+        throw JsonError(""_json_pointer / index / "value",
+                        "Invalid value for MMS type {}", mms_type);
     }
 
     auto signal = std::optional<int>{};
@@ -1021,7 +1032,7 @@ void GooseNode::parsePublisher(json_t *json, PublisherConfig &pc) {
                        "burst", &burst,                                      //
                        "data", &json_data);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-iec61850-8-1");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   if (!output.interface_id.empty()) {
     std::optional dst_address = stringToMac(dst_address_str);
@@ -1041,7 +1052,8 @@ void GooseNode::parsePublisher(json_t *json, PublisherConfig &pc) {
   pc.time_allowed_to_live = time_allowed_to_live;
   pc.burst = burst;
 
-  parsePublisherData(json_data, pc.data);
+  JsonError::context("/data"_json_pointer,
+                     [&] { return parsePublisherData(json_data, pc.data); });
 }
 
 void GooseNode::parsePublishers(json_t *json, std::vector<OutputContext> &ctx) {
@@ -1051,7 +1063,8 @@ void GooseNode::parsePublishers(json_t *json, std::vector<OutputContext> &ctx) {
   json_array_foreach (json, index, json_publisher) {
     PublisherConfig pc;
 
-    parsePublisher(json_publisher, pc);
+    JsonError::context(""_json_pointer / index,
+                       [&] { return parsePublisher(json_publisher, pc); });
 
     ctx.push_back(OutputContext{pc});
   }

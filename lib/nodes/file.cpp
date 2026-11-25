@@ -14,6 +14,7 @@
 
 #include <villas/exceptions.hpp>
 #include <villas/format.hpp>
+#include <villas/json.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/file.hpp>
 #include <villas/queue.h>
@@ -87,7 +88,7 @@ int villas::node::file_parse(NodeCompat *n, json_t *json) {
                        &f->skip_lines, "out", "flush", &f->flush, "buffer_size",
                        &f->buffer_size_out);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-file");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   f->epoch = time_from_double(epoch_flt);
   f->uri_tmpl = uri_tmpl ? strdup(uri_tmpl) : nullptr;
@@ -95,11 +96,13 @@ int villas::node::file_parse(NodeCompat *n, json_t *json) {
   // Format
   if (f->formatter)
     delete f->formatter;
-  f->formatter = json_format ? FormatFactory::make(json_format)
-                             : FormatFactory::make("villas.human");
+  f->formatter =
+      json_format
+          ? JsonError::context("/format"_json_pointer,
+                               [&] { return FormatFactory::make(json_format); })
+          : FormatFactory::make("villas.human");
   if (!f->formatter)
-    throw ConfigError(json_format, "node-config-node-file-format",
-                      "Invalid format configuration");
+    throw JsonError("/format"_json_pointer, "Invalid format configuration");
 
   if (eof) {
     if (!strcmp(eof, "exit") || !strcmp(eof, "stop"))

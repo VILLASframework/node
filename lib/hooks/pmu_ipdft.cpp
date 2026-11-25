@@ -6,6 +6,7 @@
  */
 
 #include <villas/hooks/pmu.hpp>
+#include <villas/json.hpp>
 
 namespace villas {
 namespace node {
@@ -67,11 +68,11 @@ public:
                          &estimationRange);
 
     if (ret)
-      throw ConfigError(json, err, "node-config-hook-ip-dft-pmu");
+      throw JsonError(""_json_pointer, "{}", err.text);
 
     if (estimationRange <= 0)
-      throw ConfigError(
-          json, "node-config-hook-ip-dft-pmu-estimation_range",
+      throw JsonError(
+          "/estimation_range"_json_pointer,
           "Estimation range cannot be less or equal than 0 tried to set {}",
           estimationRange);
   }

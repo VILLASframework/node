@@ -12,6 +12,7 @@ extern "C" {
 }
 
 #include <villas/fs.hpp>
+#include <villas/json.hpp>
 #include <villas/nodes/opal_orchestra/ddf.hpp>
 #include <villas/nodes/opal_orchestra/error.hpp>
 #include <villas/nodes/opal_orchestra/signal.hpp>
@@ -220,8 +221,9 @@ void ConnectionLocal::parse(json_t *json) {
       "nic_framework", &nf, "nic_client", &nc, "core_framework", &cf,
       "core_client", &cc);
   if (ret) {
-    throw ConfigError(json, err, "node-config-node-opal-orchestra-connection",
-                      "Failed to parse configuration of local connection");
+    throw JsonError(""_json_pointer,
+                    "Failed to parse configuration of local connection: {}",
+                    err.text);
   }
 
   if (ec) {
@@ -270,9 +272,10 @@ void ConnectionRemote::parse(json_t *json) {
   int ret = json_unpack_ex(json, &err, 0, "{ s: s, s: i }", "card", &nme,
                            "pci_index", &pciIndex);
   if (ret) {
-    throw ConfigError(
-        json, err, "node-config-node-opal-orchestra-rfm",
-        "Failed to parse configuration of Reflective Memory Card (RFM)");
+    throw JsonError(
+        ""_json_pointer,
+        "Failed to parse configuration of Reflective Memory Card (RFM): {}",
+        err.text);
   }
 
   name = nme;
@@ -301,8 +304,9 @@ void ConnectionDolphin::parse(json_t *json) {
       json_unpack_ex(json, &err, 0, "{ s: i, s: i }", "node_id_framework",
                      &nodeIdFramework, "segment_id", &segmentId);
   if (ret) {
-    throw ConfigError(json, err, "node-config-node-opal-orchestra-connection",
-                      "Failed to parse configuration of dolphin connection");
+    throw JsonError(""_json_pointer,
+                    "Failed to parse configuration of dolphin connection: {}",
+                    err.text);
   }
 }
 
@@ -312,8 +316,8 @@ std::shared_ptr<Connection> Connection::fromJson(json_t *json) {
 
   int ret = json_unpack_ex(json, &err, 0, "{ s: s, }", "type", &type);
   if (ret) {
-    throw ConfigError(json, err, "node-config-node-opal-orchestra-connection",
-                      "Failed to parse connection type");
+    throw JsonError(""_json_pointer, "Failed to parse connection type: {}",
+                    err.text);
   }
 
   std::shared_ptr<Connection> c;
@@ -328,8 +332,8 @@ std::shared_ptr<Connection> Connection::fromJson(json_t *json) {
     c = std::make_shared<ConnectionDolphin>();
     c->parse(json);
   } else {
-    throw ConfigError(json, err, "node-config-node-opal-orchestra-connection",
-                      "Unknown type of connection '{}'", type);
+    throw JsonError("/type"_json_pointer, "Unknown type of connection '{}'",
+                    type);
   }
 
   return c;

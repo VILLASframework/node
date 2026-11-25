@@ -10,6 +10,7 @@
 
 #include <villas/exceptions.hpp>
 #include <villas/formats/column.hpp>
+#include <villas/json.hpp>
 #include <villas/sample.hpp>
 #include <villas/signal.hpp>
 #include <villas/timing.hpp>
@@ -179,13 +180,13 @@ void ColumnLineFormat::parse(json_t *json) {
 
   ret = json_unpack_ex(json, &err, 0, "{ s?: s }", "separator", &sep);
   if (ret)
-    throw ConfigError(json, err, "node-config-format-column",
-                      "Failed to parse format configuration");
+    throw JsonError(""_json_pointer, "Failed to parse format configuration: {}",
+                    err.text);
 
   if (sep) {
     if (strlen(sep) != 1)
-      throw ConfigError(json, "node-config-format-column-separator",
-                        "Column separator must be a single character!");
+      throw JsonError("/separator"_json_pointer,
+                      "Column separator must be a single character!");
 
     separator = sep[0];
   }

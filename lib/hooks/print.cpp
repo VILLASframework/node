@@ -10,6 +10,7 @@
 
 #include <villas/format.hpp>
 #include <villas/hook.hpp>
+#include <villas/json.hpp>
 #include <villas/node.hpp>
 #include <villas/path.hpp>
 #include <villas/sample.hpp>
@@ -67,11 +68,11 @@ public:
     ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: o, s?: s }", "prefix", &p,
                          "format", &json_format, "output", &o);
     if (ret)
-      throw ConfigError(json, err, "node-config-hook-print");
+      throw JsonError(""_json_pointer, "{}", err.text);
 
     if (p && o) {
-      throw ConfigError(json, "node-config-hook-print",
-                        "Prefix and output settings are exclusive.");
+      throw JsonError(""_json_pointer,
+                      "Prefix and output settings are exclusive.");
     }
 
     if (p)
@@ -81,13 +82,15 @@ public:
       output_path = o;
 
     // Format
-    auto *fmt = json_format ? FormatFactory::make(json_format)
-                            : FormatFactory::make("villas.human");
+    auto *fmt = json_format
+                    ? JsonError::context(
+                          "/format"_json_pointer,
+                          [&] { return FormatFactory::make(json_format); })
+                    : FormatFactory::make("villas.human");
 
     formatter = Format::Ptr(fmt);
     if (!formatter)
-      throw ConfigError(json_format, "node-config-hook-print-format",
-                        "Invalid format configuration");
+      throw JsonError("/format"_json_pointer, "Invalid format configuration");
 
     state = State::PARSED;
   }

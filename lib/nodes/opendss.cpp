@@ -13,6 +13,7 @@
 #include <fmt/core.h>
 
 #include <villas/exceptions.hpp>
+#include <villas/json.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/opendss.hpp>
 #include <villas/sample.hpp>
@@ -62,11 +63,11 @@ void OpenDSS::parseData(json_t *json, bool in) {
       int ret = json_unpack_ex(json_data, &err, 0, "{ s: s, s: s, s: o }",
                                "name", &name, "type", &type, "data", &a_mode);
       if (ret)
-        throw ConfigError(json, err, "node-config-node-opendss");
+        throw JsonError(""_json_pointer / i, "{}", err.text);
 
       if (!json_is_array(a_mode) && a_mode)
-        throw ConfigError(
-            a_mode, "node-config-opendssIn",
+        throw JsonError(
+            ""_json_pointer / i / "data",
             "datatype must be configured as a list of name objects");
 
       ele.name = name;
@@ -147,18 +148,20 @@ int OpenDSS::parse(json_t *json) {
                        "list", &json_dataOut);
 
   if (ret)
-    throw ConfigError(json, err, "node-config-node-opendss");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   if (!json_is_array(json_dataIn) && json_dataIn)
-    throw ConfigError(json_dataIn, "node-config-opendssIn",
-                      "DataIn must be configured as a list of name objects");
+    throw JsonError("/in/list"_json_pointer,
+                    "DataIn must be configured as a list of name objects");
 
   if (!json_is_array(json_dataOut) && json_dataOut)
-    throw ConfigError(json_dataIn, "node-config-opendssIn",
-                      "DataOut must be configured as a list of name objects");
+    throw JsonError("/out/list"_json_pointer,
+                    "DataOut must be configured as a list of name objects");
 
-  parseData(json_dataIn, true);
-  parseData(json_dataOut, false);
+  JsonError::context("/in/list"_json_pointer,
+                     [&] { return parseData(json_dataIn, true); });
+  JsonError::context("/out/list"_json_pointer,
+                     [&] { return parseData(json_dataOut, false); });
 
   return 0;
 }

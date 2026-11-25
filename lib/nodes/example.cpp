@@ -9,6 +9,7 @@
  */
 
 #include <villas/exceptions.hpp>
+#include <villas/json.hpp>
 #include <villas/sample.hpp>
 #include <villas/super_node.hpp>
 #include <villas/timing.hpp>
@@ -92,7 +93,7 @@ public:
     int ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: s }", "setting1",
                              &setting1, "setting2", &setting2_str);
     if (ret)
-      throw ConfigError(json, err, "node-config-node-example");
+      throw JsonError(""_json_pointer, "{}", err.text);
 
     if (setting2_str)
       setting2 = setting2_str;

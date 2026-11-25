@@ -6,6 +6,7 @@
  */
 
 #include <villas/hooks/decimate.hpp>
+#include <villas/json.hpp>
 #include <villas/sample.hpp>
 
 namespace villas {
@@ -30,7 +31,7 @@ void DecimateHook::parse(json_t *json) {
   ret = json_unpack_ex(json, &err, 0, "{ s: i, s?: b }", "ratio", &ratio,
                        "renumber", &renumber);
   if (ret)
-    throw ConfigError(json, err, "node-config-hook-decimate");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   state = State::PARSED;
 }

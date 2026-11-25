@@ -17,6 +17,7 @@
 #include <villas/fpga/card_parser.hpp>
 #include <villas/fpga/memory_manager.hpp>
 #include <villas/fpga/platform_card.hpp>
+#include <villas/json.hpp>
 #include <villas/kernel/kernel.hpp>
 
 using namespace villas;
@@ -101,8 +102,12 @@ PlatformCardFactory::make(json_t *json_card, std::string card_name,
   card->polling = parser.polling != 0;
   card->ignored_ip_names = parser.ignored_ip_names;
 
-  CardFactory::loadIps(card, parser.json_ips, searchPath);
-  CardFactory::loadSwitch(card, parser.json_paths);
+  JsonError::context("/ips"_json_pointer, [&] {
+    return CardFactory::loadIps(card, parser.json_ips, searchPath);
+  });
+  JsonError::context("/paths"_json_pointer, [&] {
+    return CardFactory::loadSwitch(card, parser.json_paths);
+  });
 
   // Deallocate JSON config
   json_decref(parser.json_ips);

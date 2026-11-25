@@ -17,6 +17,7 @@ extern "C" {
 
 #include <villas/exceptions.hpp>
 #include <villas/hooks/lua.hpp>
+#include <villas/json.hpp>
 #include <villas/node.hpp>
 #include <villas/path.hpp>
 #include <villas/sample.hpp>
@@ -298,7 +299,7 @@ LuaSignalExpression::LuaSignalExpression(lua_State *l, json_t *json_sig)
   // Parse expression
   ret = json_unpack_ex(json_sig, &err, 0, "{ s: s }", "expression", &expr);
   if (ret)
-    throw ConfigError(json_sig, err, "node-config-hook-lua-signals");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   cfg = json_sig;
 
@@ -316,8 +317,8 @@ void LuaSignalExpression::parseExpression(const std::string &expr) {
 
   int err = luaL_loadstring(L, fexpr.c_str());
   if (err)
-    throw ConfigError(cfg, "node-config-hook-lua-signals",
-                      "Failed to load Lua expression: {}", lua_tostring(L, -1));
+    throw JsonError(""_json_pointer, "Failed to load Lua expression: {}",
+                    lua_tostring(L, -1));
 
   cookie = luaL_ref(L, LUA_REGISTRYINDEX);
 }
@@ -354,12 +355,13 @@ void LuaHook::parseExpressions(json_t *json_sigs) {
   signalsExpressions->clear();
   ret = signalsExpressions->parse(json_sigs);
   if (ret)
-    throw ConfigError(json_sigs, "node-config-hook-lua-signals",
-                      "Setting 'signals' must be a list of dicts");
+    throw JsonError(""_json_pointer,
+                    "Setting 'signals' must be a list of dicts");
 
   // cppcheck-suppress unknownMacro
   json_array_foreach (json_sigs, i, json_sig)
-    expressions.emplace_back(L, json_sig);
+    JsonError::context(""_json_pointer / i,
+                       [&] { return expressions.emplace_back(L, json_sig); });
 
   hasExpressions = true;
 }
@@ -379,7 +381,7 @@ void LuaHook::parse(json_t *json) {
                        &script_str, "signals", &json_signals, "use_names",
                        &names);
   if (ret)
-    throw ConfigError(json, err, "node-config-hook-lua");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   useNames = names;
 
@@ -387,7 +389,8 @@ void LuaHook::parse(json_t *json) {
     script = script_str;
 
   if (json_signals)
-    parseExpressions(json_signals);
+    JsonError::context("/signals"_json_pointer,
+                       [&] { return parseExpressions(json_signals); });
 
   state = State::PARSED;
 }

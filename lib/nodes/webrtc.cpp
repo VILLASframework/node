@@ -12,6 +12,7 @@
 
 #include <villas/exceptions.hpp>
 #include <villas/jansson.hpp>
+#include <villas/json.hpp>
 #include <villas/node/config.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/webrtc.hpp>
@@ -91,16 +92,16 @@ int WebRTCNode::parse(json_t *json) {
     rtcConf.iceServers.clear();
 
     if (!json_is_array(json_servers))
-      throw ConfigError(
-          json_servers, "node-config-node-webrtc-ice-servers",
+      throw JsonError(
+          "/ice/servers"_json_pointer,
           "ICE Servers must be a an array of server configurations.");
 
     size_t i;
     json_t *json_server;
     json_array_foreach (json_servers, i, json_server) {
       if (!json_is_string(json_server))
-        throw ConfigError(json_server, "node-config-node-webrtc-ice-server",
-                          "ICE servers must be provided as STUN/TURN url.");
+        throw JsonError("/ice/servers"_json_pointer / i,
+                        "ICE servers must be provided as STUN/TURN url.");
 
       std::string uri = json_string_value(json_server);
 
@@ -111,12 +112,14 @@ int WebRTCNode::parse(json_t *json) {
       rtcConf.enableIceTcp = tcp > 0;
   }
 
-  auto *fmt = json_format ? FormatFactory::make(json_format)
-                          : FormatFactory::make("villas.binary");
+  auto *fmt =
+      json_format
+          ? JsonError::context("/format"_json_pointer,
+                               [&] { return FormatFactory::make(json_format); })
+          : FormatFactory::make("villas.binary");
   formatter = Format::Ptr(fmt);
   if (!formatter)
-    throw ConfigError(json_format, "node-config-node-webrtc-format",
-                      "Invalid format configuration");
+    throw JsonError("/format"_json_pointer, "Invalid format configuration");
 
   return 0;
 }

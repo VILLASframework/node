@@ -10,6 +10,7 @@
 #include <villas/common.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/hook.hpp>
+#include <villas/json.hpp>
 #include <villas/node.hpp>
 #include <villas/stats.hpp>
 #include <villas/timing.hpp>
@@ -165,14 +166,14 @@ public:
                          "format", &f, "verbose", &verbose, "warmup", &warmup,
                          "buckets", &buckets, "output", &u);
     if (ret)
-      throw ConfigError(json, err, "node-config-hook-stats");
+      throw JsonError(""_json_pointer, "{}", err.text);
 
     if (f) {
       try {
         format = Stats::lookupFormat(f);
       } catch (const std::invalid_argument &e) {
-        throw ConfigError(json, "node-config-hook-stats",
-                          "Invalid statistic output format: {}", f);
+        throw JsonError("/format"_json_pointer,
+                        "Invalid statistic output format: {}", f);
       }
     }
 

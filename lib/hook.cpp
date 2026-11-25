@@ -9,6 +9,7 @@
 
 #include <villas/exceptions.hpp>
 #include <villas/hook.hpp>
+#include <villas/json.hpp>
 #include <villas/node.hpp>
 #include <villas/node/config.hpp>
 #include <villas/path.hpp>
@@ -49,7 +50,7 @@ void Hook::parse(json_t *json) {
 
   ret = json_unpack_ex(json, &err, 0, "{ s?: i }", "priority", &prio);
   if (ret)
-    throw ConfigError(json, err, "node-config-hook");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   if (prio >= 0)
     priority = prio;
@@ -69,11 +70,11 @@ void SingleSignalHook::parse(json_t *json) {
 
   ret = json_unpack_ex(json, &err, 0, "{ s: o }", "signal", &json_signal);
   if (ret)
-    throw ConfigError(json, err, "node-config-hook");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   if (!json_is_string(json_signal))
-    throw ConfigError(json_signal, "node-config-hook-signals",
-                      "Invalid value for setting 'signal'");
+    throw JsonError("/signal"_json_pointer,
+                    "Invalid value for setting 'signal'");
 
   signalName = json_string_value(json_signal);
 }
@@ -104,17 +105,17 @@ void MultiSignalHook::parse(json_t *json) {
   ret = json_unpack_ex(json, &err, 0, "{ s?: o, s?: o }", "signals",
                        &json_signals, "signal", &json_signal);
   if (ret)
-    throw ConfigError(json, err, "node-config-hook");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   if (json_signals) {
     if (!json_is_array(json_signals))
-      throw ConfigError(json_signals, "node-config-hook-signals",
-                        "Setting 'signals' must be a list of signal names");
+      throw JsonError("/signals"_json_pointer,
+                      "Setting 'signals' must be a list of signal names");
 
     json_array_foreach (json_signals, i, json_signal) {
       if (!json_is_string(json_signal))
-        throw ConfigError(json_signal, "node-config-hook-signals",
-                          "Invalid value for setting 'signals'");
+        throw JsonError("/signals"_json_pointer / i,
+                        "Invalid value for setting 'signals'");
 
       const char *name = json_string_value(json_signal);
 
@@ -122,15 +123,14 @@ void MultiSignalHook::parse(json_t *json) {
     }
   } else if (json_signal) {
     if (!json_is_string(json_signal))
-      throw ConfigError(json_signal, "node-config-hook-signals",
-                        "Invalid value for setting 'signals'");
+      throw JsonError("/signal"_json_pointer,
+                      "Invalid value for setting 'signal'");
 
     const char *name = json_string_value(json_signal);
 
     signalNames.push_back(name);
   } else
-    throw ConfigError(json, "node-config-hook-signals",
-                      "Missing 'signals' setting");
+    throw JsonError(""_json_pointer, "Missing 'signals' setting");
 }
 
 void MultiSignalHook::prepare() {

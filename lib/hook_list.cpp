@@ -7,6 +7,7 @@
 
 #include <villas/hook.hpp>
 #include <villas/hook_list.hpp>
+#include <villas/json.hpp>
 #include <villas/list.hpp>
 #include <villas/plugin.hpp>
 #include <villas/sample.hpp>
@@ -17,8 +18,8 @@ using namespace villas::node;
 
 void HookList::parse(json_t *json, int mask, Path *o, Node *n) {
   if (!json_is_array(json))
-    throw ConfigError(json, "node-config-hook",
-                      "Hooks must be configured as a list of hook objects");
+    throw JsonError(""_json_pointer,
+                    "Hooks must be configured as a list of hook objects");
 
   size_t i;
   json_t *json_hook;
@@ -38,27 +39,26 @@ void HookList::parse(json_t *json, int mask, Path *o, Node *n) {
     case JSON_OBJECT:
       ret = json_unpack_ex(json_hook, &err, 0, "{ s: s }", "type", &type);
       if (ret)
-        throw ConfigError(json_hook, err, "node-config-hook",
-                          "Failed to parse hook");
+        throw JsonError(""_json_pointer / i, "Failed to parse hook: {}",
+                        err.text);
       json_config = json_hook;
       break;
 
     default:
-      throw ConfigError(json_hook, "node-config-hook",
-                        "Hook must be configured by simple string or object");
+      throw JsonError(""_json_pointer / i,
+                      "Hook must be configured by simple string or object");
     }
 
     auto hf = plugin::registry->lookup<HookFactory>(type);
     if (!hf)
-      throw ConfigError(json_hook, "node-config-hook", "Unknown hook type '{}'",
-                        type);
+      throw JsonError(""_json_pointer / i, "Unknown hook type '{}'", type);
 
     if (!(hf->getFlags() & mask))
-      throw ConfigError(json_hook, "node-config-hook",
-                        "Hook '{}' not allowed here", type);
+      throw JsonError(""_json_pointer / i, "Hook '{}' not allowed here", type);
 
     h = hf->make(o, n);
-    h->parse(json_config);
+    JsonError::context(""_json_pointer / i,
+                       [&] { return h->parse(json_config); });
 
     push_back(h);
   }

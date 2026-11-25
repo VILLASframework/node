@@ -6,6 +6,7 @@
  */
 
 #include <villas/hooks/pmu.hpp>
+#include <villas/json.hpp>
 #include <villas/timing.hpp>
 
 namespace villas {
@@ -102,26 +103,26 @@ void PmuHook::parse(json_t *json) {
       &frequencyOffset, "rocof_offset", &rocofOffset);
 
   if (ret)
-    throw ConfigError(json, err, "node-config-hook-pmu");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   if (sampleRate <= 0)
-    throw ConfigError(json, "node-config-hook-pmu-sample_rate",
-                      "Sample rate cannot be less than 0 tried to set {}",
-                      sampleRate);
+    throw JsonError("/sample_rate"_json_pointer,
+                    "Sample rate cannot be less than 0 tried to set {}",
+                    sampleRate);
 
   if (phasorRate <= 0)
-    throw ConfigError(json, "node-config-hook-pmu-phasor_rate",
-                      "Phasor rate cannot be less than 0 tried to set {}",
-                      phasorRate);
+    throw JsonError("/dft_rate"_json_pointer,
+                    "Phasor rate cannot be less than 0 tried to set {}",
+                    phasorRate);
 
   if (nominalFreq <= 0)
-    throw ConfigError(json, "node-config-hook-pmu-nominal_freq",
-                      "Nominal frequency cannot be less than 0 tried to set {}",
-                      nominalFreq);
+    throw JsonError("/nominal_freq"_json_pointer,
+                    "Nominal frequency cannot be less than 0 tried to set {}",
+                    nominalFreq);
 
   if (numberPlc <= 0)
-    throw ConfigError(
-        json, "node-config-hook-pmu-number_plc",
+    throw JsonError(
+        "/number_plc"_json_pointer,
         "Number of power line cycles cannot be less than 0 tried to set {}",
         numberPlc);
 
@@ -140,8 +141,8 @@ void PmuHook::parse(json_t *json) {
   else if (strcmp(windowTypeC, "blackman") == 0)
     windowType = WindowType::BLACKMAN;
   else
-    throw ConfigError(json, "node-config-hook-pmu-window-type",
-                      "Invalid window type: {}", windowTypeC);
+    throw JsonError("/window_type"_json_pointer, "Invalid window type: {}",
+                    windowTypeC);
 
   if (!angleUnitC)
     logger->info("No angle type given, assume rad");
@@ -150,8 +151,8 @@ void PmuHook::parse(json_t *json) {
   else if (strcmp(angleUnitC, "degree") == 0)
     angleUnitFactor = 180 / M_PI;
   else
-    throw ConfigError(json, "node-config-hook-pmu-angle-unit",
-                      "Angle unit {} not recognized", angleUnitC);
+    throw JsonError("/angle_unit"_json_pointer, "Angle unit {} not recognized",
+                    angleUnitC);
 
   if (!timeAlignC)
     logger->info("No timestamp alignment defined. Assume alignment center");
@@ -162,8 +163,8 @@ void PmuHook::parse(json_t *json) {
   else if (strcmp(timeAlignC, "right") == 0)
     timeAlignType = TimeAlign::RIGHT;
   else
-    throw ConfigError(json, "node-config-hook-dft-timestamp-alignment",
-                      "Timestamp alignment {} not recognized", timeAlignC);
+    throw JsonError("/timestamp_align"_json_pointer,
+                    "Timestamp alignment {} not recognized", timeAlignC);
 }
 
 Hook::Reason PmuHook::process(struct Sample *smp) {

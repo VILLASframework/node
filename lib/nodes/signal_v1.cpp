@@ -10,6 +10,7 @@
 #include <list>
 
 #include <villas/exceptions.hpp>
+#include <villas/json.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/signal_old.hpp>
 #include <villas/utils.hpp>
@@ -176,7 +177,7 @@ int villas::node::signal_node_parse(NodeCompat *n, json_t *json) {
       "pulse_high", &json_pulse_high, "phase", &json_phase, "monitor_missed",
       &s->monitor_missed);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-signal");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   struct desc {
     json_t *json;
@@ -205,14 +206,13 @@ int villas::node::signal_node_parse(NodeCompat *n, json_t *json) {
   switch (json_typeof(json_type)) {
   case JSON_ARRAY:
     if (json_array_size(json_type) != s->values)
-      throw ConfigError(json_type, "node-config-node-signal",
-                        "Length of values must match");
+      throw JsonError("/signal"_json_pointer, "Length of values must match");
 
     json_array_foreach (json_type, i, json_value) {
       type_str = json_string_value(json_value);
       if (!type_str)
-        throw ConfigError(json_value, "node-config-node-signal",
-                          "Signal type must be a string");
+        throw JsonError("/signal"_json_pointer / i,
+                        "Signal type must be a string");
 
       s->type[i] = signal_node_lookup_type(type_str);
     }
@@ -230,8 +230,8 @@ int villas::node::signal_node_parse(NodeCompat *n, json_t *json) {
     break;
 
   default:
-    throw ConfigError(json_type, "node-config-node-signal",
-                      "Invalid setting 'signal' for node {}", n->getName());
+    throw JsonError("/signal"_json_pointer,
+                    "Invalid setting 'signal' for node {}", n->getName());
   }
 
   for (auto &a : arrays) {
@@ -244,15 +244,15 @@ int villas::node::signal_node_parse(NodeCompat *n, json_t *json) {
       switch (json_typeof(a.json)) {
       case JSON_ARRAY:
         if (json_array_size(a.json) != s->values)
-          throw ConfigError(a.json, "node-config-node-signal",
-                            "Length of values must match");
+          throw JsonError(""_json_pointer / a.name,
+                          "Length of values must match");
 
         size_t i;
         json_t *json_value;
         json_array_foreach (a.json, i, json_value) {
           if (!json_is_number(json_value))
-            throw ConfigError(
-                json_value, "node-config-node-signal",
+            throw JsonError(
+                ""_json_pointer / a.name / i,
                 "Values must gives as array of integer or float values!");
 
           (*a.array)[i] = json_number_value(json_value);
@@ -268,8 +268,8 @@ int villas::node::signal_node_parse(NodeCompat *n, json_t *json) {
         break;
 
       default:
-        throw ConfigError(
-            a.json, "node-config-node-signal",
+        throw JsonError(
+            ""_json_pointer / a.name,
             "Values must given as array or scalar integer or float value!");
       }
     } else {

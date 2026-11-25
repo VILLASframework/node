@@ -14,6 +14,7 @@
 #include <sys/mman.h>
 
 #include <villas/exceptions.hpp>
+#include <villas/json.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/comedi.hpp>
 #include <villas/utils.hpp>
@@ -41,7 +42,7 @@ static int comedi_parse_direction(struct comedi *c, struct comedi_direction *d,
                        "subdevice", &d->subdevice, "bufsize", &d->buffer_size,
                        "signals", &json_chans, "rate", &d->sample_rate_hz);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-comedi");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   if (!json_is_array(json_chans))
     return -1;
@@ -54,8 +55,7 @@ static int comedi_parse_direction(struct comedi *c, struct comedi_direction *d,
 
   d->chanlist_len = json_array_size(json_chans);
   if (d->chanlist_len == 0)
-    throw ConfigError(json_chans, "node-config-node-channels",
-                      "No channels configured");
+    throw JsonError("/signals"_json_pointer, "No channels configured");
 
   d->chanlist = new unsigned int[d->chanlist_len];
   if (!d->chanlist)
@@ -70,11 +70,11 @@ static int comedi_parse_direction(struct comedi *c, struct comedi_direction *d,
     ret = json_unpack_ex(json_chan, &err, 0, "{ s: i, s: i, s: i }", "channel",
                          &num, "range", &range, "aref", &aref);
     if (ret)
-      throw ConfigError(json_chan, err, "node-config-node-comedi");
+      throw JsonError("/signals"_json_pointer / i, "{}", err.text);
 
     if (aref < AREF_GROUND || aref > AREF_OTHER)
-      throw ConfigError(json_chan, "node-config-node-comedi-aref",
-                        "Invalid value for analog reference: aref={}", aref);
+      throw JsonError("/signals"_json_pointer / i / "aref",
+                      "Invalid value for analog reference: aref={}", aref);
 
     d->chanlist[i] = CR_PACK(num, range, aref);
   }
@@ -393,7 +393,7 @@ int villas::node::comedi_parse(NodeCompat *n, json_t *json) {
                        &device, "in", &json_in, "out", &json_out);
 
   if (ret)
-    throw ConfigError(json, err, "node-config-node-comedi");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   c->in.present = json_in != nullptr;
   c->in.enabled = false;
@@ -404,13 +404,17 @@ int villas::node::comedi_parse(NodeCompat *n, json_t *json) {
   c->out.running = false;
 
   if (c->in.present) {
-    ret = comedi_parse_direction(c, &c->in, json_in);
+    ret = JsonError::context("/in"_json_pointer, [&] {
+      return comedi_parse_direction(c, &c->in, json_in);
+    });
     if (ret)
       return ret;
   }
 
   if (c->out.present) {
-    ret = comedi_parse_direction(c, &c->out, json_out);
+    ret = JsonError::context("/out"_json_pointer, [&] {
+      return comedi_parse_direction(c, &c->out, json_out);
+    });
     if (ret)
       return ret;
   }

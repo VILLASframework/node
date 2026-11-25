@@ -14,6 +14,7 @@
 #include <jansson.h>
 
 #include <villas/exceptions.hpp>
+#include <villas/json.hpp>
 
 namespace villas {
 
@@ -298,7 +299,7 @@ void janssonUnpack(::json_t *json,
   ::json_error_t err;
   if (auto ret = ::json_unpack_ex(json, &err, 0, fmt.c_str(), args...);
       ret == -1)
-    throw RuntimeError("Could not unpack json value: {}", err.text);
+    throw JsonError(""_json_pointer, "{}", err.text);
 }
 
 // Compile time validator for json_pack-style format strings.

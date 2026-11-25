@@ -12,6 +12,7 @@
 
 #include <villas/fpga/ips/i2c.hpp>
 #include <villas/fpga/ips/intc.hpp>
+#include <villas/json.hpp>
 #include <villas/log.hpp>
 
 using namespace villas::fpga::ip;
@@ -323,8 +324,9 @@ void I2cFactory::parse(Core &ip, json_t *cfg) {
                            "c_gpo_width", &i2c.xConfig.GpOutWidth,
                            "component_name", &component_name);
   if (ret != 0) {
-    throw ConfigError(cfg, err, "", "Failed to parse DMA configuration for {}",
-                      ip.getInstanceName());
+    throw JsonError(""_json_pointer,
+                    "Failed to parse DMA configuration for {}: {}",
+                    ip.getInstanceName(), err.text);
   }
   if (component_name != nullptr) {
     char last_letter = component_name[strlen(component_name) - 1];

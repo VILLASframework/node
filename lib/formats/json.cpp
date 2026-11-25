@@ -8,6 +8,7 @@
 #include <villas/compat.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/formats/json.hpp>
+#include <villas/json.hpp>
 #include <villas/sample.hpp>
 #include <villas/signal.hpp>
 
@@ -396,12 +397,12 @@ void JsonFormat::parse(json_t *json) {
 
   );
   if (ret)
-    throw ConfigError(json, err, "node-config-format-json",
-                      "Failed to parse format configuration");
+    throw JsonError(""_json_pointer, "Failed to parse format configuration: {}",
+                    err.text);
 
   if (indent > JSON_MAX_INDENT)
-    throw ConfigError(json, "node-config-format-json-indent",
-                      "The maximum indentation level is {}", JSON_MAX_INDENT);
+    throw JsonError("/indent"_json_pointer,
+                    "The maximum indentation level is {}", JSON_MAX_INDENT);
 
   dump_flags = 0;
 

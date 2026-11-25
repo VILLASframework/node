@@ -14,6 +14,7 @@
 #include <villas/fpga/ips/pcie.hpp>
 #include <villas/fpga/memory.hpp>
 #include <villas/fpga/pcie_card.hpp>
+#include <villas/json.hpp>
 
 using namespace villas::fpga::ip;
 
@@ -107,7 +108,8 @@ void AxiPciExpressBridgeFactory::parse(Core &ip, json_t *cfg) {
   for (auto barType : std::list<std::string>{"axi_bars", "pcie_bars"}) {
     json_t *json_bars = json_object_get(cfg, barType.c_str());
     if (not json_is_object(json_bars))
-      throw ConfigError(cfg, "", "Missing BAR config: {}", barType);
+      throw JsonError(""_json_pointer / barType, "Missing BAR config: {}",
+                      barType);
 
     json_t *json_bar;
     const char *bar_name;
@@ -118,8 +120,8 @@ void AxiPciExpressBridgeFactory::parse(Core &ip, json_t *cfg) {
       int ret = json_unpack_ex(json_bar, &err, 0, "{ s: i }", "translation",
                                &translation);
       if (ret != 0)
-        throw ConfigError(json_bar, err, "", "Cannot parse {}/{}", barType,
-                          bar_name);
+        throw JsonError(""_json_pointer / barType / bar_name,
+                        "Cannot parse {}/{}: {}", barType, bar_name, err.text);
 
       if (barType == "axi_bars") {
         json_int_t base, high, size;
@@ -127,8 +129,9 @@ void AxiPciExpressBridgeFactory::parse(Core &ip, json_t *cfg) {
             json_unpack_ex(json_bar, &err, 0, "{ s: I, s: I, s: I }",
                            "baseaddr", &base, "highaddr", &high, "size", &size);
         if (ret != 0)
-          throw ConfigError(json_bar, err, "", "Cannot parse {}/{}", barType,
-                            bar_name);
+          throw JsonError(""_json_pointer / barType / bar_name,
+                          "Cannot parse {}/{}: {}", barType, bar_name,
+                          err.text);
 
         pcie.axiToPcieTranslations[bar_name] = {
             .base = static_cast<uintptr_t>(base),

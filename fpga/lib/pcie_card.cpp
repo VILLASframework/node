@@ -17,6 +17,7 @@
 #include <villas/fpga/memory.hpp>
 #include <villas/fpga/pcie_card.hpp>
 #include <villas/fpga/vfio/container.hpp>
+#include <villas/json.hpp>
 #include <villas/kernel/kernel.hpp>
 
 using namespace villas;
@@ -56,7 +57,7 @@ PCIeCardFactory::make(json_t *json_card, std::string card_name,
       "ignore_ips", &ignored_ips_array);
 
   if (ret != 0)
-    throw ConfigError(json_card, err, "", "Failed to parse card");
+    throw JsonError(""_json_pointer, "Failed to parse card: {}", err.text);
 
   auto card = std::shared_ptr<PCIeCard>(make());
 
@@ -93,12 +94,15 @@ PCIeCardFactory::make(json_t *json_card, std::string card_name,
     return nullptr;
   }
 
-  CardFactory::loadIps(card, json_ips, searchPath);
+  JsonError::context("/ips"_json_pointer, [&] {
+    return CardFactory::loadIps(card, json_ips, searchPath);
+  });
 
   if (not card->check())
     throw RuntimeError("Checking of FPGA card {} failed", card_name);
 
-  CardFactory::loadSwitch(card, json_paths);
+  JsonError::context("/paths"_json_pointer,
+                     [&] { return CardFactory::loadSwitch(card, json_paths); });
 
   // Deallocate JSON config
   json_decref(json_ips);

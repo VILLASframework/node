@@ -9,6 +9,7 @@
 
 #include <villas/exceptions.hpp>
 #include <villas/formats/opal_asyncip.hpp>
+#include <villas/json.hpp>
 #include <villas/sample.hpp>
 #include <villas/utils.hpp>
 
@@ -104,8 +105,8 @@ void OpalAsyncIPFormat::parse(json_t *json) {
 
   ret = json_unpack_ex(json, &err, 0, "{ s?: i }", "dev_id", &did);
   if (ret)
-    throw ConfigError(json, err, "node-config-format-opal-asyncip",
-                      "Failed to parse format configuration");
+    throw JsonError(""_json_pointer, "Failed to parse format configuration: {}",
+                    err.text);
 
   if (did >= 0)
     dev_id = did;

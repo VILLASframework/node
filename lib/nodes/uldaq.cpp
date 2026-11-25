@@ -10,6 +10,7 @@
 
 #include <villas/config.hpp>
 #include <villas/exceptions.hpp>
+#include <villas/json.hpp>
 #include <villas/node/memory.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/uldaq.hpp>
@@ -283,13 +284,13 @@ int villas::node::uldaq_parse(NodeCompat *n, json_t *json) {
       &default_range_str, "input_mode", &default_input_mode_str,
       "sample_clock_source", &sample_clock_source);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-uldaq");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   if (interface_type) {
     int iftype = uldaq_parse_interface_type(interface_type);
     if (iftype < 0)
-      throw ConfigError(json, "node-config-node-uldaq-interface-type",
-                        "Invalid interface type: {}", interface_type);
+      throw JsonError("/interface_type"_json_pointer,
+                      "Invalid interface type: {}", interface_type);
 
     u->device_interface_type = (DaqDeviceInterface)iftype;
   }
@@ -297,8 +298,8 @@ int villas::node::uldaq_parse(NodeCompat *n, json_t *json) {
   if (sample_clock_source) {
     int clksrc = uldaq_parse_clock_source(sample_clock_source);
     if (clksrc < 0) {
-      throw ConfigError(json, "node-config-node-uldaq-clock_source",
-                        "Invalid clock source type: {}", sample_clock_source);
+      throw JsonError("/sample_clock_source"_json_pointer,
+                      "Invalid clock source type: {}", sample_clock_source);
     }
     u->in.scan_options = (ScanOption)(u->in.scan_options | clksrc);
   }
@@ -319,8 +320,8 @@ int villas::node::uldaq_parse(NodeCompat *n, json_t *json) {
                          "range", &range_str, "input_mode", &input_mode_str,
                          "channel", &channel);
     if (ret)
-      throw ConfigError(json_signal, err, "node-config-node-uldaq-signal",
-                        "Failed to parse signal configuration");
+      throw JsonError("/in/signals"_json_pointer / i,
+                      "Failed to parse signal configuration: {}", err.text);
 
     if (!range_str)
       range_str = default_range_str;
@@ -332,22 +333,22 @@ int villas::node::uldaq_parse(NodeCompat *n, json_t *json) {
       channel = i;
 
     if (!range_str)
-      throw ConfigError(json_signal, err, "node-config-node-uldaq-signal",
-                        "No input range specified for signal {}.", i);
+      throw JsonError("/in/signals"_json_pointer / i / "range",
+                      "No input range specified for signal {}.", i);
 
     if (!input_mode_str)
-      throw ConfigError(json_signal, err, "node-config-node-uldaq-signal",
-                        "No input mode specified for signal {}.", i);
+      throw JsonError("/in/signals"_json_pointer / i / "input_mode",
+                      "No input mode specified for signal {}.", i);
 
     range = uldaq_parse_range(range_str);
     if (range < 0)
-      throw ConfigError(json_signal, err, "node-config-node-uldaq-signal",
-                        "Invalid input range specified for signal {}.", i);
+      throw JsonError("/in/signals"_json_pointer / i / "range",
+                      "Invalid input range specified for signal {}.", i);
 
     input_mode = uldaq_parse_input_mode(input_mode_str);
     if (input_mode < 0)
-      throw ConfigError(json_signal, err, "node-config-node-uldaq-signal",
-                        "Invalid input mode specified for signal {}.", i);
+      throw JsonError("/in/signals"_json_pointer / i / "input_mode",
+                      "Invalid input mode specified for signal {}.", i);
 
     u->in.queues[i].range = (Range)range;
     u->in.queues[i].inputMode = (AiInputMode)input_mode;
@@ -390,8 +391,8 @@ int villas::node::uldaq_check(NodeCompat *n) {
   UlError err;
 
   if (n->in.vectorize < 100)
-    throw ConfigError(n->getConfig(), "node-config-node-vectorize",
-                      "Setting 'vectorize' must be larger than 100");
+    throw JsonError("/nodes"_json_pointer / n->getName() / "in" / "vectorize",
+                    "Setting 'vectorize' must be larger than 100");
 
   ret = uldaq_connect(n);
   if (ret)

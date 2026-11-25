@@ -11,6 +11,7 @@
 
 #include <villas/dsp/window.hpp>
 #include <villas/hook.hpp>
+#include <villas/json.hpp>
 #include <villas/sample.hpp>
 #include <villas/utils.hpp>
 
@@ -143,20 +144,19 @@ public:
                          &json_signal, "f0", &f0, "dt", &dt, "rate", &rate,
                          "harmonics", &json_harmonics, "inverse", &inverse);
     if (ret)
-      throw ConfigError(json, err, "node-config-hook-dp");
+      throw JsonError(""_json_pointer, "{}", err.text);
 
     if (rate > 0)
       timestep = 1. / rate;
     else if (dt > 0)
       timestep = dt;
     else
-      throw ConfigError(
-          json, "node-config-hook-dp",
-          "Either on of the settings 'dt' or 'rate' must be given");
+      throw JsonError(""_json_pointer,
+                      "Either on of the settings 'dt' or 'rate' must be given");
 
     if (!json_is_array(json_harmonics))
-      throw ConfigError(json_harmonics, "node-config-hook-dp-harmonics",
-                        "Setting 'harmonics' must be a list of integers");
+      throw JsonError("/harmonics"_json_pointer,
+                      "Setting 'harmonics' must be a list of integers");
 
     switch (json_typeof(json_signal)) {
     case JSON_STRING:
@@ -169,8 +169,8 @@ public:
       break;
 
     default:
-      throw ConfigError(json_signal, "node-config-hook-dp-signal",
-                        "Invalid value for setting 'signal'");
+      throw JsonError("/signal"_json_pointer,
+                      "Invalid value for setting 'signal'");
     }
 
     fharmonics_len = json_array_size(json_harmonics);
@@ -181,8 +181,8 @@ public:
 
     json_array_foreach (json_harmonics, i, json_harmonic) {
       if (!json_is_integer(json_harmonic))
-        throw ConfigError(json_harmonic, "node-config-hook-dp-harmonics",
-                          "Setting 'harmonics' must be a list of integers");
+        throw JsonError("/harmonics"_json_pointer / i,
+                        "Setting 'harmonics' must be a list of integers");
 
       fharmonics[i] = json_integer_value(json_harmonic);
     }

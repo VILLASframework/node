@@ -14,6 +14,7 @@
 
 #include <villas/exceptions.hpp>
 #include <villas/jansson.hpp>
+#include <villas/json.hpp>
 #include <villas/log.hpp>
 #include <villas/terminal.hpp>
 
@@ -132,8 +133,8 @@ void Log::parse(json_t *json) {
 
   if (json_expressions) {
     if (!json_is_array(json_expressions))
-      throw ConfigError(json_expressions, "node-config-logging-expressions",
-                        "The 'expressions' setting must be a list of objects.");
+      throw JsonError("/expressions"_json_pointer,
+                      "The 'expressions' setting must be a list of objects.");
 
     size_t i;
     json_t *json_expression;

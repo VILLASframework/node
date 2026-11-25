@@ -71,6 +71,9 @@ SuperNode::SuperNode(Json config, fs::path search_path)
                                .apply_migrations = true,
                                .apply_defaults = true,
                            });
+
+    JanssonPtr jansson = this->config;
+    parse(jansson.get());
   } catch (JsonError const &error) {
     for (auto const &[ptr, msg] : error) {
       if (not ptr.empty())
@@ -82,8 +85,6 @@ SuperNode::SuperNode(Json config, fs::path search_path)
     throw RuntimeError("Failed to parse configuration");
   }
 
-  JanssonPtr jansson = this->config;
-  parse(jansson.get());
   check();
 }
 
@@ -302,7 +303,7 @@ void SuperNode::validate(Json &json, const SuperNodeValidateOptions &opts) {
   if (opts.apply_defaults)
     json.patch_inplace(default_values);
 
-  validate_walk_schema(json, JsonPointer{}, schema.json(), opts);
+  validate_walk_schema(json, ""_json_pointer, schema.json(), opts);
 }
 
 void SuperNode::parse(json_t *root) {
@@ -331,8 +332,8 @@ void SuperNode::parse(json_t *root) {
                        &affinity, "priority", &priority, "idle_stop", &stop,
                        "uuid", &uuid_str, "seed", &seed);
   if (ret)
-    throw ConfigError(root, err, "node-config",
-                      "Unpacking top-level config failed");
+    throw JsonError(""_json_pointer, "Unpacking top-level config failed: {}",
+                    err.text);
 
   if (stop >= 0) {
     idleStop = stop > 0;
@@ -341,23 +342,25 @@ void SuperNode::parse(json_t *root) {
   if (uuid_str) {
     ret = uuid_parse(uuid_str, uuid);
     if (ret)
-      throw ConfigError(root, "node-config-uuid", "Failed to parse UUID: {}",
-                        uuid_str);
+      throw JsonError("/uuid"_json_pointer, "Failed to parse UUID: {}",
+                      uuid_str);
   }
 
 #ifdef WITH_WEB
   if (json_http)
-    web.parse(json_http);
+    JsonError::context("/http"_json_pointer,
+                       [&] { return web.parse(json_http); });
 #endif // WITH_WEB
 
   if (json_logging)
-    Log::getInstance().parse(json_logging);
+    JsonError::context("/logging"_json_pointer,
+                       [&] { return Log::getInstance().parse(json_logging); });
 
   // Parse nodes
   if (json_nodes) {
     if (!json_is_object(json_nodes))
-      throw ConfigError(
-          json_nodes, "node-config-nodes",
+      throw JsonError(
+          "/nodes"_json_pointer,
           "Setting 'nodes' must be a group with node name => group mappings.");
 
     const char *node_name;
@@ -372,8 +375,9 @@ void SuperNode::parse(json_t *root) {
 
       ret = json_unpack_ex(json_node, &err, 0, "{ s: s }", "type", &node_type);
       if (ret)
-        throw ConfigError(root, err, "node-config-node-type",
-                          "Failed to parse type of node '{}'", node_name);
+        throw JsonError("/nodes"_json_pointer / node_name,
+                        "Failed to parse type of node '{}': {}", node_name,
+                        err.text);
 
       // Generate UUID from node name and super-node UUID
       uuid::generateFromString(node_uuid, node_name, uuid::toString(uuid));
@@ -384,12 +388,13 @@ void SuperNode::parse(json_t *root) {
 
       n->configPath = getSearchPath();
 
-      ret = n->parse(json_node);
+      ret = JsonError::context("/nodes"_json_pointer / node_name,
+                               [&] { return n->parse(json_node); });
       if (ret) {
         auto config_id = fmt::format("node-config-node-{}", node_type);
-        throw ConfigError(json_node, config_id,
-                          "Failed to parse configuration of node '{}'",
-                          node_name);
+        throw JsonError("/nodes"_json_pointer / node_name,
+                        "Failed to parse configuration of node '{}'",
+                        node_name);
       }
 
       nodes.push_back(n);
@@ -408,7 +413,8 @@ void SuperNode::parse(json_t *root) {
       if (!p)
         throw MemoryAllocationError();
 
-      p->parse(json_path, nodes, uuid);
+      JsonError::context("/paths"_json_pointer / i,
+                         [&] { return p->parse(json_path, nodes, uuid); });
 
       paths.push_back(p);
     }

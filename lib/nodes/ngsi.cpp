@@ -17,6 +17,7 @@
 #include <unistd.h>
 
 #include <villas/exceptions.hpp>
+#include <villas/json.hpp>
 #include <villas/node/config.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/ngsi.hpp>
@@ -90,8 +91,7 @@ public:
     ret = json_unpack_ex(json, &err, 0, "{ s: s, s: s, s: s }", "name", &nam,
                          "type", &typ, "value", &val);
     if (ret)
-      throw ConfigError(json, "node-config-node-ngsi-metadata",
-                        "Failed to parse NGSI metadata");
+      throw JsonError(""_json_pointer, "Failed to parse NGSI metadata");
 
     name = nam;
     type = typ;
@@ -127,8 +127,8 @@ public:
                          "ngsi_attribute_name", &nam, "ngsi_attribute_type",
                          &typ, "ngsi_metadatas", &json_metadatas);
     if (ret)
-      throw ConfigError(json, err, "node-config-node-ngsi",
-                        "Failed to parse NGSI attribute");
+      throw JsonError(""_json_pointer, "Failed to parse NGSI attribute: {}",
+                      err.text);
 
     // Copy values from node signal, if 'ngsi_attribute' settings not provided
     if (s && !nam)
@@ -143,14 +143,16 @@ public:
 
     if (json_metadatas) {
       if (!json_is_array(json_metadatas))
-        throw ConfigError(json_metadatas, "node-config-node-ngsi-metadata",
-                          "ngsi_metadata must be a list of objects");
+        throw JsonError("/ngsi_metadatas"_json_pointer,
+                        "ngsi_metadata must be a list of objects");
 
       json_t *json_metadata;
 
       // cppcheck-suppress unknownMacro
       json_array_foreach (json_metadatas, j, json_metadata)
-        metadata.emplace_back(json_metadata);
+        JsonError::context("/ngsi_metadatas"_json_pointer / j, [&] {
+          return metadata.emplace_back(json_metadata);
+        });
     }
 
     // Metadata: index(integer)=j
@@ -381,7 +383,9 @@ static int ngsi_parse_signals(json_t *json_signals, struct List *ngsi_signals,
 
   json_array_foreach (json_signals, j, json_signal) {
     auto s = node_signals->getByIndex(j);
-    auto *a = new NgsiAttribute(json_signal, j, s);
+    auto *a = JsonError::context(""_json_pointer / j, [&] {
+      return new NgsiAttribute(json_signal, j, s);
+    });
     if (!a)
       throw MemoryAllocationError();
 
@@ -597,25 +601,28 @@ int villas::node::ngsi_parse(NodeCompat *n, json_t *json) {
                        "delete", &remove, "in", "signals", &json_signals_in,
                        "out", "signals", &json_signals_out);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-ngsi");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   i->create = create;
   i->remove = remove;
 
   if (json_signals_in) {
-    ret = ngsi_parse_signals(json_signals_in, &i->in.signals, n->in.signals);
+    ret = JsonError::context("/in/signals"_json_pointer, [&] {
+      return ngsi_parse_signals(json_signals_in, &i->in.signals, n->in.signals);
+    });
     if (ret)
-      throw ConfigError(json_signals_in, "node-config-node-ngsi-in-signals",
-                        "Invalid setting 'in.signals' of node {}",
-                        n->getName());
+      throw JsonError("/in/signals"_json_pointer,
+                      "Invalid setting 'in.signals' of node {}", n->getName());
   }
 
   if (json_signals_out) {
-    ret = ngsi_parse_signals(json_signals_out, &i->out.signals, n->out.signals);
+    ret = JsonError::context("/out/signals"_json_pointer, [&] {
+      return ngsi_parse_signals(json_signals_out, &i->out.signals,
+                                n->out.signals);
+    });
     if (ret)
-      throw ConfigError(json_signals_out, "node-config-node-ngsi-out-signals",
-                        "Invalid setting 'out.signals' of node {}",
-                        n->getName());
+      throw JsonError("/out/signals"_json_pointer,
+                      "Invalid setting 'out.signals' of node {}", n->getName());
   }
 
   return 0;

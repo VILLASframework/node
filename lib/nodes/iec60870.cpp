@@ -8,6 +8,7 @@
 #include <algorithm>
 
 #include <villas/exceptions.hpp>
+#include <villas/json.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/iec60870.hpp>
 #include <villas/sample.hpp>
@@ -47,7 +48,7 @@ ASDUData ASDUData::parse(json_t *json_signal, std::optional<ASDUData> last_data,
                      "asdu_type", &asdu_type_name, "with_timestamp",
                      &with_timestamp, "asdu_type_id", &asdu_type_id, "ioa",
                      &ioa))
-    throw ConfigError(json_signal, err, "node-config-node-iec60870-5-104");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   // Increase the ioa if it is found twice to make it a sequence
   if (duplicate_ioa_is_sequence && last_data &&
@@ -707,7 +708,7 @@ int SlaveNode::parse(json_t *json) {
       "apci_t1", &apci_t1, "apci_t2", &apci_t2, "apci_t3", &apci_t3, "apci_k",
       &apci_k, "apci_w", &apci_w);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-iec60870-5-104");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   if (apci_t0 != -1)
     server.apci_t0 = apci_t0;
@@ -740,7 +741,7 @@ int SlaveNode::parse(json_t *json) {
                          &json_signals, "duplicate_ioa_is_sequence",
                          &duplicate_ioa_is_sequence);
     if (ret)
-      throw ConfigError(json_out, err, "node-config-node-iec60870-5-104");
+      throw JsonError("/out"_json_pointer, "{}", err.text);
   }
 
   if (json_signals) {
@@ -750,8 +751,10 @@ int SlaveNode::parse(json_t *json) {
 
     json_array_foreach (json_signals, i, json_signal) {
       auto signal = signals ? signals->getByIndex(i) : Signal::Ptr{};
-      auto asdu_data =
-          ASDUData::parse(json_signal, last_data, duplicate_ioa_is_sequence);
+      auto asdu_data = JsonError::context("/out/signals"_json_pointer / i, [&] {
+        return ASDUData::parse(json_signal, last_data,
+                               duplicate_ioa_is_sequence);
+      });
       last_data = asdu_data;
       SignalData initial_value;
 

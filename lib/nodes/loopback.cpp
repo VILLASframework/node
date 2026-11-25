@@ -8,6 +8,7 @@
 #include <cstring>
 
 #include <villas/exceptions.hpp>
+#include <villas/json.hpp>
 #include <villas/node/config.hpp>
 #include <villas/node/memory.hpp>
 #include <villas/node_compat.hpp>
@@ -102,7 +103,7 @@ int LoopbackNode::parse(json_t *json) {
   ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: s }", "queuelen", &queuelen,
                        "mode", &mode_str);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-loopback");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   if (mode_str) {
     if (!strcmp(mode_str, "auto"))
@@ -116,8 +117,7 @@ int LoopbackNode::parse(json_t *json) {
     else if (!strcmp(mode_str, "polling"))
       mode = QueueSignalledMode::POLLING;
     else
-      throw ConfigError(json, "node-config-node-loopback-mode",
-                        "Unknown mode '{}'", mode_str);
+      throw JsonError("/mode"_json_pointer, "Unknown mode '{}'", mode_str);
   }
 
   return Node::parse(json);

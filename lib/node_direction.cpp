@@ -10,6 +10,7 @@
 #include <villas/hook.hpp>
 #include <villas/hook_list.hpp>
 #include <villas/jansson.hpp>
+#include <villas/json.hpp>
 #include <villas/node.hpp>
 #include <villas/node_compat_type.hpp>
 #include <villas/node_direction.hpp>
@@ -43,8 +44,8 @@ int NodeDirection::parse(json_t *json) {
     signals = std::make_shared<SignalList>();
     ret = signals->parse(json_signals);
     if (ret)
-      throw ConfigError(json_signals, "node-config-node-signals",
-                        "Failed to parse signal definition");
+      throw JsonError("/signals"_json_pointer,
+                      "Failed to parse signal definition");
   } else {
     signals =
         std::make_shared<SignalList>(DEFAULT_SAMPLE_LENGTH, SignalType::FLOAT);
@@ -56,7 +57,9 @@ int NodeDirection::parse(json_t *json) {
                 ? (int)Hook::Flags::NODE_WRITE
                 : (int)Hook::Flags::NODE_READ;
 
-    hooks.parse(json_hooks, m, nullptr, node);
+    JsonError::context("/hooks"_json_pointer, [&] {
+      return hooks.parse(json_hooks, m, nullptr, node);
+    });
   }
 #endif // WITH_HOOKS
 

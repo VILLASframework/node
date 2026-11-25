@@ -13,6 +13,7 @@
 
 #include <villas/exceptions.hpp>
 #include <villas/format.hpp>
+#include <villas/json.hpp>
 #include <villas/nodes/test_rtt.hpp>
 #include <villas/sample.hpp>
 #include <villas/super_node.hpp>
@@ -161,7 +162,7 @@ int TestRTT::parse(json_t *json) {
                        &shutdown_, "mode", &mode_str, "count", &count_default,
                        "duration", &duration_default);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-test-rtt");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   output = output_str;
   prefix = prefix_str ? prefix_str : getNameShort();
@@ -172,35 +173,37 @@ int TestRTT::parse(json_t *json) {
   if (mode_str) {
     mode_default = parseMode(mode_str);
     if (mode_default == Mode::UNKNOWN)
-      throw ConfigError(json, "node-config-node-test-rtt-mode",
-                        "Invalid mode: {}. Must be 'min' or 'max'", mode_str);
+      throw JsonError("/mode"_json_pointer,
+                      "Invalid mode: {}. Must be 'min' or 'max'", mode_str);
   }
 
   // Formatter
-  auto *fmt = json_format ? FormatFactory::make(json_format)
-                          : FormatFactory::make("villas.human");
+  auto *fmt =
+      json_format
+          ? JsonError::context("/format"_json_pointer,
+                               [&] { return FormatFactory::make(json_format); })
+          : FormatFactory::make("villas.human");
 
   formatter = Format::Ptr(fmt);
   if (!formatter)
-    throw ConfigError(json_format, "node-config-node-test-rtt-format",
-                      "Invalid format configuration");
+    throw JsonError("/format"_json_pointer, "Invalid format configuration");
 
   if (json_rates_default && !json_is_array(json_rates_default) &&
       !json_is_number(json_rates_default))
-    throw ConfigError(
-        json_rates_default, "node-config-node-test-rtt-rates",
+    throw JsonError(
+        "/rates"_json_pointer,
         "The 'rates' setting must be a real or an array of real numbers");
 
   if (json_values_default && !json_is_array(json_values_default) &&
       !json_is_integer(json_values_default))
-    throw ConfigError(
-        json_values_default, "node-config-node-test-rtt-values",
+    throw JsonError(
+        "/values"_json_pointer,
         "The 'values' setting must be an integer or an array of integers");
 
   // Construct List of test cases
   if (!json_is_array(json_cases))
-    throw ConfigError(json_cases, "node-config-node-test-rtt-format",
-                      "The 'cases' setting must be an array.");
+    throw JsonError("/cases"_json_pointer,
+                    "The 'cases' setting must be an array.");
 
   int id = 0;
   json_array_foreach (json_cases, i, json_case) {
@@ -224,28 +227,35 @@ int TestRTT::parse(json_t *json) {
         &duration, "warmup", &warmup, "cooldown", &cooldown, "mode", &mode_str);
 
     if (!json_is_array(json_rates) && !json_is_number(json_rates))
-      throw ConfigError(
-          json_case, "node-config-node-test-rtt-rates",
+      throw JsonError(
+          (json_rates == json_rates_default
+               ? "/rates"_json_pointer
+               : "/cases"_json_pointer / i / "rates"),
           "The 'rates' setting must be a real or an array of real numbers");
 
     if (!json_is_array(json_values) && !json_is_integer(json_values))
-      throw ConfigError(
-          json_case, "node-config-node-test-rtt-values",
+      throw JsonError(
+          (json_values == json_values_default
+               ? "/values"_json_pointer
+               : "/cases"_json_pointer / i / "values"),
           "The 'values' setting must be an integer or an array of integers");
 
     if (mode_str) {
       mode = parseMode(mode_str);
       if (mode == Mode::UNKNOWN)
-        throw ConfigError(json, "node-config-node-test-rtt-mode",
-                          "Invalid mode: {}. Must be 'min' or 'max'", mode_str);
+        throw JsonError("/cases"_json_pointer / i / "mode",
+                        "Invalid mode: {}. Must be 'min' or 'max'", mode_str);
     }
 
     if (json_is_array(json_rates)) {
       size_t j;
       json_array_foreach (json_rates, j, json_val) {
         if (!json_is_number(json_val))
-          throw ConfigError(
-              json_val, "node-config-node-test-rtt-rates",
+          throw JsonError(
+              (json_rates == json_rates_default
+                   ? "/rates"_json_pointer
+                   : "/cases"_json_pointer / i / "rates") /
+                  j,
               "The 'rates' setting must be an array of real numbers");
 
         rates.push_back(json_integer_value(json_val));
@@ -257,9 +267,11 @@ int TestRTT::parse(json_t *json) {
       size_t j;
       json_array_foreach (json_values, j, json_val) {
         if (!json_is_integer(json_val))
-          throw ConfigError(
-              json_val, "node-config-node-test-rtt-values",
-              "The 'values' setting must be an array of integers");
+          throw JsonError((json_values == json_values_default
+                               ? "/values"_json_pointer
+                               : "/cases"_json_pointer / i / "values") /
+                              j,
+                          "The 'values' setting must be an array of integers");
 
         values.push_back(json_integer_value(json_val));
       }

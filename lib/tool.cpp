@@ -7,6 +7,7 @@
 
 #include <iostream>
 
+#include <villas/json.hpp>
 #include <villas/tool.hpp>
 
 using namespace villas;
@@ -60,6 +61,11 @@ int Tool::run() {
     logger->info(CLR_GRN("Goodbye!"));
 
     return ret;
+  } catch (const JsonError &error) {
+    for (auto const &[ptr, msg] : error)
+      logger->error("config[{}]: {}", ptr.empty() ? "/" : ptr.to_string(), msg);
+
+    return -1;
   } catch (const std::exception &e) {
     logger->error("{}", e.what());
 

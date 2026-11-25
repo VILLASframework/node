@@ -8,6 +8,7 @@
 #include <villas/compat.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/formats/raw.hpp>
+#include <villas/json.hpp>
 #include <villas/sample.hpp>
 #include <villas/utils.hpp>
 
@@ -496,12 +497,11 @@ void RawFormat::parse(json_t *json) {
   ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: b, s?: i }", "endianess",
                        &end, "fake", &fake_tmp, "bits", &bits);
   if (ret)
-    throw ConfigError(json, err, "node-config-format-raw",
-                      "Failed to parse format configuration");
+    throw JsonError(""_json_pointer, "Failed to parse format configuration: {}",
+                    err.text);
 
   if (bits % 8 != 0 || bits > 128 || bits <= 0)
-    throw ConfigError(json, "node-config-format-raw-bits",
-                      "Failed to parse format configuration");
+    throw JsonError("/bits"_json_pointer, "Invalid number of bits: {}", bits);
 
   if (end) {
     if (!strcmp(end, "little"))
@@ -509,8 +509,8 @@ void RawFormat::parse(json_t *json) {
     else if (!strcmp(end, "big"))
       endianess = Endianess::BIG;
     else
-      throw ConfigError(json, "node-config-format-raw-endianess",
-                        "Endianess must be either 'big' or 'little'");
+      throw JsonError("/endianess"_json_pointer,
+                      "Endianess must be either 'big' or 'little'");
   }
 
   fake = fake_tmp;

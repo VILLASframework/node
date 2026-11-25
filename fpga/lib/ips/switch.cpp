@@ -13,6 +13,7 @@
 
 #include <villas/exceptions.hpp>
 #include <villas/fpga/ips/switch.hpp>
+#include <villas/json.hpp>
 
 namespace villas {
 namespace fpga {
@@ -146,7 +147,8 @@ void AxiStreamSwitchFactory::parse(Core &ip, json_t *cfg) {
   auto ret = json_unpack_ex(cfg, &err, 0, "{ s: { s: i, s: i } }", "parameters",
                             "num_si", &num_si, "num_mi", &num_mi);
   if (ret != 0)
-    throw ConfigError(cfg, err, "", "Cannot parse switch config");
+    throw JsonError(""_json_pointer, "Cannot parse switch config: {}",
+                    err.text);
 
   axiSwitch.xConfig.MaxNumMI = num_mi;
   axiSwitch.xConfig.MaxNumSI = num_si;

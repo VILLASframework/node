@@ -11,6 +11,7 @@
 
 #include <villas/exceptions.hpp>
 #include <villas/format.hpp>
+#include <villas/json.hpp>
 #include <villas/node/config.hpp>
 #include <villas/nodes/exec.hpp>
 #include <villas/utils.hpp>
@@ -46,7 +47,7 @@ int ExecNode::parse(json_t *json) {
       &json_exec, "format", &json_format, "flush", &f, "environment", &json_env,
       "shell", &s, "working_directory", &wd);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-exec");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   flush = f != 0;
   shell = s < 0 ? json_is_string(json_exec) : s != 0;
@@ -56,27 +57,27 @@ int ExecNode::parse(json_t *json) {
 
   if (json_is_string(json_exec)) {
     if (!shell)
-      throw ConfigError(
-          json_exec, "node-config-node-exec-shell",
+      throw JsonError(
+          "/exec"_json_pointer,
           "The exec setting must be an array if shell mode is disabled.");
 
     command = json_string_value(json_exec);
   } else if (json_is_array(json_exec)) {
     if (shell)
-      throw ConfigError(
-          json_exec, "node-config-node-exec-shell",
+      throw JsonError(
+          "/exec"_json_pointer,
           "The exec setting must be a string if shell mode is enabled.");
 
     if (json_array_size(json_exec) < 1)
-      throw ConfigError(json_exec, "node-config-node-exec-exec",
-                        "At least one argument must be given");
+      throw JsonError("/exec"_json_pointer,
+                      "At least one argument must be given");
 
     size_t i;
     json_t *json_arg;
     json_array_foreach (json_exec, i, json_arg) {
       if (!json_is_string(json_arg))
-        throw ConfigError(json_arg, "node-config-node-exec-exec",
-                          "All arguments must be of string type");
+        throw JsonError("/exec"_json_pointer / i,
+                        "All arguments must be of string type");
 
       if (i == 0)
         command = json_string_value(json_arg);
@@ -92,21 +93,23 @@ int ExecNode::parse(json_t *json) {
 
     json_object_foreach (json_env, key, json_value) {
       if (!json_is_string(json_value))
-        throw ConfigError(json_value, "node-config-node-exec-environment",
-                          "Environment variables must be of string type");
+        throw JsonError("/environment"_json_pointer / key,
+                        "Environment variables must be of string type");
 
       environment[key] = json_string_value(json_value);
     }
   }
 
   // Format
-  auto *fmt = json_format ? FormatFactory::make(json_format)
-                          : FormatFactory::make("villas.human");
+  auto *fmt =
+      json_format
+          ? JsonError::context("/format"_json_pointer,
+                               [&] { return FormatFactory::make(json_format); })
+          : FormatFactory::make("villas.human");
 
   formatter = Format::Ptr(fmt);
   if (!formatter)
-    throw ConfigError(json_format, "node-config-node-exec-format",
-                      "Invalid format configuration");
+    throw JsonError("/format"_json_pointer, "Invalid format configuration");
 
   state = State::PARSED;
 

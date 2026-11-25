@@ -9,6 +9,7 @@
 #include <cstring>
 
 #include <villas/exceptions.hpp>
+#include <villas/json.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/signal.hpp>
 #include <villas/utils.hpp>
@@ -149,13 +150,13 @@ int SignalNodeSignal::parse(json_t *json) {
       "stddev", &stddev, "offset", &offset, "pulse_width", &pulse_width,
       "pulse_low", &pulse_low, "pulse_high", &pulse_high, "phase", &phase);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-signal");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   try {
     type = lookupType(type_str);
   } catch (std::invalid_argument &e) {
-    throw ConfigError(json, "node-config-node-signal-type",
-                      "Unknown signal type: {}", type_str);
+    throw JsonError("/signal"_json_pointer, "Unknown signal type: {}",
+                    type_str);
   }
 
   return 0;
@@ -209,7 +210,7 @@ int SignalNode::parse(json_t *json) {
                        "realtime", &r, "limit", &limit, "rate", &rate,
                        "monitor_missed", &m, "in", "signals", &json_signals);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-signal");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   if (r >= 0)
     rt = r != 0;
@@ -220,7 +221,9 @@ int SignalNode::parse(json_t *json) {
   signals.clear();
   unsigned j = 0;
   json_array_foreach (json_signals, i, json_signal) {
-    auto sig = SignalNodeSignal(json_signal);
+    auto sig = JsonError::context("/in/signals"_json_pointer / i, [&] {
+      return SignalNodeSignal(json_signal);
+    });
 
     if (sig.type == SignalNodeSignal::Type::MIXED)
       sig.type =

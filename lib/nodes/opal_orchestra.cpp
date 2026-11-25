@@ -27,6 +27,7 @@ __attribute__((weak)) void op_license_feature_register() {}
 #include <villas/config_helper.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/fs.hpp>
+#include <villas/json.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/opal_orchestra/ddf.hpp>
 #include <villas/nodes/opal_orchestra/error.hpp>
@@ -355,8 +356,7 @@ public:
                     std::unordered_map<std::shared_ptr<DataItem>,
                                        OpalOrchestraMapping> &mappings) {
     if (!json_is_array(json)) {
-      throw ConfigError(json, "node-config-node-opal-orchestra-signals",
-                        "Signals must be an array");
+      throw JsonError(""_json_pointer, "Signals must be an array");
     }
 
     size_t i;
@@ -374,8 +374,7 @@ public:
                                 "orchestra_name", &nme, "orchestra_type", &typ,
                                 "orchestra_index", &oi);
       if (ret) {
-        throw ConfigError(json_signal, err,
-                          "node-config-node-opal-orchestra-signals");
+        throw JsonError(""_json_pointer / i, "{}", err.text);
       }
 
       std::optional<unsigned> orchestraIdx;
@@ -439,7 +438,7 @@ public:
         "ddf_overwrite_only", &owo, "rate", &rate, "in", "signals",
         &json_in_signals, "out", "signals", &json_out_signals);
     if (ret) {
-      throw ConfigError(json, err, "node-config-node-opal-orchestra");
+      throw JsonError(""_json_pointer, "{}", err.text);
     }
 
     domain.name = dn;
@@ -469,31 +468,41 @@ public:
     }
 
     if (json_connect_timeout) {
-      connectTimeout =
-          parse_duration<std::chrono::seconds>(json_connect_timeout);
+      connectTimeout = JsonError::context("/connect_timeout"_json_pointer, [&] {
+        return parse_duration<std::chrono::seconds>(json_connect_timeout);
+      });
     }
 
     if (json_flag_delay) {
-      *flagDelay = parse_duration<std::chrono::microseconds>(json_flag_delay);
+      *flagDelay = JsonError::context("/flag_delay"_json_pointer, [&] {
+        return parse_duration<std::chrono::microseconds>(json_flag_delay);
+      });
     }
 
     if (json_flag_delay_tool) {
-      *flagDelayTool =
-          parse_duration<std::chrono::microseconds>(json_flag_delay_tool);
+      *flagDelayTool = JsonError::context("/flag_delay_tool"_json_pointer, [&] {
+        return parse_duration<std::chrono::microseconds>(json_flag_delay_tool);
+      });
     }
 
     if (json_connection) {
-      domain.connection = Connection::fromJson(json_connection);
+      domain.connection = JsonError::context("/connection"_json_pointer, [&] {
+        return Connection::fromJson(json_connection);
+      });
     }
 
     if (json_in_signals) {
-      parseSignals(json_in_signals, in.getSignals(false), domain.publish,
-                   publishMappings);
+      JsonError::context("/in/signals"_json_pointer, [&] {
+        return parseSignals(json_in_signals, in.getSignals(false),
+                            domain.publish, publishMappings);
+      });
     }
 
     if (json_out_signals) {
-      parseSignals(json_out_signals, out.getSignals(false), domain.subscribe,
-                   subscribeMappings);
+      JsonError::context("/out/signals"_json_pointer, [&] {
+        return parseSignals(json_out_signals, out.getSignals(false),
+                            domain.subscribe, subscribeMappings);
+      });
     }
 
     return 0;
