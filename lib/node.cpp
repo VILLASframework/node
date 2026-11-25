@@ -21,6 +21,7 @@ extern "C" {
 #include <villas/colors.hpp>
 #include <villas/hook.hpp>
 #include <villas/hook_list.hpp>
+#include <villas/json.hpp>
 #include <villas/mapping.hpp>
 #include <villas/node.hpp>
 #include <villas/node/config.hpp>
@@ -126,16 +127,22 @@ int Node::parse(json_t *json) {
       return ret;
 
     if (enabled)
-      kernel::tc::netem_parse(&tc_qdisc, json_netem);
+      JsonError::context("/out/netem"_json_pointer, [&] {
+        return kernel::tc::netem_parse(&tc_qdisc, json_netem);
+      });
     else
       tc_qdisc = nullptr;
 #endif // WITH_NETEM
   }
 
-  if (auto ret = in.parse(json_object_get(json, "in")))
+  if (auto ret = JsonError::context("/in"_json_pointer, [&] {
+        return in.parse(json_object_get(json, "in"));
+      }))
     return ret;
 
-  if (auto ret = out.parse(json_object_get(json, "out")))
+  if (auto ret = JsonError::context("/out"_json_pointer, [&] {
+        return out.parse(json_object_get(json, "out"));
+      }))
     return ret;
 
   config = json;
@@ -411,8 +418,7 @@ Node *NodeFactory::make(json_t *json, const uuid_t &id,
   Node *n;
 
   if (json_is_object(json))
-    throw ConfigError(json, "node-config-node",
-                      "Node configuration must be an object");
+    throw JsonError(""_json_pointer, "Node configuration must be an object");
 
   json_t *json_type = json_object_get(json, "type");
 
@@ -543,7 +549,8 @@ Json NodeFactory::migrate(Json const &json) const {
       if (dir != json.end() and (!dir->is_object() or dir->contains(setting)))
         continue;
 
-      auto path = JsonPointer{} / std::string(direction) / std::string(setting);
+      auto path =
+          ""_json_pointer / std::string(direction) / std::string(setting);
       patch.push_back(Json::object({
           {"op", "add"},
           {"path", path.to_string()},
@@ -553,7 +560,7 @@ Json NodeFactory::migrate(Json const &json) const {
       create = true;
     }
 
-    auto path = JsonPointer{} / std::string(setting);
+    auto path = ""_json_pointer / std::string(setting);
     patch.push_back(Json::object({
         {"op", "remove"},
         {"path", path.to_string()},
@@ -575,7 +582,7 @@ Json NodeFactory::migrate(Json const &json) const {
 
   for (auto const &direction : {"in"sv, "out"sv}) {
     auto dir = json.find(direction);
-    auto path = JsonPointer{} / std::string(direction) / "signals";
+    auto path = ""_json_pointer / std::string(direction) / "signals";
 
     if (dir != json.end() and dir->contains("signals")) {
       if (auto new_signals = migrate_signal_list(dir->at("signals")))

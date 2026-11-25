@@ -12,6 +12,7 @@
 #include <pthread.h>
 #include <signal.h>
 
+#include <villas/json.hpp>
 #include <villas/nodes/rtp.hpp>
 
 extern "C" {
@@ -128,7 +129,7 @@ int villas::node::rtp_parse(NodeCompat *n, json_t *json) {
       "format", &json_format, "rtcp", &r->rtcp.enabled, "aimd", &json_aimd,
       "out", "address", &remote, "in", "address", &local);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-rtp");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   // AIMD
   if (json_aimd) {
@@ -141,7 +142,7 @@ int villas::node::rtp_parse(NodeCompat *n, json_t *json) {
                          "rate_init", &r->aimd.rate, "log", &log, "hook_type",
                          &hook_type);
     if (ret)
-      throw ConfigError(json_aimd, err, "node-config-node-rtp-aimd");
+      throw JsonError("/aimd"_json_pointer, "{}", err.text);
 
     // AIMD Hook type
     if (!r->rtcp.enabled)
@@ -164,11 +165,13 @@ int villas::node::rtp_parse(NodeCompat *n, json_t *json) {
   // Format
   if (r->formatter)
     delete r->formatter;
-  r->formatter = json_format ? FormatFactory::make(json_format)
-                             : FormatFactory::make("villas.binary");
+  r->formatter =
+      json_format
+          ? JsonError::context("/format"_json_pointer,
+                               [&] { return FormatFactory::make(json_format); })
+          : FormatFactory::make("villas.binary");
   if (!r->formatter)
-    throw ConfigError(json_format, "node-config-node-rtp-format",
-                      "Invalid format configuration");
+    throw JsonError("/format"_json_pointer, "Invalid format configuration");
 
   // Remote address
   ret = sa_decode(&r->out.saddr_rtp, remote, strlen(remote));

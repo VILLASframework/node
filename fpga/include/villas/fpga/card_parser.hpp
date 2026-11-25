@@ -15,6 +15,7 @@
 #include <spdlog/logger.h>
 
 #include <villas/exceptions.hpp>
+#include <villas/json.hpp>
 #include <villas/log.hpp>
 
 class CardParser {
@@ -49,6 +50,7 @@ public:
     }
 
     if (ret != 0)
-      throw villas::ConfigError(json_card, err, "", "Failed to parse card");
+      throw villas::JsonError(""_json_pointer, "Failed to parse card: {}",
+                              err.text);
   }
 };

@@ -8,6 +8,7 @@
 #include <cstring>
 
 #include <villas/hooks/limit_rate.hpp>
+#include <villas/json.hpp>
 #include <villas/sample.hpp>
 #include <villas/timing.hpp>
 
@@ -28,7 +29,7 @@ void LimitRateHook::parse(json_t *json) {
   ret = json_unpack_ex(json, &err, 0, "{ s: F, s?: s }", "rate", &rate, "mode",
                        &m);
   if (ret)
-    throw ConfigError(json, err, "node-config-hook-limit_rate");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   if (m) {
     if (!strcmp(m, "origin"))
@@ -38,8 +39,8 @@ void LimitRateHook::parse(json_t *json) {
     else if (!strcmp(m, "local"))
       mode = LIMIT_RATE_LOCAL;
     else
-      throw ConfigError(json, "node-config-hook-limit_rate-mode",
-                        "Invalid value '{}' for setting 'mode'", m);
+      throw JsonError("/mode"_json_pointer,
+                      "Invalid value '{}' for setting 'mode'", m);
   }
 
   deadtime = 1.0 / rate;

@@ -13,6 +13,7 @@
 
 #include <villas/exceptions.hpp>
 #include <villas/format.hpp>
+#include <villas/json.hpp>
 #include <villas/node/config.hpp>
 #include <villas/sample.hpp>
 #include <villas/utils.hpp>
@@ -42,7 +43,7 @@ Format *FormatFactory::make(json_t *json) {
 
     return f;
   } else
-    throw ConfigError(json, "node-config-format", "Invalid format config");
+    throw JsonError(""_json_pointer, "Invalid format config");
 }
 
 Format *FormatFactory::make(const std::string &format) {
@@ -123,13 +124,13 @@ void Format::parse(json_t *json) {
                        "sequence", &sequence, "data", &data, "offset", &offset,
                        "real_precision", &real_precision);
   if (ret)
-    throw ConfigError(json, err, "node-config-format",
-                      "Failed to parse format configuration");
+    throw JsonError(""_json_pointer, "Failed to parse format configuration: {}",
+                    err.text);
 
   if (real_precision < 0 || real_precision > 31)
-    throw ConfigError(json, err, "node-config-format-precision",
-                      "The valid range for the real_precision setting is "
-                      "between 0 and 31 (inclusive)");
+    throw JsonError("/real_precision"_json_pointer,
+                    "The valid range for the real_precision setting is "
+                    "between 0 and 31 (inclusive)");
 
   if (ts_origin == 0)
     flags &= ~(int)SampleFlags::HAS_TS_ORIGIN;

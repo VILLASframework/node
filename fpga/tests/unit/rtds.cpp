@@ -16,8 +16,8 @@
 #include <villas/fpga/ips/dma.hpp>
 #include <villas/fpga/ips/rtds.hpp>
 #include <villas/fpga/ips/switch.hpp>
+#include <villas/fpga/memory.hpp>
 #include <villas/log.hpp>
-#include <villas/memory.hpp>
 #include <villas/utils.hpp>
 
 #include "global.hpp"
@@ -66,7 +66,7 @@ Test(fpga, rtds, .description = "RTDS") {
       //			rtds->connect(rtdsMaster, dmaSlave);
       //			dma->connect(dmaMaster, rtdsSlave);
 
-      auto mem = villas::HostRam::getAllocator().allocate<int32_t>(
+      auto mem = villas::fpga::HostRam::getAllocator().allocate<int32_t>(
           0x100 / sizeof(int32_t));
 
       //			auto start = std::chrono::high_resolution_clock::now();

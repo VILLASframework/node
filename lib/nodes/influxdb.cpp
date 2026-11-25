@@ -13,6 +13,7 @@
 #include <sys/types.h>
 
 #include <villas/exceptions.hpp>
+#include <villas/json.hpp>
 #include <villas/node/config.hpp>
 #include <villas/node/memory.hpp>
 #include <villas/node_compat.hpp>
@@ -37,7 +38,7 @@ int villas::node::influxdb_parse(NodeCompat *n, json_t *json) {
   ret = json_unpack_ex(json, &err, 0, "{ s: s, s: s }", "server", &server,
                        "key", &key);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-influx");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   tmp = strdup(server);
 

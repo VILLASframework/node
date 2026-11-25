@@ -7,6 +7,7 @@
 
 #include <villas/exceptions.hpp>
 #include <villas/formats/line.hpp>
+#include <villas/json.hpp>
 
 using namespace villas;
 using namespace villas::node;
@@ -136,21 +137,21 @@ void LineFormat::parse(json_t *json) {
                        "delimiter", &delim, "header", &header,
                        "skip_first_line", &skip, "comment_prefix", &com);
   if (ret)
-    throw ConfigError(json, err, "node-config-format-line",
-                      "Failed to parse format configuration");
+    throw JsonError(""_json_pointer, "Failed to parse format configuration: {}",
+                    err.text);
 
   if (delim) {
     if (strlen(delim) != 1)
-      throw ConfigError(json, "node-config-format-line-delimiter",
-                        "Line delimiter must be a single character!");
+      throw JsonError("/delimiter"_json_pointer,
+                      "Line delimiter must be a single character!");
 
     delimiter = delim[0];
   }
 
   if (com) {
     if (strlen(com) != 1)
-      throw ConfigError(json, "node-config-format-line-comment_prefix",
-                        "Comment prefix must be a single character!");
+      throw JsonError("/comment_prefix"_json_pointer,
+                      "Comment prefix must be a single character!");
 
     comment = com[0];
   }

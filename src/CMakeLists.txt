@@ -48,7 +48,7 @@ endif()
 
 if(LIBZMQ_FOUND)
     add_executable(villas-zmq-keygen villas-zmq-keygen.cpp)
-    target_link_libraries(villas-zmq-keygen PUBLIC villas-common PkgConfig::LIBZMQ)
+    target_link_libraries(villas-zmq-keygen PUBLIC villas PkgConfig::LIBZMQ)
 
     list(APPEND SRCS villas-zmq-keygen)
 endif()

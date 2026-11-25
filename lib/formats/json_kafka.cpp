@@ -7,6 +7,7 @@
 
 #include <villas/exceptions.hpp>
 #include <villas/formats/json_kafka.hpp>
+#include <villas/json.hpp>
 #include <villas/timing.hpp>
 #include <villas/utils.hpp>
 
@@ -138,13 +139,13 @@ void JsonKafkaFormat::parse(json_t *json) {
 
   ret = json_unpack_ex(json, &err, 0, "{ s?: o }", "schema", &json_schema_tmp);
   if (ret)
-    throw ConfigError(json, err, "node-config-format-json-kafka",
-                      "Failed to parse format configuration");
+    throw JsonError(""_json_pointer, "Failed to parse format configuration: {}",
+                    err.text);
 
   if (json_schema_tmp) {
     if (!json_is_object(json_schema_tmp))
-      throw ConfigError(json, "node-config-format-json-kafka-schema",
-                        "Kafka schema must be configured as a dictionary");
+      throw JsonError("/schema"_json_pointer,
+                      "Kafka schema must be configured as a dictionary");
 
     if (json_schema)
       json_decref(json_schema);

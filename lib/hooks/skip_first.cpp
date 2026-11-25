@@ -6,6 +6,7 @@
  */
 
 #include <villas/hook.hpp>
+#include <villas/json.hpp>
 #include <villas/sample.hpp>
 #include <villas/timing.hpp>
 
@@ -65,7 +66,7 @@ public:
       return;
     }
 
-    throw ConfigError(json, err, "node-config-hook-skip_first");
+    throw JsonError(""_json_pointer, "{}", err.text);
   }
 
   void start() override {

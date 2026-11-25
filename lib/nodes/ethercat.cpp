@@ -11,6 +11,7 @@
 
 #include <villas/exceptions.hpp>
 #include <villas/jansson.hpp>
+#include <villas/json.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/ethercat.hpp>
 #include <villas/super_node.hpp>
@@ -110,7 +111,7 @@ int villas::node::ethercat_type_start(villas::node::SuperNode *sn) {
                        "coupler", "position", &coupler.position, "product_code",
                        &coupler.product_code, "vendor_id", &coupler.vendor_id);
     if (ret)
-      throw ConfigError(json.get(), err, "node-config-node-ethercat");
+      throw JsonError(""_json_pointer, "{}", err.text);
   }
 
   master = ecrt_request_master(master_id);
@@ -153,7 +154,7 @@ int villas::node::ethercat_parse(NodeCompat *n, json_t *json) {
                        &w->in.position, "product_code", &w->in.product_code,
                        "vendor_id", &w->in.vendor_id);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-ethercat");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   return 0;
 }

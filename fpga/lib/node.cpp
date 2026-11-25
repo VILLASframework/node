@@ -14,6 +14,7 @@
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/ips/switch.hpp>
 #include <villas/fpga/node.hpp>
+#include <villas/json.hpp>
 #include <villas/utils.hpp>
 
 using namespace villas::fpga::ip;
@@ -32,7 +33,8 @@ void NodeFactory::parse(Core &ip, json_t *cfg) {
     json_t *json_port;
     json_array_foreach (json_ports, index, json_port) {
       if (not json_is_object(json_port))
-        throw ConfigError(json_port, "", "Port {} is not an object", index);
+        throw JsonError("/ports"_json_pointer / index,
+                        "Port {} is not an object", index);
 
       const char *role_raw, *target_raw, *name_raw;
 
@@ -41,12 +43,13 @@ void NodeFactory::parse(Core &ip, json_t *cfg) {
           json_unpack_ex(json_port, &err, 0, "{ s: s, s: s, s: s }", "role",
                          &role_raw, "target", &target_raw, "name", &name_raw);
       if (ret != 0)
-        throw ConfigError(json_port, err, "", "Cannot parse port {}", index);
+        throw JsonError("/ports"_json_pointer / index,
+                        "Cannot parse port {}: {}", index, err.text);
 
       const auto tokens = utils::tokenize(target_raw, ":");
       if (tokens.size() != 2)
-        throw ConfigError(json_port, err, "",
-                          "Cannot parse 'target' of port {}", index);
+        throw JsonError("/ports"_json_pointer / index / "target",
+                        "Cannot parse 'target' of port {}", index);
 
       const std::string role(role_raw);
       const bool isMaster = (role == "master" or role == "initiator");
@@ -65,8 +68,9 @@ void NodeFactory::parse(Core &ip, json_t *cfg) {
         Node.portsSlave[name_raw] = thisVertex;
     }
   } else if (json_ports) {
-    throw ConfigError(json_ports, "", "IP port list of {} must be an array",
-                      ip.getInstanceName());
+    throw JsonError("/ports"_json_pointer,
+                    "IP port list of {} must be an array",
+                    ip.getInstanceName());
   }
 }
 

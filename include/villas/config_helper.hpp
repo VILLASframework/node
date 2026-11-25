@@ -13,6 +13,7 @@
 
 #include <jansson.h>
 
+#include <villas/json.hpp>
 #include <villas/node/config.hpp>
 #include <villas/sample.hpp>
 
@@ -117,7 +118,7 @@ Duration parse_duration(json_t *json) {
   case JSON_INTEGER: {
     int64_t value = json_integer_value(json);
     if (value < 0) {
-      throw ConfigError(json, "duration-negative", "Negative duration value");
+      throw JsonError(""_json_pointer, "Negative duration value");
     }
 
     return Duration(value);
@@ -128,13 +129,13 @@ Duration parse_duration(json_t *json) {
       return parse_duration<Duration>(
           std::string_view(json_string_value(json), json_string_length(json)));
     } catch (const RuntimeError &e) {
-      throw ConfigError(json, "duration", "{}", e.what());
+      throw JsonError(""_json_pointer, "{}", e.what());
     }
   }
 
   default:
-    throw ConfigError(json, "duration",
-                      "Expected a string or integer for duration");
+    throw JsonError(""_json_pointer,
+                    "Expected a string or integer for duration");
   }
 }
 

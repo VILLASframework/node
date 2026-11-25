@@ -22,7 +22,6 @@
 #include <villas/kernel/kernel.hpp>
 #include <villas/kernel/rt.hpp>
 #include <villas/log.hpp>
-#include <villas/memory.hpp>
 #include <villas/node.hpp>
 #include <villas/node/config.hpp>
 #include <villas/path.hpp>

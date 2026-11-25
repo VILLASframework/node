@@ -11,6 +11,7 @@
 #include <sys/syslog.h>
 
 #include <villas/exceptions.hpp>
+#include <villas/json.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/kafka.hpp>
 #include <villas/utils.hpp>
@@ -174,7 +175,7 @@ int villas::node::kafka_parse(NodeCompat *n, json_t *json) {
                        "client_id", &client_id, "ssl", &json_ssl, "sasl",
                        &json_sasl);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-kafka");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   k->server = strdup(server);
   k->produce = produce ? strdup(produce) : nullptr;
@@ -185,22 +186,22 @@ int villas::node::kafka_parse(NodeCompat *n, json_t *json) {
 
   if (strcmp(protocol, "SSL") && strcmp(protocol, "PLAINTEXT") &&
       strcmp(protocol, "SASL_SSL") && strcmp(protocol, "SASL_PLAINTEXT"))
-    throw ConfigError(json, "node-config-node-kafka-protocol",
-                      "Invalid security protocol: {}", protocol);
+    throw JsonError("/protocol"_json_pointer, "Invalid security protocol: {}",
+                    protocol);
 
   if (!k->produce && !k->consume)
-    throw ConfigError(json, "node-config-node-kafka",
-                      "At least one topic has to be specified for node {}",
-                      n->getName());
+    throw JsonError(""_json_pointer,
+                    "At least one topic has to be specified for node {}",
+                    n->getName());
 
   if (json_ssl) {
     const char *ca;
 
     ret = json_unpack_ex(json_ssl, &err, 0, "{ s: s }", "ca", &ca);
     if (ret)
-      throw ConfigError(json_ssl, err, "node-config-node-kafka-ssl",
-                        "Failed to parse SSL configuration of node {}",
-                        n->getName());
+      throw JsonError("/ssl"_json_pointer,
+                      "Failed to parse SSL configuration of node {}: {}",
+                      n->getName(), err.text);
 
     k->ssl.ca = strdup(ca);
   }
@@ -214,8 +215,8 @@ int villas::node::kafka_parse(NodeCompat *n, json_t *json) {
                          "mechanisms", &mechanisms, "username", &username,
                          "password", &password);
     if (ret)
-      throw ConfigError(json_sasl, err, "node-config-node-kafka-sasl",
-                        "Failed to parse SASL configuration");
+      throw JsonError("/sasl"_json_pointer,
+                      "Failed to parse SASL configuration: {}", err.text);
 
     k->sasl.mechanisms = strdup(mechanisms);
     k->sasl.username = strdup(username);
@@ -225,11 +226,13 @@ int villas::node::kafka_parse(NodeCompat *n, json_t *json) {
   // Format
   if (k->formatter)
     delete k->formatter;
-  k->formatter = json_format ? FormatFactory::make(json_format)
-                             : FormatFactory::make("villas.binary");
+  k->formatter =
+      json_format
+          ? JsonError::context("/format"_json_pointer,
+                               [&] { return FormatFactory::make(json_format); })
+          : FormatFactory::make("villas.binary");
   if (!k->formatter)
-    throw ConfigError(json_format, "node-config-node-kafka-format",
-                      "Invalid format configuration");
+    throw JsonError("/format"_json_pointer, "Invalid format configuration");
 
   return 0;
 }

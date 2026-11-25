@@ -9,6 +9,7 @@
 
 #include <villas/exceptions.hpp>
 #include <villas/hook.hpp>
+#include <villas/json.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/stats.hpp>
 #include <villas/sample.hpp>
@@ -38,7 +39,7 @@ int villas::node::stats_node_signal_parse(struct stats_node_signal *s,
 
   ret = json_unpack_ex(json, &err, 0, "{ s: s }", "stats", &stats);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-stats");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   cpy = strdup(stats);
 
@@ -112,8 +113,9 @@ int villas::node::stats_node_start(NodeCompat *n) {
 
     stats_sig->node = nodes.lookup(stats_sig->node_str);
     if (!stats_sig->node)
-      throw ConfigError(n->getConfig(), "node-config-node-stats-node",
-                        "Invalid reference node {}", stats_sig->node_str);
+      throw JsonError("/nodes"_json_pointer / n->getName() / "in" / "signals" /
+                          i / "stats",
+                      "Invalid reference node {}", stats_sig->node_str);
   }
 
   return 0;
@@ -170,25 +172,26 @@ int villas::node::stats_node_parse(NodeCompat *n, json_t *json) {
   ret = json_unpack_ex(json, &err, 0, "{ s: F, s: { s: o } }", "rate", &s->rate,
                        "in", "signals", &json_signals);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-stats");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   if (s->rate <= 0)
-    throw ConfigError(json, "node-config-node-stats-rate",
-                      "Setting 'rate' must be positive");
+    throw JsonError("/rate"_json_pointer, "Setting 'rate' must be positive");
 
   if (!json_is_array(json_signals))
-    throw ConfigError(json, "node-config-node-stats-in-signals",
-                      "Setting 'in.signals' must be an array");
+    throw JsonError("/in/signals"_json_pointer,
+                    "Setting 'in.signals' must be an array");
 
   json_array_foreach (json_signals, i, json_signal) {
     auto *stats_sig = new struct stats_node_signal;
     if (!stats_sig)
       throw MemoryAllocationError();
 
-    ret = stats_node_signal_parse(stats_sig, json_signal);
+    ret = JsonError::context("/in/signals"_json_pointer / i, [&] {
+      return stats_node_signal_parse(stats_sig, json_signal);
+    });
     if (ret)
-      throw ConfigError(json_signal, "node-config-node-stats-signals",
-                        "Failed to parse statistics signal definition");
+      throw JsonError("/in/signals"_json_pointer / i,
+                      "Failed to parse statistics signal definition");
 
     list_push(&s->signals, stats_sig);
   }

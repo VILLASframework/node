@@ -20,6 +20,7 @@
 
 #include <villas/exceptions.hpp>
 #include <villas/hook.hpp>
+#include <villas/json.hpp>
 #include <villas/sample.hpp>
 #include <villas/signal_data.hpp>
 #include <villas/signal_type.hpp>
@@ -201,7 +202,7 @@ public:
         json_unpack_ex(json, &err, 0, "{ s: s, s?: s, s?: s }", "uri", &uri_str,
                        "mode", &mode_str, "algorithm", &algorithm_str);
     if (ret)
-      throw ConfigError(json, err, "node-config-hook-digest");
+      throw JsonError(""_json_pointer, "{}", err.text);
 
     uri = std::string(uri_str);
 

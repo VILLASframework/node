@@ -10,8 +10,8 @@
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/ips/bram.hpp>
 #include <villas/fpga/ips/dma.hpp>
+#include <villas/fpga/memory.hpp>
 #include <villas/log.hpp>
-#include <villas/memory.hpp>
 #include <villas/utils.hpp>
 
 #include "global.hpp"
@@ -48,8 +48,8 @@ Test(fpga, dma, .description = "DMA") {
 
 #if 0
     // Allocate memory to use with DMA
-    auto src = HostDmaRam::getAllocator().allocate<char>(len);
-    auto dst = HostDmaRam::getAllocator().allocate<char>(len);
+    auto src = fpga::HostDmaRam::getAllocator().allocate<char>(len);
+    auto dst = fpga::HostDmaRam::getAllocator().allocate<char>(len);
 #elif 0
     // ... only works with IOMMU enabled currently
 
@@ -63,13 +63,13 @@ Test(fpga, dma, .description = "DMA") {
     auto dst = bram->getAllocator().allocate<char>(len);
 #else
     // ... only works with IOMMU enabled currently
-    auto &alloc = villas::HostRam::getAllocator();
-    const std::shared_ptr<villas::MemoryBlock> srcBlock =
+    auto &alloc = villas::fpga::HostRam::getAllocator();
+    const std::shared_ptr<villas::fpga::MemoryBlock> srcBlock =
         alloc.allocateBlock(len);
-    const std::shared_ptr<villas::MemoryBlock> dstBlock =
+    const std::shared_ptr<villas::fpga::MemoryBlock> dstBlock =
         alloc.allocateBlock(len);
-    villas::MemoryAccessor<char> src(*srcBlock);
-    villas::MemoryAccessor<char> dst(*dstBlock);
+    villas::fpga::MemoryAccessor<char> src(*srcBlock);
+    villas::fpga::MemoryAccessor<char> dst(*dstBlock);
 #endif
     // Make sure memory is accessible for DMA
     dma->makeAccesibleFromVA(srcBlock);
@@ -93,6 +93,6 @@ Test(fpga, dma, .description = "DMA") {
 
   cr_assert(count > 0, "No DMA found");
 
-  MemoryManager::get().getGraph().dump();
+  fpga::MemoryManager::get().getGraph().dump();
   fpga::ip::Node::getGraph().dump();
 }

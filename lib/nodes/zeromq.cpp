@@ -14,6 +14,7 @@
 #endif
 
 #include <villas/exceptions.hpp>
+#include <villas/json.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/zeromq.hpp>
 #include <villas/queue.h>
@@ -113,8 +114,8 @@ static int zeromq_parse_endpoints(json_t *json_ep, struct List *epl) {
     json_array_foreach (json_ep, i, json_val) {
       ep = json_string_value(json_val);
       if (!ep)
-        throw ConfigError(json_val, "node-config-node-publish",
-                          "All 'publish' settings must be strings");
+        throw JsonError(""_json_pointer / i,
+                        "All 'publish' settings must be strings");
 
       list_push(epl, strdup(ep));
     }
@@ -155,7 +156,7 @@ int villas::node::zeromq_parse(NodeCompat *n, json_t *json) {
                        &json_curve, "pattern", &type, "ipv6", &z->ipv6,
                        "format", &json_format);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-zeromq");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   z->in.filter = in_filter ? strdup(in_filter) : nullptr;
   z->out.filter = out_filter ? strdup(out_filter) : nullptr;
@@ -163,24 +164,30 @@ int villas::node::zeromq_parse(NodeCompat *n, json_t *json) {
   // Format
   if (z->formatter)
     delete z->formatter;
-  z->formatter = json_format ? FormatFactory::make(json_format)
-                             : FormatFactory::make("villas.binary");
+  z->formatter =
+      json_format
+          ? JsonError::context("/format"_json_pointer,
+                               [&] { return FormatFactory::make(json_format); })
+          : FormatFactory::make("villas.binary");
   if (!z->formatter)
-    throw ConfigError(json_format, "node-config-node-zeromq-format",
-                      "Invalid format configuration");
+    throw JsonError("/format"_json_pointer, "Invalid format configuration");
 
   if (json_out_ep) {
-    ret = zeromq_parse_endpoints(json_out_ep, &z->out.endpoints);
+    ret = JsonError::context("/out/publish"_json_pointer, [&] {
+      return zeromq_parse_endpoints(json_out_ep, &z->out.endpoints);
+    });
     if (ret)
-      throw ConfigError(json_out_ep, "node-config-node-zeromq-publish",
-                        "Failed to parse list of publish endpoints");
+      throw JsonError("/out/publish"_json_pointer,
+                      "Failed to parse list of publish endpoints");
   }
 
   if (json_in_ep) {
-    ret = zeromq_parse_endpoints(json_in_ep, &z->in.endpoints);
+    ret = JsonError::context("/in/subscribe"_json_pointer, [&] {
+      return zeromq_parse_endpoints(json_in_ep, &z->in.endpoints);
+    });
     if (ret)
-      throw ConfigError(json_out_ep, "node-config-node-zeromq-subscribe",
-                        "Failed to parse list of subscribe endpoints");
+      throw JsonError("/in/subscribe"_json_pointer,
+                      "Failed to parse list of subscribe endpoints");
   }
 
   if (json_curve) {
@@ -192,17 +199,17 @@ int villas::node::zeromq_parse(NodeCompat *n, json_t *json) {
                          "public_key", &public_key, "secret_key", &secret_key,
                          "enabled", &z->curve.enabled);
     if (ret)
-      throw ConfigError(json_curve, err, "node-config-node-zeromq-curve",
-                        "Failed to parse setting 'curve'");
+      throw JsonError("/curve"_json_pointer,
+                      "Failed to parse setting 'curve': {}", err.text);
 
     if (strlen(secret_key) != 40)
-      throw ConfigError(
-          json_curve, err, "node-config-node-zeromq-curve",
+      throw JsonError(
+          "/curve/secret_key"_json_pointer,
           "Setting 'curve.secret_key' must be a Z85 encoded CurveZMQ key");
 
     if (strlen(public_key) != 40)
-      throw ConfigError(
-          json_curve, err, "node-config-node-zeromq-curve",
+      throw JsonError(
+          "/curve/public_key"_json_pointer,
           "Setting 'curve.public_key' must be a Z85 encoded CurveZMQ key");
 
     memcpy(z->curve.server.public_key, public_key, 41);
@@ -211,8 +218,8 @@ int villas::node::zeromq_parse(NodeCompat *n, json_t *json) {
 
   // TODO: We should fix this. Its mostly done.
   if (z->curve.enabled)
-    throw ConfigError(json_curve, "node-config-zeromq-curve",
-                      "CurveZMQ support is currently broken");
+    throw JsonError("/curve"_json_pointer,
+                    "CurveZMQ support is currently broken");
 
   if (type) {
     if (!strcmp(type, "pubsub"))
@@ -222,8 +229,8 @@ int villas::node::zeromq_parse(NodeCompat *n, json_t *json) {
       z->pattern = zeromq::Pattern::RADIODISH;
 #endif
     else
-      throw ConfigError(json, "node-config-node-zeromq-type",
-                        "Invalid type for ZeroMQ node: {}", n->getNameShort());
+      throw JsonError("/pattern"_json_pointer,
+                      "Invalid type for ZeroMQ node: {}", n->getNameShort());
   }
 
   return 0;

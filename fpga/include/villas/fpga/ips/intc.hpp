@@ -11,7 +11,7 @@
 #include <xilinx/xintc.h>
 
 #include <villas/fpga/core.hpp>
-#include <villas/kernel/vfio_device.hpp>
+#include <villas/fpga/vfio/device.hpp>
 
 namespace villas {
 namespace fpga {
@@ -45,7 +45,7 @@ public:
 protected:
   static constexpr char registerMemory[] = "reg0";
 
-  std::shared_ptr<villas::kernel::vfio::Device> vfioDevice = nullptr;
+  std::shared_ptr<villas::fpga::vfio::Device> vfioDevice = nullptr;
 
   std::list<MemoryBlockName> getMemoryBlocks() const override {
     return {registerMemory};
@@ -57,7 +57,7 @@ protected:
     bool polling; // Polled or not
   };
 
-  std::vector<kernel::vfio::Device::IrqVectorInfo> irq_vectors;
+  std::vector<vfio::Device::IrqVectorInfo> irq_vectors;
   int nos[maxIrqs] = {-1};
   bool polling[maxIrqs] = {false};
 };

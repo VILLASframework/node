@@ -17,6 +17,7 @@
  */
 
 #include <villas/exceptions.hpp>
+#include <villas/json.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/temper.hpp>
 #include <villas/utils.hpp>
@@ -297,7 +298,7 @@ int villas::node::temper_parse(NodeCompat *n, json_t *json) {
 
                        "bus", &t->filter.bus, "port", &t->filter.port);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-temper");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   return 0;
 }

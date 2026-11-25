@@ -40,5 +40,7 @@ fpga                                                @n-eiling
 /include/villas/dumper.hpp                          @windrad6
 
 # VFIO related files
-/common/lib/kernel                                  @n-eiling
-/common/include/villas/kernel                       @n-eiling
+/fpga/lib/vfio                                      @n-eiling
+/fpga/lib/devices                                   @n-eiling
+/fpga/include/villas/fpga/vfio                      @n-eiling
+/fpga/include/villas/fpga/devices                   @n-eiling

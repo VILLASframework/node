@@ -10,6 +10,7 @@
 #include <mosquitto.h>
 
 #include <villas/exceptions.hpp>
+#include <villas/json.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/mqtt.hpp>
 #include <villas/utils.hpp>
@@ -181,7 +182,7 @@ int villas::node::mqtt_parse(NodeCompat *n, json_t *json) {
                        &m->keepalive, "retain", &m->retain, "username",
                        &username, "password", &password, "ssl", &json_ssl);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-mqtt");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   m->host = strdup(host);
   m->publish = publish ? strdup(publish) : nullptr;
@@ -190,9 +191,9 @@ int villas::node::mqtt_parse(NodeCompat *n, json_t *json) {
   m->password = password ? strdup(password) : nullptr;
 
   if (!m->publish && !m->subscribe)
-    throw ConfigError(json, "node-config-node-mqtt",
-                      "At least one topic has to be specified for node {}",
-                      n->getName());
+    throw JsonError(""_json_pointer,
+                    "At least one topic has to be specified for node {}",
+                    n->getName());
 
   if (json_ssl) {
     m->ssl.enabled = 1;
@@ -212,15 +213,15 @@ int villas::node::mqtt_parse(NodeCompat *n, json_t *json) {
         "cipher", &ciphers, "verify", &m->ssl.cert_reqs, "tls_version",
         &tls_version);
     if (ret)
-      throw ConfigError(json_ssl, err, "node-config-node-mqtt-ssl",
-                        "Failed to parse SSL configuration of node {}",
-                        n->getName());
+      throw JsonError("/ssl"_json_pointer,
+                      "Failed to parse SSL configuration of node {}: {}",
+                      n->getName(), err.text);
 
     if (m->ssl.enabled && !cafile && !capath)
-      throw ConfigError(json_ssl, "node-config-node-mqtt-ssl",
-                        "Either 'ssl.cafile' or 'ssl.capath' settings must be "
-                        "set for node {}.",
-                        n->getName());
+      throw JsonError("/ssl"_json_pointer,
+                      "Either 'ssl.cafile' or 'ssl.capath' settings must be "
+                      "set for node {}.",
+                      n->getName());
 
     m->ssl.cafile = cafile ? strdup(cafile) : nullptr;
     m->ssl.capath = capath ? strdup(capath) : nullptr;
@@ -232,11 +233,13 @@ int villas::node::mqtt_parse(NodeCompat *n, json_t *json) {
   // Format
   if (m->formatter)
     delete m->formatter;
-  m->formatter = json_format ? FormatFactory::make(json_format)
-                             : FormatFactory::make("json");
+  m->formatter =
+      json_format
+          ? JsonError::context("/format"_json_pointer,
+                               [&] { return FormatFactory::make(json_format); })
+          : FormatFactory::make("json");
   if (!m->formatter)
-    throw ConfigError(json_format, "node-config-node-mqtt-format",
-                      "Invalid format configuration");
+    throw JsonError("/format"_json_pointer, "Invalid format configuration");
 
   return 0;
 }

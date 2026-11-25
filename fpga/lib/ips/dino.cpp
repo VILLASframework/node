@@ -9,6 +9,7 @@
 
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/ips/dino.hpp>
+#include <villas/json.hpp>
 #include <villas/utils.hpp>
 
 using namespace villas::fpga::ip;
@@ -271,10 +272,11 @@ void DinoFactory::parse(Core &ip, json_t *cfg) {
   int ret =
       json_unpack_ex(cfg, &err, 0, "{ s: i }", "i2c_channel", &i2c_channel);
   if (ret != 0) {
-    throw ConfigError(cfg, err, "", "Failed to parse Dino configuration");
+    throw JsonError(""_json_pointer, "Failed to parse Dino configuration: {}",
+                    err.text);
   }
   if (i2c_channel < 0 || i2c_channel >= 8) {
-    throw ConfigError(cfg, err, "", "Invalid I2C channel");
+    throw JsonError("/i2c_channel"_json_pointer, "Invalid I2C channel");
   }
   dino.i2c_channel = static_cast<uint8_t>(i2c_channel);
 

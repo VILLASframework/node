@@ -8,6 +8,7 @@
 #include <vector>
 
 #include <villas/hook.hpp>
+#include <villas/json.hpp>
 #include <villas/sample.hpp>
 #include <villas/timing.hpp>
 
@@ -53,7 +54,7 @@ public:
     ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: F }", "time_source",
                          &timeSourceC, "threshold", &threshold);
     if (ret)
-      throw ConfigError(json, err, "node-config-hook-pps_ts");
+      throw JsonError(""_json_pointer, "{}", err.text);
 
     if (timeSourceC) {
       if (!strcmp(timeSourceC, "sample"))

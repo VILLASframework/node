@@ -19,6 +19,7 @@
 #include <unistd.h>
 
 #include <villas/exceptions.hpp>
+#include <villas/json.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/can.hpp>
 #include <villas/sample.hpp>
@@ -76,19 +77,19 @@ static int can_parse_signal(json_t *json, SignalList::Ptr node_signals,
                        &name, "can_id", &can_id, "can_size", &can_size,
                        "can_offset", &can_offset);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-can-signals");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   if (can_size > 8 || can_size <= 0)
-    throw ConfigError(json, "node-config-node-can-can-size",
-                      "can_size of {} for signal '{}' is invalid. You must "
-                      "satisfy 0 < can_size <= 8.",
-                      can_size, name);
+    throw JsonError("/can_size"_json_pointer,
+                    "can_size of {} for signal '{}' is invalid. You must "
+                    "satisfy 0 < can_size <= 8.",
+                    can_size, name);
 
   if (can_offset > 8 || can_offset < 0)
-    throw ConfigError(json, "node-config-node-can-can-offset",
-                      "can_offset of {} for signal '{}' is invalid. You must "
-                      "satisfy 0 <= can_offset <= 8.",
-                      can_offset, name);
+    throw JsonError("/can_offset"_json_pointer,
+                    "can_offset of {} for signal '{}' is invalid. You must "
+                    "satisfy 0 <= can_offset <= 8.",
+                    can_offset, name);
 
   auto sig = node_signals->getByIndex(signal_index);
   if ((!name && sig->name.empty()) || (name && sig->name == name)) {
@@ -98,10 +99,10 @@ static int can_parse_signal(json_t *json, SignalList::Ptr node_signals,
     ret = 0;
     goto out;
   } else
-    throw ConfigError(json, "node-config-node-can-signa;s",
-                      "Signal configuration inconsistency detected: Signal "
-                      "with index {} '{}' does not match can_signal '{}'",
-                      signal_index, sig->name, name);
+    throw JsonError(""_json_pointer,
+                    "Signal configuration inconsistency detected: Signal "
+                    "with index {} '{}' does not match can_signal '{}'",
+                    signal_index, sig->name, name);
 
 out:
   return ret;
@@ -123,7 +124,7 @@ int villas::node::can_parse(NodeCompat *n, json_t *json) {
                        "interface_name", &c->interface_name, "in", "signals",
                        &json_in_signals, "out", "signals", &json_out_signals);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-can");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   c->in = (struct can_signal *)calloc(json_array_size(json_in_signals),
                                       sizeof(struct can_signal));
@@ -136,13 +137,17 @@ int villas::node::can_parse(NodeCompat *n, json_t *json) {
     throw MemoryAllocationError();
 
   json_array_foreach (json_in_signals, i, json_signal) {
-    ret = can_parse_signal(json_signal, n->in.signals, c->in, i);
+    ret = JsonError::context("/in/signals"_json_pointer / i, [&] {
+      return can_parse_signal(json_signal, n->in.signals, c->in, i);
+    });
     if (ret)
       throw RuntimeError("at signal {}.", i);
   }
 
   json_array_foreach (json_out_signals, i, json_signal) {
-    ret = can_parse_signal(json_signal, n->out.signals, c->out, i);
+    ret = JsonError::context("/out/signals"_json_pointer / i, [&] {
+      return can_parse_signal(json_signal, n->out.signals, c->out, i);
+    });
     if (ret)
       throw RuntimeError("at signal {}.", i);
   }

@@ -10,8 +10,9 @@
 #include <villas/api.hpp>
 #include <villas/api/session.hpp>
 #include <villas/config.hpp>
+#include <villas/exceptions.hpp>
+#include <villas/json.hpp>
 #include <villas/node/config.hpp>
-#include <villas/node/exceptions.hpp>
 #include <villas/nodes/websocket.hpp>
 #include <villas/utils.hpp>
 #include <villas/web.hpp>
@@ -183,7 +184,7 @@ int Web::parse(json_t *json) {
       json, &err, JSON_STRICT, "{ s?: s, s?: s, s?: i, s?: b }", "ssl_cert",
       &cert, "ssl_private_key", &pkey, "port", &port, "enabled", &enabled);
   if (ret)
-    throw ConfigError(json, err, "node-config-http");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   if (cert)
     ssl_cert = cert;

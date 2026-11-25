@@ -7,8 +7,8 @@
 
 #pragma once
 
+#include <villas/fpga/memory.hpp>
 #include <villas/fpga/node.hpp>
-#include <villas/memory.hpp>
 
 namespace villas {
 namespace fpga {

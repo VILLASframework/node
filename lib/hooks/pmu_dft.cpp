@@ -11,6 +11,7 @@
 
 #include <villas/dumper.hpp>
 #include <villas/hook.hpp>
+#include <villas/json.hpp>
 #include <villas/sample.hpp>
 #include <villas/timing.hpp>
 
@@ -263,7 +264,7 @@ public:
         "amplitude_offset", &amplitudeOffset, "frequency_offset",
         &frequencyOffset, "rocof_offset", &rocofOffset);
     if (ret)
-      throw ConfigError(json, err, "node-config-hook-dft");
+      throw JsonError(""_json_pointer, "{}", err.text);
 
     // Backward-compatibility: accept the previously misspelled keys.
     json_t *json_start = json_object_get(json, "start_freqency");
@@ -289,8 +290,8 @@ public:
     else if (strcmp(windowTypeC, "hann") == 0)
       windowType = WindowType::HANN;
     else
-      throw ConfigError(json, "node-config-hook-dft-window-type",
-                        "Invalid window type: {}", windowTypeC);
+      throw JsonError("/window_type"_json_pointer, "Invalid window type: {}",
+                      windowTypeC);
 
     if (!timeAlignC)
       logger->info("No timestamp alignment defined. Assume alignment center");
@@ -301,8 +302,8 @@ public:
     else if (strcmp(timeAlignC, "right") == 0)
       timeAlignType = TimeAlign::RIGHT;
     else
-      throw ConfigError(json, "node-config-hook-dft-timestamp-alignment",
-                        "Timestamp alignment {} not recognized", timeAlignC);
+      throw JsonError("/timestamp_align"_json_pointer,
+                      "Timestamp alignment {} not recognized", timeAlignC);
 
     if (!angleUnitC)
       logger->info("No angle type given, assume rad");
@@ -311,8 +312,8 @@ public:
     else if (strcmp(angleUnitC, "degree") == 0)
       angleUnitFactor = 180 / M_PI;
     else
-      throw ConfigError(json, "node-config-hook-dft-angle-unit",
-                        "Angle unit {} not recognized", angleUnitC);
+      throw JsonError("/angle_unit"_json_pointer,
+                      "Angle unit {} not recognized", angleUnitC);
 
     if (!paddingTypeC)
       logger->info("No Padding type given, assume no zeropadding");
@@ -321,8 +322,8 @@ public:
     else if (strcmp(paddingTypeC, "signal_repeat") == 0)
       paddingType = PaddingType::SIG_REPEAT;
     else
-      throw ConfigError(json, "node-config-hook-dft-padding-type",
-                        "Padding type {} not recognized", paddingTypeC);
+      throw JsonError("/padding_type"_json_pointer,
+                      "Padding type {} not recognized", paddingTypeC);
 
     if (!estimateTypeC) {
       logger->info("No Frequency estimation type given, assume no none");

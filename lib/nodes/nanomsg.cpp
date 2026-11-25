@@ -11,6 +11,7 @@
 #include <nanomsg/pubsub.h>
 
 #include <villas/exceptions.hpp>
+#include <villas/json.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/nanomsg.hpp>
 #include <villas/utils.hpp>
@@ -103,7 +104,7 @@ int villas::node::nanomsg_parse(NodeCompat *n, json_t *json) {
                        &json_out_endpoints, "in", "endpoints",
                        &json_in_endpoints);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-nanomsg");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   if (json_out_endpoints) {
     ret = nanomsg_parse_endpoints(&m->out.endpoints, json_out_endpoints);
@@ -120,11 +121,13 @@ int villas::node::nanomsg_parse(NodeCompat *n, json_t *json) {
   // Format
   if (m->formatter)
     delete m->formatter;
-  m->formatter = json_format ? FormatFactory::make(json_format)
-                             : FormatFactory::make("json");
+  m->formatter =
+      json_format
+          ? JsonError::context("/format"_json_pointer,
+                               [&] { return FormatFactory::make(json_format); })
+          : FormatFactory::make("json");
   if (!m->formatter)
-    throw ConfigError(json_format, "node-config-node-nanomsg-format",
-                      "Invalid format configuration");
+    throw JsonError("/format"_json_pointer, "Invalid format configuration");
 
   return 0;
 }

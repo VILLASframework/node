@@ -25,17 +25,32 @@ struct param {
   int thread_count;
   int pool_size;
   size_t block_size;
-  struct memory::Type *mt;
+  // Criterion builds the parameters and runs the test in different processes.
+  // In a PIE binary, addresses of static objects like memory::heap differ.
+  enum class MemoryType { HEAP, MMAP, MMAP_HUGETLB } mt;
 };
+
+static struct memory::Type *memory_type(param::MemoryType mt) {
+  switch (mt) {
+  case param::MemoryType::HEAP:
+    return &memory::heap;
+  case param::MemoryType::MMAP:
+    return &memory::mmap;
+  case param::MemoryType::MMAP_HUGETLB:
+    return &memory::mmap_hugetlb;
+  }
+
+  return nullptr;
+}
 
 ParameterizedTestParameters(pool, basic) {
   static std::vector<struct param> params;
 
   params.clear();
-  params.push_back({1, 4096, 150, &memory::heap});
-  params.push_back({1, 128, 8, &memory::mmap});
-  params.push_back({1, 4, 8192, &memory::mmap_hugetlb});
-  params.push_back({1, 1 << 13, 4, &memory::mmap_hugetlb});
+  params.push_back({1, 4096, 150, param::MemoryType::HEAP});
+  params.push_back({1, 128, 8, param::MemoryType::MMAP});
+  params.push_back({1, 4, 8192, param::MemoryType::MMAP_HUGETLB});
+  params.push_back({1, 1 << 13, 4, param::MemoryType::MMAP_HUGETLB});
 
   return cr_make_param_array(struct param, params.data(), params.size());
 }
@@ -48,11 +63,11 @@ ParameterizedTest(struct param *p, pool, basic, .init = init_memory) {
 
   Log::getInstance().setLevel("trace");
 
-  if (!utils::isPrivileged() && p->mt == &memory::mmap_hugetlb)
+  if (!utils::isPrivileged() && p->mt == param::MemoryType::MMAP_HUGETLB)
     cr_skip_test("Skipping memory_mmap_hugetlb tests allocatpr because we are "
                  "running in an unprivileged environment.");
 
-  ret = pool_init(&pool, p->pool_size, p->block_size, p->mt);
+  ret = pool_init(&pool, p->pool_size, p->block_size, memory_type(p->mt));
   cr_assert_eq(ret, 0, "Failed to create pool");
 
   ptr = pool_get(&pool);

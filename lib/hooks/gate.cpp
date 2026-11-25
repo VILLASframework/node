@@ -10,6 +10,7 @@
 #include <string>
 
 #include <villas/hook.hpp>
+#include <villas/json.hpp>
 #include <villas/node.hpp>
 #include <villas/sample.hpp>
 #include <villas/timing.hpp>
@@ -53,7 +54,7 @@ public:
                          "threshold", &threshold, "duration", &duration,
                          "samples", &samples, "mode", &mode_str);
     if (ret)
-      throw ConfigError(json, err, "node-config-hook-gate");
+      throw JsonError(""_json_pointer, "{}", err.text);
 
     if (mode_str) {
       if (!strcmp(mode_str, "above"))

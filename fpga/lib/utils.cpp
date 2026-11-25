@@ -26,6 +26,7 @@
 #include <villas/fpga/utils.hpp>
 #include <villas/fpga/vlnv.hpp>
 #include <villas/fs.hpp>
+#include <villas/json.hpp>
 #include <villas/log.hpp>
 #include <villas/utils.hpp>
 
@@ -233,7 +234,7 @@ void fpga::setupColorHandling() {
 
 std::shared_ptr<fpga::Card>
 fpga::createCard(json_t *config, const fs::path &searchPath,
-                 std::shared_ptr<kernel::vfio::Container> vfioContainer,
+                 std::shared_ptr<vfio::Container> vfioContainer,
                  std::string card_name) {
   auto configDir = fs::path().parent_path();
 
@@ -243,8 +244,9 @@ fpga::createCard(json_t *config, const fs::path &searchPath,
   int ret =
       json_unpack_ex(config, &err, 0, "{s: s}", "interface", &interfaceName);
   if (ret) {
-    throw ConfigError(config, err, "interface",
-                      "Failed to parse interface name for card {}", card_name);
+    throw JsonError("/interface"_json_pointer,
+                    "Failed to parse interface name for card {}: {}", card_name,
+                    err.text);
   }
   std::string interfaceNameStr(interfaceName);
   std::shared_ptr<fpga::Card> card = nullptr;
@@ -264,10 +266,10 @@ fpga::createCard(json_t *config, const fs::path &searchPath,
 int fpga::createCards(json_t *config,
                       std::list<std::shared_ptr<fpga::Card>> &cards,
                       const fs::path &searchPath,
-                      std::shared_ptr<kernel::vfio::Container> vfioContainer) {
+                      std::shared_ptr<vfio::Container> vfioContainer) {
   int numFpgas = 0;
   if (vfioContainer == nullptr) {
-    vfioContainer = std::make_shared<kernel::vfio::Container>();
+    vfioContainer = std::make_shared<vfio::Container>();
   }
   auto configDir = fs::path().parent_path();
 
@@ -293,7 +295,7 @@ int fpga::createCards(json_t *config,
 int fpga::createCards(json_t *config,
                       std::list<std::shared_ptr<fpga::Card>> &cards,
                       const std::string &searchPath,
-                      std::shared_ptr<kernel::vfio::Container> vfioContainer) {
+                      std::shared_ptr<vfio::Container> vfioContainer) {
   const auto fsPath = fs::path(searchPath);
   return createCards(config, cards, fsPath, vfioContainer);
 }

@@ -6,7 +6,7 @@
 
 add_custom_target(run-integration-tests
     COMMAND
-        /bin/bash -o pipefail -c \"
+        /usr/bin/env bash -o pipefail -c \"
             SRCDIR=${PROJECT_SOURCE_DIR}
             BUILDDIR=${PROJECT_BINARY_DIR}
             ${PROJECT_SOURCE_DIR}/tools/integration-tests.sh 2>&1 | c++filt\"

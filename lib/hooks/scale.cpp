@@ -6,6 +6,7 @@
  */
 
 #include <villas/hook.hpp>
+#include <villas/json.hpp>
 #include <villas/sample.hpp>
 
 namespace villas {
@@ -32,7 +33,7 @@ public:
     ret = json_unpack_ex(json, &err, 0, "{ s?: F, s?: F }", "scale", &scale,
                          "offset", &offset);
     if (ret)
-      throw ConfigError(json, err, "node-config-hook-scale");
+      throw JsonError(""_json_pointer, "{}", err.text);
 
     state = State::PARSED;
   }

@@ -117,7 +117,7 @@ jobs:
         run: cmake -S . -B build ${{ env.CCACHE }}
 
       - name: Build and run unit tests
-        run: LD_LIBRARY_PATH=/usr/local/lib64:$LD_LIBRARY_PATH cmake --build build ${{ env.CMAKE_BUILD_OPTS }} --target run-unit-tests run-unit-tests-common
+        run: LD_LIBRARY_PATH=/usr/local/lib64:$LD_LIBRARY_PATH cmake --build build ${{ env.CMAKE_BUILD_OPTS }} --target run-unit-tests
 
   integration:
     name: Integration Tests

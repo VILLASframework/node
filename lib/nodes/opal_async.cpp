@@ -13,6 +13,7 @@
 #include <unistd.h>
 
 #include <villas/exceptions.hpp>
+#include <villas/json.hpp>
 #include <villas/log.hpp>
 #include <villas/nodes/opal_async.hpp>
 #include <villas/utils.hpp>
@@ -149,7 +150,7 @@ int OpalAsyncNode::parse(json_t *json) {
   ret = json_unpack_ex(json, &err, 0, "{ s: i, s?: { s?: b } }", "id", &id,
                        "in", "reply", &rply);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-opal-async");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   if (id >= 0) {
     in.id = id;

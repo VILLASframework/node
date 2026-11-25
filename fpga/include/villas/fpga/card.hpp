@@ -13,8 +13,8 @@
 #include <string>
 
 #include <villas/fpga/core.hpp>
+#include <villas/fpga/vfio/container.hpp>
 #include <villas/fs.hpp>
-#include <villas/kernel/vfio_container.hpp>
 
 namespace villas {
 namespace fpga {
@@ -24,7 +24,7 @@ public:
   bool polling = 0;
   bool doReset = 0; // Reset VILLASfpga during startup?
   std::string name; // The name of the FPGA card
-  std::shared_ptr<kernel::vfio::Container> vfioContainer;
+  std::shared_ptr<vfio::Container> vfioContainer;
 
   // Slave address space ID to access the PCIe address space from the
   // FPGA

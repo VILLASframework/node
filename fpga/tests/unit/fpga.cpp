@@ -26,7 +26,7 @@
 
 using namespace villas;
 
-static kernel::devices::PciDeviceList *pciDevices;
+static fpga::devices::PciDeviceList *pciDevices;
 
 FpgaState state;
 
@@ -39,9 +39,9 @@ static void init() {
 
   plugin::registry->dump();
 
-  pciDevices = kernel::devices::PciDeviceList::getInstance();
+  pciDevices = fpga::devices::PciDeviceList::getInstance();
 
-  auto vfioContainer = std::make_shared<kernel::vfio::Container>();
+  auto vfioContainer = std::make_shared<fpga::vfio::Container>();
 
   // Parse FPGA configuration
   char *fn = getenv("TEST_CONFIG");

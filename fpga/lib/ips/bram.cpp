@@ -7,6 +7,7 @@
 
 #include <villas/exceptions.hpp>
 #include <villas/fpga/ips/bram.hpp>
+#include <villas/json.hpp>
 
 using namespace villas;
 using namespace villas::fpga::ip;
@@ -19,7 +20,7 @@ void BramFactory::parse(Core &ip, json_t *cfg) {
   json_error_t err;
   int ret = json_unpack_ex(cfg, &err, 0, "{ s: i }", "size", &bram.size);
   if (ret != 0)
-    throw ConfigError(cfg, err, "", "Cannot parse BRAM config");
+    throw JsonError(""_json_pointer, "Cannot parse BRAM config: {}", err.text);
 }
 
 bool Bram::init() {

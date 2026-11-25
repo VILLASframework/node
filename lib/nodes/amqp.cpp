@@ -7,6 +7,7 @@
 
 #include <cstring>
 
+#include <villas/json.hpp>
 #include <villas/node/config.hpp>
 
 #ifdef RABBITMQ_C_NEW_INCLUDE_DIR
@@ -162,7 +163,7 @@ int villas::node::amqp_parse(NodeCompat *n, json_t *json) {
       "password", &password, "port", &port, "exchange", &exchange,
       "routing_key", &routing_key, "format", &json_format, "ssl", &json_ssl);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-amqp");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   a->exchange = amqp_bytes_strdup(exchange);
   a->routing_key = amqp_bytes_strdup(routing_key);
@@ -175,8 +176,7 @@ int villas::node::amqp_parse(NodeCompat *n, json_t *json) {
 
   ret = amqp_parse_url(a->uri, &a->connection_info);
   if (ret != AMQP_STATUS_OK)
-    throw ConfigError(json, "node-config-node-uri", "Failed to parse URI '{}'",
-                      uri);
+    throw JsonError("/uri"_json_pointer, "Failed to parse URI '{}'", uri);
 
   if (json_ssl) {
     const char *ca_cert = nullptr;
@@ -189,8 +189,8 @@ int villas::node::amqp_parse(NodeCompat *n, json_t *json) {
         &a->ssl_info.verify_hostname, "ca_cert", &ca_cert, "client_key",
         &client_key, "client_cert", &client_cert);
     if (ret)
-      throw ConfigError(json_ssl, err, "node-config-node-amqp-ssl",
-                        "Failed to parse SSL configuration");
+      throw JsonError("/ssl"_json_pointer,
+                      "Failed to parse SSL configuration: {}", err.text);
 
     if (ca_cert)
       a->ssl_info.ca_cert = strdup(ca_cert);
@@ -205,11 +205,13 @@ int villas::node::amqp_parse(NodeCompat *n, json_t *json) {
   // Format
   if (a->formatter)
     delete a->formatter;
-  a->formatter = json_format ? FormatFactory::make(json_format)
-                             : FormatFactory::make("json");
+  a->formatter =
+      json_format
+          ? JsonError::context("/format"_json_pointer,
+                               [&] { return FormatFactory::make(json_format); })
+          : FormatFactory::make("json");
   if (!a->formatter)
-    throw ConfigError(json_format, "node-config-node-amqp-format",
-                      "Invalid format configuration");
+    throw JsonError("/format"_json_pointer, "Invalid format configuration");
 
   return 0;
 }

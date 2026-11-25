@@ -5,16 +5,24 @@
 # SPDX-License-Identifier: Apache-2.0
 
 add_compile_options(-fPIC)
+add_compile_definitions(__STDC_FORMAT_MACROS _GNU_SOURCE)
 
 list(APPEND INCLUDE_DIRS
     ${PROJECT_BINARY_DIR}/include
     ${PROJECT_SOURCE_DIR}/include
+    ${OPENSSL_INCLUDE_DIR}
+    ${CURL_INCLUDE_DIRS}
 )
 
 set(LIBRARIES
-    villas-common
+    nlohmann_json::nlohmann_json
     PkgConfig::JANSSON
     PkgConfig::UUID
+    ${OPENSSL_LIBRARIES}
+    ${CURL_LIBRARIES}
+    ${CMAKE_DL_LIBS}
+    spdlog::spdlog
+    fmt::fmt
     m
     stdc++
     rt
@@ -22,10 +30,22 @@ set(LIBRARIES
 )
 
 set(LIB_SRC
+    base64.cpp
+    buffer.cpp
     capabilities.cpp
+    common.cpp
+    compat.cpp
     config_helper.cpp
+    cpuset.cpp
+    dsp/pid.cpp
     dumper.cpp
     format.cpp
+    hist.cpp
+    json.cpp
+    kernel/kernel.cpp
+    kernel/rt.cpp
+    list.cpp
+    log.cpp
     mapping.cpp
     mapping_list.cpp
     memory.cpp
@@ -42,7 +62,9 @@ set(LIB_SRC
     path_source.cpp
     path.cpp
     path_list.cpp
+    plugin.cpp
     pool.cpp
+    popen.cpp
     queue_signalled.cpp
     queue.cpp
     sample.cpp
@@ -54,7 +76,19 @@ set(LIB_SRC
     socket_addr.cpp
     stats.cpp
     super_node.cpp
+    table.cpp
+    task.cpp
+    terminal.cpp
+    timing.cpp
+    tool.cpp
+    utils.cpp
+    uuid.cpp
+    version.cpp
 )
+
+if(CMAKE_SYSTEM_NAME STREQUAL Linux)
+    list(APPEND LIB_SRC tsc.cpp)
+endif()
 
 if(WITH_WEB)
     list(APPEND LIB_SRC
@@ -126,12 +160,14 @@ if(LIBUSB_FOUND)
 endif()
 
 if(WITH_FPGA)
-    list(APPEND LIBRARIES villas-fpga)
+    list(APPEND WHOLE_ARCHIVES villas-fpga)
+    list(APPEND INCLUDE_DIRS $<TARGET_PROPERTY:villas-fpga,INTERFACE_INCLUDE_DIRECTORIES>)
 endif()
 
 add_library(villas SHARED ${LIB_SRC})
 target_include_directories(villas PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(villas PUBLIC ${LIBRARIES})
+target_compile_definitions(villas PUBLIC __STDC_FORMAT_MACROS _GNU_SOURCE)
 target_link_libraries(villas PRIVATE -Wl,--whole-archive ${WHOLE_ARCHIVES} -Wl,--no-whole-archive)
 
 set_target_properties(villas PROPERTIES

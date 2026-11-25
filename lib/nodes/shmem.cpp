@@ -14,6 +14,7 @@
 #include <unistd.h>
 
 #include <villas/exceptions.hpp>
+#include <villas/json.hpp>
 #include <villas/kernel/kernel.hpp>
 #include <villas/log.hpp>
 #include <villas/node_compat.hpp>
@@ -51,7 +52,7 @@ int villas::node::shmem_parse(NodeCompat *n, json_t *json) {
       "name", &shm->out_name, "in", "name", &shm->in_name, "queuelen",
       &shm->conf.queuelen, "exec", &json_exec, "mode", &mode_str);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-shmem");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   if (mode_str) {
     if (!strcmp(mode_str, "polling"))

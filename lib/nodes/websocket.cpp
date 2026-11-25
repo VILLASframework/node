@@ -12,6 +12,7 @@
 #include <unistd.h>
 
 #include <villas/exceptions.hpp>
+#include <villas/json.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/websocket.hpp>
 #include <villas/super_node.hpp>
@@ -560,7 +561,7 @@ int villas::node::websocket_parse(NodeCompat *n, json_t *json) {
   ret = json_unpack_ex(json, &err, 0, "{ s?: o, s?: b }", "destinations",
                        &json_dests, "wait_connected", &wc);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-websocket");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   if (wc >= 0)
     w->wait = wc != 0;
@@ -568,18 +569,16 @@ int villas::node::websocket_parse(NodeCompat *n, json_t *json) {
   list_clear(&w->destinations);
   if (json_dests) {
     if (!json_is_array(json_dests))
-      throw ConfigError(json_dests, err,
-                        "node-config-node-websocket-destinations",
-                        "The 'destinations' setting must be an array of URLs");
+      throw JsonError("/destinations"_json_pointer,
+                      "The 'destinations' setting must be an array of URLs");
 
     json_array_foreach (json_dests, i, json_dest) {
       const char *uri, *prot, *ads, *path;
 
       uri = json_string_value(json_dest);
       if (!uri)
-        throw ConfigError(
-            json_dest, err, "node-config-node-websocket-destinations",
-            "The 'destinations' setting must be an array of URLs");
+        throw JsonError("/destinations"_json_pointer / i,
+                        "The 'destinations' setting must be an array of URLs");
 
       auto *d = new struct websocket_destination;
       if (!d)
@@ -591,14 +590,13 @@ int villas::node::websocket_parse(NodeCompat *n, json_t *json) {
 
       ret = lws_parse_uri(d->uri, &prot, &ads, &d->info.port, &path);
       if (ret)
-        throw ConfigError(json_dest, err,
-                          "node-config-node-websocket-destinations",
-                          "Failed to parse WebSocket URI: '{}'", uri);
+        throw JsonError("/destinations"_json_pointer / i,
+                        "Failed to parse WebSocket URI: '{}'", uri);
 
       if (strlen(path) == 0) {
-        throw ConfigError(json_dest, "node-config-node-websocket-destinations",
-                          "Missing node name / path in destination URI: '{}'",
-                          d->uri);
+        throw JsonError("/destinations"_json_pointer / i,
+                        "Missing node name / path in destination URI: '{}'",
+                        d->uri);
       }
 
       d->info.ssl_connection = !strcmp(prot, "https");

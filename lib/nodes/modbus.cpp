@@ -41,6 +41,7 @@
 #include <fmt/format.h>
 
 #include <villas/exceptions.hpp>
+#include <villas/json.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/modbus.hpp>
 #include <villas/sample.hpp>
@@ -693,7 +694,7 @@ Rtu Rtu::parse(json_t *json) {
                            &baudrate, "data_bits", &data_bits, "stop_bits",
                            &stop_bits);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-modbus-rtu");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   Parity parity = parseParity(parity_str);
 
@@ -709,7 +710,7 @@ Tcp Tcp::parse(json_t *json) {
   int ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: i, s?: i }", "remote",
                            &remote, "port", &port, "unit", &unit_int);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-modbus-tcp");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   std::optional unit = unit_int >= 0 ? std::optional(unit_int) : std::nullopt;
 
@@ -738,7 +739,7 @@ RegisterMappingSingle RegisterMappingSingle::parse(unsigned int index,
       "word_endianess", &word_endianess_str, "byte_endianess",
       &byte_endianess_str, "offset", &offset, "scale", &scale);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-modbus-signal");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   if (integer_registers != -1 &&
       (integer_registers <= 0 || (size_t)integer_registers > MAX_REGISTERS))
@@ -811,7 +812,9 @@ unsigned int ModbusNode::parseMappings(std::vector<RegisterMapping> &mappings,
   json_array_foreach (json, i, signal_json) {
     auto signal = signals->getByIndex(i);
 
-    mappings.push_back(RegisterMappingSingle::parse(i, signal, signal_json));
+    mappings.push_back(JsonError::context(""_json_pointer / i, [&] {
+      return RegisterMappingSingle::parse(i, signal, signal_json);
+    }));
   }
 
   return json_array_size(json);
@@ -833,7 +836,7 @@ int ModbusNode::parse(json_t *json) {
           "reconnect_interval", &reconnect_interval, "min_block_usage",
           &min_block_usage, "max_block_size", &max_block_size, "rate", &rate,
           "in", &in_json, "out", &out_json))
-    throw ConfigError(json, err, "node-config-node-modbus");
+    throw JsonError(""_json_pointer, "{}", err.text);
 
   if (in.enabled && rate < 0)
     throw RuntimeError{"missing polling rate for Modbus reads"};
@@ -843,15 +846,20 @@ int ModbusNode::parse(json_t *json) {
   else if (!strcmp(transport, "tcp"))
     connection_settings = Tcp::parse(json);
   else
-    throw ConfigError(json, err, "node-config-node-modbus-transport");
+    throw JsonError("/transport"_json_pointer, "Invalid transport '{}'",
+                    transport);
 
   json_t *signals_json;
 
   if (in_json && (signals_json = json_object_get(in_json, "signals")))
-    num_in_signals = parseMappings(in_mappings, signals_json);
+    num_in_signals = JsonError::context("/in/signals"_json_pointer, [&] {
+      return parseMappings(in_mappings, signals_json);
+    });
 
   if (out_json && (signals_json = json_object_get(out_json, "signals")))
-    num_out_signals = parseMappings(out_mappings, signals_json);
+    num_out_signals = JsonError::context("/out/signals"_json_pointer, [&] {
+      return parseMappings(out_mappings, signals_json);
+    });
 
   return 0;
 }

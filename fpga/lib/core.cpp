@@ -16,11 +16,12 @@
 #include <villas/fpga/ips/pcie.hpp>
 #include <villas/fpga/ips/platform_intc.hpp>
 #include <villas/fpga/ips/switch.hpp>
+#include <villas/fpga/memory.hpp>
 #include <villas/fpga/platform_card.hpp>
 #include <villas/fpga/utils.hpp>
 #include <villas/fpga/vlnv.hpp>
+#include <villas/json.hpp>
 #include <villas/log.hpp>
-#include <villas/memory.hpp>
 #include <villas/utils.hpp>
 
 using namespace villas::fpga;
@@ -50,7 +51,8 @@ std::list<IpIdentifier> CoreFactory::parseIpIdentifier(json_t *json_ips) {
     json_error_t err;
     int ret = json_unpack_ex(json_ip, &err, 0, "{ s: s }", "vlnv", &vlnv);
     if (ret != 0)
-      throw ConfigError(json_ip, err, "", "IP {} has no VLNV", ipName);
+      throw JsonError(""_json_pointer / ipName, "IP {} has no VLNV: {}", ipName,
+                      err.text);
 
     allIps.push_back({vlnv, ipName});
   }
@@ -251,9 +253,11 @@ CoreFactory::configureIps(std::list<IpIdentifier> orderedIps, json_t *json_ips,
                                      "{ s: I, s: I, s: I }", "baseaddr", &base,
                                      "highaddr", &high, "size", &size);
             if (ret != 0)
-              throw ConfigError(
-                  json_block, err, "", "Cannot parse address block {}/{}/{}/{}",
-                  ip->getInstanceName(), bus_name, instance_name, block_name);
+              throw JsonError(""_json_pointer / id.getName() / "memory-view" /
+                                  bus_name / instance_name / block_name,
+                              "Cannot parse address block {}/{}/{}/{}: {}",
+                              ip->getInstanceName(), bus_name, instance_name,
+                              block_name, err.text);
 
             // Get or create the slave address space
             const std::string slaveAddrSpace =
@@ -272,7 +276,8 @@ CoreFactory::configureIps(std::list<IpIdentifier> orderedIps, json_t *json_ips,
     }
 
     // IP-specific setup via JSON config
-    f->parse(*ip, json_ip);
+    JsonError::context(""_json_pointer / id.getName(),
+                       [&] { return f->parse(*ip, json_ip); });
 
     // Set polling mode
     f->configurePollingMode(

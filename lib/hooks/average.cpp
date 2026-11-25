@@ -5,8 +5,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <villas/exceptions.hpp>
 #include <villas/hook.hpp>
-#include <villas/node/exceptions.hpp>
+#include <villas/json.hpp>
 #include <villas/sample.hpp>
 #include <villas/signal.hpp>
 
@@ -47,7 +48,7 @@ public:
 
     ret = json_unpack_ex(json, &err, 0, "{ s: i }", "offset", &offset);
     if (ret)
-      throw ConfigError(json, err, "node-config-hook-average");
+      throw JsonError(""_json_pointer, "{}", err.text);
 
     state = State::PARSED;
   }

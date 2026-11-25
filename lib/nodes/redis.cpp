@@ -11,6 +11,7 @@
 #include <sys/time.h>
 
 #include <villas/exceptions.hpp>
+#include <villas/json.hpp>
 #include <villas/node/config.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/node_compat_type.hpp>
@@ -325,8 +326,8 @@ int villas::node::redis_parse(NodeCompat *n, json_t *json) {
       &socket_timeout, "ssl", &json_ssl, "keepalive", &keepalive, "mode", &mode,
       "key", &key, "channel", &channel, "notify", &notify, "rate", &r->rate);
   if (ret)
-    throw ConfigError(json, err, "node-config-node-redis",
-                      "Failed to parse node configuration");
+    throw JsonError(""_json_pointer, "Failed to parse node configuration: {}",
+                    err.text);
 
   if (json_ssl) {
 #ifdef REDISPP_WITH_TLS
@@ -342,8 +343,8 @@ int villas::node::redis_parse(NodeCompat *n, json_t *json) {
                          &enabled, "cacert", &cacert, "cacertdir", &cacertdir,
                          "cert", &cert, "key", &key);
     if (ret)
-      throw ConfigError(json, err, "node-config-node-redis-ssl",
-                        "Failed to parse Redis SSL configuration");
+      throw JsonError(""_json_pointer,
+                      "Failed to parse Redis SSL configuration: {}", err.text);
 
     r->options.tls.enabled = enabled != 0;
 
@@ -355,8 +356,8 @@ int villas::node::redis_parse(NodeCompat *n, json_t *json) {
     if (host)
       r->options.tls.sni = host;
 #else
-    throw ConfigError(json_ssl, "node-config-node-redis-ssl",
-                      "This built of the redis++ library does not support SSL");
+    throw JsonError("/ssl"_json_pointer,
+                    "This built of the redis++ library does not support SSL");
 #endif // REDISPP_WITH_TLS
   }
 
@@ -369,18 +370,19 @@ int villas::node::redis_parse(NodeCompat *n, json_t *json) {
     else if (!strcmp(mode, "channel") || !strcmp(mode, "pub-sub"))
       r->mode = RedisMode::CHANNEL;
     else
-      throw ConfigError(json, "node-config-node-redis-mode",
-                        "Invalid Redis mode: {}", mode);
+      throw JsonError("/mode"_json_pointer, "Invalid Redis mode: {}", mode);
   }
 
   // Format
   if (r->formatter)
     delete r->formatter;
-  r->formatter = json_format ? FormatFactory::make(json_format)
-                             : FormatFactory::make("json");
+  r->formatter =
+      json_format
+          ? JsonError::context("/format"_json_pointer,
+                               [&] { return FormatFactory::make(json_format); })
+          : FormatFactory::make("json");
   if (!r->formatter)
-    throw ConfigError(json_format, "node-config-node-redis-format",
-                      "Invalid format configuration");
+    throw JsonError("/format"_json_pointer, "Invalid format configuration");
 
   if (key && r->mode == RedisMode::KEY)
     r->key = key;

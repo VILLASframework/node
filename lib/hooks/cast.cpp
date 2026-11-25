@@ -6,6 +6,7 @@
  */
 
 #include <villas/hook.hpp>
+#include <villas/json.hpp>
 #include <villas/sample.hpp>
 
 namespace villas {
@@ -56,7 +57,7 @@ public:
     ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: s, s?: s }", "new_type",
                          &type, "new_name", &name, "new_unit", &unit);
     if (ret)
-      throw ConfigError(json, err, "node-config-hook-cast");
+      throw JsonError(""_json_pointer, "{}", err.text);
 
     if (type) {
       new_type = signalTypeFromString(type);

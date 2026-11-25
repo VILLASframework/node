@@ -17,7 +17,8 @@
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/ips/dma.hpp>
 #include <villas/fpga/ips/intc.hpp>
-#include <villas/memory.hpp>
+#include <villas/fpga/memory.hpp>
+#include <villas/json.hpp>
 
 // Max. size of a DMA transfer in simple mode
 #define FPGA_DMA_BOUNDARY 0x1000
@@ -71,7 +72,7 @@ bool Dma::init() {
 
 void Dma::setupScatterGather() {
   // Allocate and map space for BD ring in host RAM
-  auto &alloc = villas::HostRam::getAllocator();
+  auto &alloc = villas::fpga::HostRam::getAllocator();
   sgRing = alloc.allocateBlock(2 * requestedRingBdSizeMemory);
 
   if (not card->mapMemoryBlock(sgRing))
@@ -937,7 +938,8 @@ void DmaFactory::parse(Core &ip, json_t *cfg) {
       &dma.xConfig.MicroDmaMode, "c_addr_width", &dma.xConfig.AddrWidth,
       "c_sg_length_width", &dma.xConfig.SgLengthWidth);
   if (ret != 0)
-    throw ConfigError(cfg, err, "", "Failed to parse DMA configuration");
+    throw JsonError(""_json_pointer, "Failed to parse DMA configuration: {}",
+                    err.text);
 
   dma.configDone = true;
 }

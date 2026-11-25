@@ -12,7 +12,7 @@
 
 #include <villas/fpga/ips/intc.hpp>
 #include <villas/fpga/platform_card.hpp>
-#include <villas/kernel/vfio_device.hpp>
+#include <villas/fpga/vfio/device.hpp>
 
 namespace villas {
 namespace fpga {

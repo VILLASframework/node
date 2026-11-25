@@ -6,6 +6,7 @@
  */
 
 #include <villas/hook.hpp>
+#include <villas/json.hpp>
 #include <villas/sample.hpp>
 
 namespace villas {
@@ -187,12 +188,12 @@ public:
         "timestamp_align", &timeAlignC, "angle_unit", &angleUnitC);
 
     if (result)
-      throw ConfigError(json, json_error, "node-config-hook-power");
+      throw JsonError(""_json_pointer, "{}", json_error.text);
 
     if (windowSizeIn < 1)
-      throw ConfigError(json, "node-config-hook-power",
-                        "Window size must be greater 0 but is set to {}",
-                        windowSizeIn);
+      throw JsonError("/window_size"_json_pointer,
+                      "Window size must be greater 0 but is set to {}",
+                      windowSizeIn);
 
     windowSize = (unsigned)windowSizeIn;
 
@@ -205,8 +206,8 @@ public:
     else if (strcmp(timeAlignC, "right") == 0)
       timeAlignType = TimeAlign::RIGHT;
     else
-      throw ConfigError(json, "node-config-hook-dft-timestamp-alignment",
-                        "Timestamp alignment {} not recognized", timeAlignC);
+      throw JsonError("/timestamp_align"_json_pointer,
+                      "Timestamp alignment {} not recognized", timeAlignC);
 
     if (!angleUnitC)
       logger->info("No angle type given, assume rad");
@@ -215,13 +216,13 @@ public:
     else if (strcmp(angleUnitC, "degree") == 0)
       angleUnitFactor = 180 / M_PI;
     else
-      throw ConfigError(json, "node-config-hook-dft-angle-unit",
-                        "Angle unit {} not recognized", angleUnitC);
+      throw JsonError("/angle_unit"_json_pointer,
+                      "Angle unit {} not recognized", angleUnitC);
 
     // Pairings
     if (!json_is_array(json_pairings))
-      throw ConfigError(json_pairings, "node-config-hook-power",
-                        "Pairings are expected as json array");
+      throw JsonError("/pairings"_json_pointer,
+                      "Pairings are expected as json array");
 
     size_t i = 0;
     json_t *json_pairings_value;

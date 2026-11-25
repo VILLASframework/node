@@ -19,10 +19,10 @@
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/config.h>
 #include <villas/fpga/core.hpp>
+#include <villas/fpga/devices/pci_device.hpp>
+#include <villas/fpga/memory.hpp>
+#include <villas/fpga/vfio/container.hpp>
 #include <villas/fs.hpp>
-#include <villas/kernel/devices/pci_device.hpp>
-#include <villas/kernel/vfio_container.hpp>
-#include <villas/memory.hpp>
 #include <villas/plugin.hpp>
 
 namespace villas {
@@ -53,8 +53,8 @@ public:
 public:         // TODO: make this private
   int affinity; // Affinity for MSI interrupts
 
-  std::shared_ptr<kernel::devices::PciDevice> pdev; // PCI device handle
-  std::shared_ptr<kernel::vfio::Device> vfioDevice;
+  std::shared_ptr<devices::PciDevice> pdev; // PCI device handle
+  std::shared_ptr<vfio::Device> vfioDevice;
 
 protected:
   Logger getLogger() const { return villas::Log::get(name); }
@@ -62,9 +62,9 @@ protected:
 
 class PCIeCardFactory : public plugin::Plugin {
 public:
-  static std::shared_ptr<PCIeCard>
-  make(json_t *json, std::string card_name,
-       std::shared_ptr<kernel::vfio::Container> vc, const fs::path &searchPath);
+  static std::shared_ptr<PCIeCard> make(json_t *json, std::string card_name,
+                                        std::shared_ptr<vfio::Container> vc,
+                                        const fs::path &searchPath);
 
   static PCIeCard *make() { return new PCIeCard(); }
 

@@ -16,6 +16,7 @@
 #include <villas/colors.hpp>
 #include <villas/hook.hpp>
 #include <villas/hook_list.hpp>
+#include <villas/json.hpp>
 #include <villas/kernel/rt.hpp>
 #include <villas/node.hpp>
 #include <villas/node/config.hpp>
@@ -336,8 +337,8 @@ void Path::parse(json_t *json, NodeList &nodes, const uuid_t sn_uuid) {
                        "original_sequence_no", &original_sequence_no, "uuid",
                        &uuid_str, "affinity", &affinity);
   if (ret)
-    throw ConfigError(json, err, "node-config-path",
-                      "Failed to parse path configuration");
+    throw JsonError(""_json_pointer, "Failed to parse path configuration: {}",
+                    err.text);
 
   if (en >= 0)
     enabled = en != 0;
@@ -352,16 +353,15 @@ void Path::parse(json_t *json, NodeList &nodes, const uuid_t sn_uuid) {
     else if (!strcmp(mode_str, "all"))
       mode = Mode::ALL;
     else
-      throw ConfigError(json, "node-config-path", "Invalid path mode '{}'",
-                        mode_str);
+      throw JsonError("/mode"_json_pointer, "Invalid path mode '{}'", mode_str);
   }
 
   // UUID
   if (uuid_str) {
     ret = uuid_parse(uuid_str, uuid);
     if (ret)
-      throw ConfigError(json, "node-config-path-uuid",
-                        "Failed to parse UUID: {}", uuid_str);
+      throw JsonError("/uuid"_json_pointer, "Failed to parse UUID: {}",
+                      uuid_str);
   } else
     // Generate UUID from hashed config
     uuid::generateFromJson(uuid, json, sn_uuid);
@@ -369,23 +369,22 @@ void Path::parse(json_t *json, NodeList &nodes, const uuid_t sn_uuid) {
   // Input node(s)
   ret = mappings.parse(json_in);
   if (ret)
-    throw ConfigError(json_in, "node-config-path-in",
-                      "Failed to parse input mapping of path {}",
-                      this->toString());
+    throw JsonError("/in"_json_pointer,
+                    "Failed to parse input mapping of path {}",
+                    this->toString());
 
   // Output node(s)
   NodeList dests;
   if (json_out) {
     ret = dests.parse(json_out, nodes);
     if (ret)
-      throw ConfigError(json_out, "node-config-path-out",
-                        "Failed to parse output nodes");
+      throw JsonError("/out"_json_pointer, "Failed to parse output nodes");
   }
 
   for (auto *n : dests) {
     if (n->out.path)
-      throw ConfigError(
-          json, "node-config-path",
+      throw JsonError(
+          "/out"_json_pointer,
           "Every node must only be used by a single path as destination");
 
     n->out.path = this;
@@ -400,11 +399,14 @@ void Path::parse(json_t *json, NodeList &nodes, const uuid_t sn_uuid) {
 
 #ifdef WITH_HOOKS
   if (json_hooks)
-    hooks.parse(json_hooks, (int)Hook::Flags::PATH, this, nullptr);
+    JsonError::context("/hooks"_json_pointer, [&] {
+      return hooks.parse(json_hooks, (int)Hook::Flags::PATH, this, nullptr);
+    });
 #endif // WITH_HOOKS
 
   if (json_mask)
-    parseMask(json_mask, nodes);
+    JsonError::context("/mask"_json_pointer,
+                       [&] { return parseMask(json_mask, nodes); });
 
   config = json;
   state = State::PARSED;
@@ -415,8 +417,8 @@ void Path::parseMask(json_t *json_mask, NodeList &nodes) {
   size_t i;
 
   if (!json_is_array(json_mask))
-    throw ConfigError(json_mask, "node-config-path-mask",
-                      "The 'mask' setting must be a list of node names");
+    throw JsonError(""_json_pointer,
+                    "The 'mask' setting must be a list of node names");
 
   json_array_foreach (json_mask, i, json_entry) {
     const char *name;
@@ -424,13 +426,13 @@ void Path::parseMask(json_t *json_mask, NodeList &nodes) {
 
     name = json_string_value(json_entry);
     if (!name)
-      throw ConfigError(json_mask, "node-config-path-mask",
-                        "The 'mask' setting must be a list of node names");
+      throw JsonError(""_json_pointer / i,
+                      "The 'mask' setting must be a list of node names");
 
     node = nodes.lookup(name);
     if (!node)
-      throw ConfigError(json_mask, "node-config-path-mask",
-                        "The 'mask' entry '{}' is not a valid node name", name);
+      throw JsonError(""_json_pointer / i,
+                      "The 'mask' entry '{}' is not a valid node name", name);
 
     masked.push_back(node);
   }

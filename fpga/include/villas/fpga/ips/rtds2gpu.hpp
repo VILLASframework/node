@@ -8,8 +8,8 @@
 #pragma once
 
 #include <villas/fpga/ips/hls.hpp>
+#include <villas/fpga/memory.hpp>
 #include <villas/fpga/node.hpp>
-#include <villas/memory.hpp>
 
 #include "rtds2gpu/register_types.hpp"
 #include "rtds2gpu/xrtds2gpu.h"
