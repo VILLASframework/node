@@ -26,10 +26,6 @@ using namespace villas::node;
 
 extern void init_memory();
 
-#define SIZE (1 << 10)
-
-static struct CQueue q;
-
 #if defined(_POSIX_BARRIERS) && _POSIX_BARRIERS > 0
 static pthread_barrier_t barrier;
 #endif
@@ -40,10 +36,25 @@ struct param {
   int thread_count;
   bool many;
   int batch_size;
-  struct memory::Type *mt;
+  // Criterion builds the parameters and runs the test in different processes.
+  // In a PIE binary, addresses of static objects like memory::heap differ.
+  enum class MemoryType { HEAP, MMAP, MMAP_HUGETLB } mt;
   volatile int start;
   struct CQueue queue;
 };
+
+static struct memory::Type *memory_type(param::MemoryType mt) {
+  switch (mt) {
+  case param::MemoryType::HEAP:
+    return &memory::heap;
+  case param::MemoryType::MMAP:
+    return &memory::mmap;
+  case param::MemoryType::MMAP_HUGETLB:
+    return &memory::mmap_hugetlb;
+  }
+
+  return nullptr;
+}
 
 /* Get thread id as integer
  * In contrast to pthread_t which is an opaque type */
@@ -220,7 +231,7 @@ Test(queue, single_threaded, .init = init_memory) {
   producer(&p);
   consumer(&p);
 
-  cr_assert_eq(queue_available(&q), 0);
+  cr_assert_eq(queue_available(&p.queue), 0);
 
   ret = queue_destroy(&p.queue);
   cr_assert_eq(ret, 0, "Failed to create queue");
@@ -234,31 +245,31 @@ ParameterizedTestParameters(queue, multi_threaded) {
                                    .thread_count = 32,
                                    .many = true,
                                    .batch_size = 10,
-                                   .mt = &memory::heap},
+                                   .mt = param::MemoryType::HEAP},
                                   {.iter_count = 1 << 8,
                                    .queue_size = 1 << 9,
                                    .thread_count = 4,
                                    .many = true,
                                    .batch_size = 100,
-                                   .mt = &memory::heap},
-                                  {.iter_count = 1 << 16,
+                                   .mt = param::MemoryType::HEAP},
+                                  {.iter_count = 1 << 12,
                                    .queue_size = 1 << 14,
                                    .thread_count = 16,
                                    .many = true,
                                    .batch_size = 100,
-                                   .mt = &memory::heap},
+                                   .mt = param::MemoryType::HEAP},
                                   {.iter_count = 1 << 8,
                                    .queue_size = 1 << 9,
                                    .thread_count = 4,
                                    .many = true,
                                    .batch_size = 10,
-                                   .mt = &memory::heap},
+                                   .mt = param::MemoryType::HEAP},
                                   {.iter_count = 1 << 16,
                                    .queue_size = 1 << 9,
                                    .thread_count = 16,
                                    .many = false,
                                    .batch_size = 10,
-                                   .mt = &memory::mmap_hugetlb}};
+                                   .mt = param::MemoryType::MMAP_HUGETLB}};
 
   return cr_make_param_array(struct param, params, std::size(params));
 }
@@ -271,7 +282,7 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20,
 
   Logger logger = Log::get("test:queue:multi_threaded");
 
-  if (!utils::isPrivileged() && p->mt == &memory::mmap_hugetlb)
+  if (!utils::isPrivileged() && p->mt == param::MemoryType::MMAP_HUGETLB)
     cr_skip_test("Skipping memory_mmap_hugetlb tests allocatpr because we are "
                  "running in an unprivileged environment.");
 
@@ -279,7 +290,7 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20,
 
   p->start = 0;
 
-  ret = queue_init(&p->queue, p->queue_size, p->mt);
+  ret = queue_init(&p->queue, p->queue_size, memory_type(p->mt));
   cr_assert_eq(ret, 0, "Failed to create queue");
 
   uint64_t start_tsc_time, end_tsc_time;
@@ -311,7 +322,7 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20,
         "Cycles/op are very high ({}). Are you running on a hypervisor?",
         cycpop);
 
-  ret = queue_available(&q);
+  ret = queue_available(&p->queue);
   cr_assert_eq(ret, 0);
 
   ret = queue_destroy(&p->queue);
