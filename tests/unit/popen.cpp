@@ -17,7 +17,7 @@ using namespace villas::utils;
 TestSuite(popen, .description = "Bi-directional popen");
 
 Test(popen, no_shell) {
-  PopenStream proc("/usr/bin/tee", {"tee", "test"});
+  PopenStream proc("/usr/bin/env", {"env", "tee", "test"});
 
   proc.cout() << "Hello World" << std::endl;
   proc.cout().flush();
@@ -50,13 +50,13 @@ Test(popen, shell) {
 }
 
 Test(popen, wd) {
-  PopenStream proc("/usr/bin/pwd", {"pwd"}, {}, "/usr/lib");
+  PopenStream proc("/usr/bin/env", {"env", "pwd"}, {}, "/usr/bin");
 
   std::string wd;
 
   proc.cin() >> wd;
 
-  cr_assert_eq(wd, "/usr/lib");
+  cr_assert_eq(wd, "/usr/bin");
 
   proc.kill();
   proc.close();
